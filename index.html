@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoneForge — 3D Educational Adventure Game</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="nav.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- NAV -->
+  <div class="nav__overlay" id="nav-overlay"></div>
+  <header>
+    <nav class="nav" id="main-nav">
+      <div class="nav__inner">
+        <a href="index.html" class="nav__logo">
+          <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
+          <span class="nav__logo-text">StoneForge</span>
+        </a>
+
+        <button class="nav__burger" id="burger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+
+        <ul class="nav__links" id="nav-links">
+          <li class="nav__sidebar-brand">
+            <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
+            <span class="nav__sidebar-brand-text">StoneForge</span>
+          </li>
+          <li><a href="index.html" class="nav__link nav__link--active">Home</a></li>
+          <li><a href="#about" class="nav__link">About</a></li>
+          <li><a href="#features" class="nav__link">Features</a></li>
+          <li><a href="download.html" class="nav__link">Download</a></li>
+          <li><a href="login-page.html"><button class="nav__cta">Sign In</button></a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <div class="hero__bg"></div>
+      <div class="hero__content">
+        <div class="hero__badge animate-up">
+          <span class="badge badge--green">🎮 Prototype v0.1 — Available Soon</span>
+        </div>
+
+        <h1 class="hero__title">STONE FORGE</h1>
+
+        <p class="hero__tagline animate-up delay-2">
+          "Forging Knowledge Through Interactive Science and Crafting."
+        </p>
+
+        <p class="hero__description animate-up delay-3">
+          Explore, craft, and learn how raw materials become advanced technologies in a 3D educational adventure game.
+        </p>
+
+        <div class="hero__actions animate-up delay-4">
+          <a href="download.html">
+            <button class="btn btn--primary btn--lg">⬇ Download</button>
+          </a>
+          <a href="#trailer">
+            <button class="btn btn--ghost btn--lg">▶ Watch Trailer</button>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__scroll-hint">
+        <span>Scroll</span>
+        <div class="hero__scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- ===== STATS STRIP ===== -->
+    <section class="stats-strip">
+      <div class="stats-strip__inner">
+        <div class="stat">
+          <span class="stat__value">3D</span>
+          <span class="stat__label">Interactive World</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value">5+</span>
+          <span class="stat__label">Science Concepts</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value">Unity</span>
+          <span class="stat__label">Game Engine</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value">PC</span>
+          <span class="stat__label">Platform</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TRAILER ===== -->
+    <section class="trailer section" id="trailer">
+      <div class="trailer__inner">
+        <div class="trailer__header">
+          <p class="section-eyebrow">Gameplay</p>
+          <h2 class="section-title">Watch the Trailer</h2>
+          <p class="section-subtitle" style="margin: 0 auto;">"Dive into StoneForge: turn raw materials into discoveries and adventures."</p>
+        </div>
+        <div class="trailer__video-wrapper">
+          <video controls poster="Assets/stoneForgeHeroBackground.png">
+            <source src="Assets/4746616-uhd_3840_2160_30fps.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ABOUT ===== -->
+    <section class="about section" id="about">
+      <div class="about__inner">
+        <!-- Row 1 -->
+        <div class="about__row">
+          <div class="about__text-group">
+            <p class="section-eyebrow">About the game</p>
+            <h2 class="section-title">What is StoneForge?</h2>
+            <p class="about__body">
+              StoneForge is an interactive 3D educational game designed to teach applied science concepts
+              through exploration, crafting, and technological progression. The game transforms complex
+              scientific processes into simple, visual, and engaging gameplay experiences.
+            </p>
+            <p class="about__body">
+              Instead of traditional text-heavy lessons, players learn by interacting with materials,
+              crafting tools, and completing invention-based challenges. Designed for students, educators,
+              and curious learners of all levels.
+            </p>
+            <div style="display:flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem;">
+              <span class="badge badge--green">🔬 Applied Science</span>
+              <span class="badge badge--orange">🏗 Crafting System</span>
+              <span class="badge badge--green">🎓 Educational</span>
+            </div>
+          </div>
+          <div class="about__image-frame">
+            <img src="Assets/pickaxe-transparent.png" alt="StoneForge Pickaxe">
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="about__row about__row--reverse">
+          <div class="about__text-group">
+            <p class="section-eyebrow">Educational Objectives</p>
+            <h2 class="section-title">Learn by Doing</h2>
+            <p class="about__body">
+              StoneForge helps players understand the logical and sequential steps involved in invention,
+              material processing, and technological development through hands-on gameplay.
+            </p>
+            <p class="about__body">
+              From basic chemistry to metallurgy and mechanical concepts — scientific knowledge becomes
+              tangible through play. Players develop problem-solving, logical thinking, and resource
+              management skills naturally as they progress.
+            </p>
+          </div>
+          <div class="about__image-frame">
+            <img src="Assets/hammer-transparent.png" alt="StoneForge Hammer">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FEATURES ===== -->
+    <section class="features section" id="features">
+      <div class="features__inner">
+        <div class="features__header">
+          <p class="section-eyebrow">Features</p>
+          <h2 class="section-title">How You Learn</h2>
+          <p class="section-subtitle" style="margin: 0 auto; text-align: center;">
+            Five core mechanics designed to make science click.
+          </p>
+        </div>
+        <div class="features__grid">
+          <div class="feature-card">
+            <div class="feature-card__icon">⚒</div>
+            <h3 class="feature-card__title">Procedural Crafting</h3>
+            <p class="feature-card__text">Step-by-step crafting processes that simulate real scientific and industrial procedures — not just clicking a button.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">📈</div>
+            <h3 class="feature-card__title">Technology Progression</h3>
+            <p class="feature-card__text">Unlock new tools, stations, and inventions as you advance from primitive materials to complex systems.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">🤝</div>
+            <h3 class="feature-card__title">Cooperative Gameplay</h3>
+            <p class="feature-card__text">Collaborate with others to complete large-scale projects, mirroring real industrial dependencies and teamwork.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">🗺</div>
+            <h3 class="feature-card__title">Guided Learning System</h3>
+            <p class="feature-card__text">NPC dialogues, missions, and prompts explain scientific processes in simple, beginner-friendly language.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-card__icon">📊</div>
+            <h3 class="feature-card__title">Assessment & Feedback</h3>
+            <p class="feature-card__text">Visual indicators and real-time feedback systems guide players during crafting and resource management tasks.</p>
+          </div>
+          <div class="feature-card" style="background: linear-gradient(135deg, rgba(95,143,71,0.1), rgba(217,119,6,0.08)); border-color: rgba(95,143,71,0.2);">
+            <div class="feature-card__icon" style="background: var(--clr-green-dim);">🎮</div>
+            <h3 class="feature-card__title">3D Open World</h3>
+            <p class="feature-card__text">A fully explorable 3D environment built in Unity — interact with the world to discover how materials and science connect.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREENSHOTS ===== -->
+    <section class="screenshots section">
+      <div class="screenshots__inner">
+        <div class="screenshots__header">
+          <p class="section-eyebrow">Gallery</p>
+          <h2 class="section-title">Screenshots</h2>
+        </div>
+        <div class="screenshots__grid">
+          <div class="screenshot-card"><div class="screenshot-card__icon">🖼</div><span>Coming Soon</span></div>
+          <div class="screenshot-card"><div class="screenshot-card__icon">🖼</div><span>Coming Soon</span></div>
+          <div class="screenshot-card"><div class="screenshot-card__icon">🖼</div><span>Coming Soon</span></div>
+          <div class="screenshot-card"><div class="screenshot-card__icon">🖼</div><span>Coming Soon</span></div>
+          <div class="screenshot-card"><div class="screenshot-card__icon">🖼</div><span>Coming Soon</span></div>
+          <div class="screenshot-card"><div class="screenshot-card__icon">🖼</div><span>Coming Soon</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DOWNLOAD CTA ===== -->
+    <section class="download-cta section">
+      <div class="download-cta__inner">
+        <div class="download-cta__card">
+          <div class="download-cta__text">
+            <p class="section-eyebrow">Get the game</p>
+            <h2 class="download-cta__title">Experience Applied Science in Action</h2>
+            <p class="download-cta__sub">Free to download. No account required for the prototype build.</p>
+            <div class="download-cta__tags">
+              <span class="tag">🪟 Windows PC</span>
+              <span class="tag">🎮 Unity Engine</span>
+              <span class="tag">⚡ Prototype v0.1</span>
+              <span class="tag">📦 ~350 MB</span>
+            </div>
+          </div>
+          <div class="download-cta__actions">
+            <a href="download.html">
+              <button class="btn btn--primary btn--lg" style="min-width: 220px;">
+                ⬇ Download Page
+              </button>
+            </a>
+            <p class="download-cta__note">Build dropping soon</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer__main">
+      <div class="footer__brand">
+        <div class="footer__brand-name">
+          <img src="Assets/logo-transparent.png" alt="StoneForge" class="footer__logo">
+          <span class="footer__brand-title">StoneForge</span>
+        </div>
+        <p class="footer__tagline">
+          An Interactive 3D Educational Game for Applied Science and Technological Progression.
+        </p>
+      </div>
+
+      <div>
+        <p class="footer__col-title">Capstone Team</p>
+        <ul class="footer__list">
+          <li>Jemarc C. Dolor</li>
+          <li>Clent Andrew C. Bagaipo</li>
+          <li>Christian Jay E. Viodor</li>
+          <li>Gabriel Angelo S. Velasco</li>
+          <li>John Aries R. Mendoza</li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="footer__col-title">Institution</p>
+        <ul class="footer__list">
+          <li>National College of Science and Technology</li>
+          <li>Computer Studies Department</li>
+        </ul>
+        <br>
+        <p class="footer__col-title" style="margin-top: 1rem;">Navigate</p>
+        <ul class="footer__list">
+          <li><a href="#about" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">About</a></li>
+          <li><a href="#features" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Features</a></li>
+          <li><a href="download.html" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Download</a></li>
+          <li><a href="login-page.html" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Sign In</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p class="footer__copy">© 2025–2026 StoneForge. All Rights Reserved.</p>
+      <p class="footer__copy">Capstone Project — NCST Computer Studies</p>
+    </div>
+  </footer>
+
+  <script src="StoneForge.js"></script>
+</body>
+</html>

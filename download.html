@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download — StoneForge</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="nav.css">
+  <link rel="stylesheet" href="download.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="nav__overlay" id="nav-overlay"></div>
+  <header>
+    <nav class="nav" id="main-nav">
+      <div class="nav__inner">
+        <a href="index.html" class="nav__logo">
+          <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
+          <span class="nav__logo-text">StoneForge</span>
+        </a>
+        <button class="nav__burger" id="burger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav__links" id="nav-links">
+          <li class="nav__sidebar-brand">
+            <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
+            <span class="nav__sidebar-brand-text">StoneForge</span>
+          </li>
+          <li><a href="index.html" class="nav__link">Home</a></li>
+          <li><a href="index.html#about" class="nav__link">About</a></li>
+          <li><a href="index.html#features" class="nav__link">Features</a></li>
+          <li><a href="download.html" class="nav__link nav__link--active">Download</a></li>
+          <li><a href="login-page.html"><button class="nav__cta">Sign In</button></a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="dl-page">
+    <!-- HERO -->
+    <div class="dl-hero animate-up">
+      <span class="badge badge--green">🎮 Prototype Build</span>
+      <h1 class="dl-hero__title">Download StoneForge</h1>
+      <div class="dl-hero__meta">
+        <span class="badge badge--orange">v0.1.0</span>
+        <span class="badge badge--green">🪟 Windows PC</span>
+        <span class="badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border); color: var(--clr-text-muted);">🎮 Unity Engine</span>
+      </div>
+    </div>
+
+    <div class="dl-page__inner">
+
+      <!-- DOWNLOAD CARD -->
+      <div class="dl-card animate-up delay-1">
+        <div class="dl-card__left">
+          <div class="dl-card__platform-icon">🪟</div>
+          <div>
+            <h2 class="dl-card__name">StoneForge for Windows</h2>
+            <div class="dl-card__details">
+              <span class="dl-detail">📦 Size: <strong>~350 MB</strong></span>
+              <span class="dl-detail">📅 Release: <strong>TBA 2026</strong></span>
+              <span class="dl-detail">🎮 Engine: <strong>Unity</strong></span>
+              <span class="dl-detail">🖥 OS: <strong>Windows 10/11</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="dl-card__btn-wrap">
+          <button class="dl-btn" disabled>⬇ Download</button>
+          <span class="dl-btn-note">Build not yet available</span>
+        </div>
+      </div>
+
+      <!-- SYSTEM REQUIREMENTS -->
+      <div class="dl-section animate-up delay-2">
+        <h2 class="dl-section-title">⚙ System Requirements</h2>
+        <div class="specs-grid">
+          <div class="specs-card specs-card--min">
+            <div class="specs-card__head">Minimum</div>
+            <table class="specs-table">
+              <tr><td>OS</td><td>Windows 10 64-bit</td></tr>
+              <tr><td>CPU</td><td>Intel Core i5-4460</td></tr>
+              <tr><td>RAM</td><td>4 GB</td></tr>
+              <tr><td>GPU</td><td>NVIDIA GTX 760</td></tr>
+              <tr><td>Storage</td><td>500 MB</td></tr>
+              <tr><td>DirectX</td><td>Version 11</td></tr>
+            </table>
+          </div>
+          <div class="specs-card specs-card--rec">
+            <div class="specs-card__head">✦ Recommended</div>
+            <table class="specs-table">
+              <tr><td>OS</td><td>Windows 10/11 64-bit</td></tr>
+              <tr><td>CPU</td><td>Intel Core i7-8700</td></tr>
+              <tr><td>RAM</td><td>8 GB</td></tr>
+              <tr><td>GPU</td><td>NVIDIA GTX 1060 6GB</td></tr>
+              <tr><td>Storage</td><td>1 GB (SSD preferred)</td></tr>
+              <tr><td>DirectX</td><td>Version 12</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTALLATION STEPS -->
+      <div class="dl-section animate-up delay-3">
+        <h2 class="dl-section-title">📋 How to Install</h2>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <strong>Click the Download button above</strong>
+              <span>A .zip file (~350 MB) will be saved to your Downloads folder.</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <strong>Extract the .zip file</strong>
+              <span>Right-click the downloaded file → "Extract All" → choose a destination folder.</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <strong>Run StoneForge.exe</strong>
+              <span>Open the extracted folder and double-click StoneForge.exe to launch the game.</span>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <strong>No installation required</strong>
+              <span>Portable build — no setup wizard, no registry changes. Delete the folder to uninstall.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATCH NOTES -->
+      <div class="dl-section animate-up delay-4">
+        <h2 class="dl-section-title">📝 Patch Notes</h2>
+        <div class="patch-notes">
+          <div class="patch-head" id="patch-toggle">
+            <div class="patch-head-left">
+              <span class="patch-ver">v0.1.0</span>
+              <span class="patch-date">Prototype — TBA 2026</span>
+            </div>
+            <span class="patch-toggle">▼</span>
+          </div>
+          <div class="patch-body" id="patch-body">
+            <p class="patch-sub">What's in this build</p>
+            <ul class="patch-list">
+              <li>Basic crafting system — stone tools and early-tier materials</li>
+              <li>First biome: Forest starting zone with explorable terrain</li>
+              <li>NPC tutorial guide with contextual dialogue prompts</li>
+              <li>Inventory and resource management UI</li>
+              <li>Technology progression — Tier 1 unlocks</li>
+            </ul>
+            <p class="patch-sub">Known Issues</p>
+            <ul class="patch-list issues">
+              <li>Occasional frame drops in dense foliage areas</li>
+              <li>Save system not yet implemented — progress resets on close</li>
+              <li>Multiplayer / co-op not available in this prototype build</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUG REPORT -->
+      <div class="bug-banner animate-up delay-5">
+        <p><strong>Found a bug?</strong> This is an early prototype — your feedback directly shapes the final game.</p>
+        <button class="btn-bug">📋 Report a Bug</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer__main">
+      <div class="footer__brand">
+        <div class="footer__brand-name">
+          <img src="Assets/logo-transparent.png" alt="StoneForge" class="footer__logo">
+          <span class="footer__brand-title">StoneForge</span>
+        </div>
+        <p class="footer__tagline">An Interactive 3D Educational Game for Applied Science and Technological Progression.</p>
+      </div>
+      <div>
+        <p class="footer__col-title">Capstone Team</p>
+        <ul class="footer__list">
+          <li>Jemarc C. Dolor</li>
+          <li>Clent Andrew C. Bagaipo</li>
+          <li>Christian Jay E. Viodor</li>
+          <li>Gabriel Angelo S. Velasco</li>
+          <li>John Aries R. Mendoza</li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__col-title">Institution</p>
+        <ul class="footer__list">
+          <li>National College of Science and Technology</li>
+          <li>Computer Studies Department</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p class="footer__copy">© 2025–2026 StoneForge. All Rights Reserved.</p>
+      <p class="footer__copy">Capstone Project — NCST Computer Studies</p>
+    </div>
+  </footer>
+
+  <script src="StoneForge.js"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — StoneForge</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="nav.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-page">
+  <div class="auth-bg"></div>
+
+  <div class="nav__overlay" id="nav-overlay"></div>
+  <header>
+    <nav class="nav" id="main-nav">
+      <div class="nav__inner">
+        <a href="index.html" class="nav__logo">
+          <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
+          <span class="nav__logo-text">StoneForge</span>
+        </a>
+        <button class="nav__burger" id="burger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav__links" id="nav-links">
+          <li class="nav__sidebar-brand">
+            <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
+            <span class="nav__sidebar-brand-text">StoneForge</span>
+          </li>
+          <li><a href="index.html" class="nav__link">Home</a></li>
+          <li><a href="index.html#about" class="nav__link">About</a></li>
+          <li><a href="index.html#features" class="nav__link">Features</a></li>
+          <li><a href="download.html" class="nav__link">Download</a></li>
+          <li><a href="login-page.html"><button class="nav__cta">Sign In</button></a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-card__logo">
+        <img src="Assets/logo-transparent.png" alt="StoneForge" class="auth-card__logo-img">
+        <span class="auth-card__logo-text">StoneForge</span>
+      </div>
+
+      <h1 class="auth-card__title">Welcome back</h1>
+      <p class="auth-card__subtitle">Sign in to your StoneForge account</p>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input class="form-input" type="text" id="username" name="username"
+            placeholder="Enter your username" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password"
+            placeholder="Enter your password" required minlength="8" autocomplete="current-password">
+        </div>
+
+        <a href="#" class="form-forgot">Forgot password?</a>
+
+        <button type="submit" class="btn-submit">Sign In</button>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <button type="button" class="btn-google">
+          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+          Continue with Google
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="signup-page.html">Create one</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="StoneForge.js"></script>
+</body>
+</html>
