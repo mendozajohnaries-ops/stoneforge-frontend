@@ -179,9 +179,10 @@
   margin-bottom: var(--space-12);
 }
 
-.trailer__video-wrapper { 
+.trailer__video-wrapper {
   position: relative;
   width: 100%;
+  aspect-ratio: 16 / 9; /* ← add this */
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--clr-border);
@@ -189,10 +190,16 @@
   background: #000;
 }
 
+/* replace the video rule with this */
+.trailer__video-wrapper iframe,
 .trailer__video-wrapper video {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
+  border: none;
 }
 
 .trailer__caption {
