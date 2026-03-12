@@ -106,6 +106,6 @@ const authItem = document.getElementById('nav-auth-item');
 if (authItem) {
   const user = sessionStorage.getItem('sf_user');
   if (user) {
-    authItem.innerHTML = '<a href="dashboard.html"><button class="nav__cta">Dashboard</button></a>';
+    authItem.innerHTML = '<a href="dashboard.html"><button class="nav__cta">Profile</button></a>';
   }
 }
