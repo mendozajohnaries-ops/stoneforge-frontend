@@ -41,13 +41,13 @@ async function apiPost(endpoint, body) {
 
 // ---- LOGIN FORM ----
 
-const loginForm = document.getElementById('login-form');
-if (loginForm) {
+const loginForm_auth = document.getElementById('login-form');
+if (loginForm_auth) {
     const submitBtn = document.getElementById('submit-btn');
     submitBtn.dataset.defaultText = 'Sign In';
     submitBtn.dataset.loadingText = 'Signing in...';
 
-    loginForm.addEventListener('submit', async (e) => {
+    loginForm_auth.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideError();
 
@@ -91,8 +91,8 @@ if (loginForm) {
 
 // ---- SIGNUP FORM ----
 
-const signupForm = document.getElementById('signup-form');
-if (signupForm) {
+const signupForm_auth = document.getElementById('signup-form');
+if (signupForm_auth) {
     const submitBtn    = document.getElementById('submit-btn');
     const passwordEl   = document.getElementById('password');
     const confirmEl    = document.getElementById('confirm-password');
@@ -116,7 +116,7 @@ if (signupForm) {
     passwordEl.addEventListener('input', validatePasswords);
     confirmEl.addEventListener('input', validatePasswords);
 
-    signupForm.addEventListener('submit', async (e) => {
+    signupForm_auth.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideError();
 
