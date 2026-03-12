@@ -101,4 +101,11 @@ function checkPasswordMatch() {
 passwordInput?.addEventListener('input', checkPasswordMatch);
 confirmInput?.addEventListener('input', checkPasswordMatch);
 
-
+// ---- NAV: Show Dashboard if logged in, Sign In if not ----
+const authItem = document.getElementById('nav-auth-item');
+if (authItem) {
+  const user = sessionStorage.getItem('sf_user');
+  if (user) {
+    authItem.innerHTML = '<a href="dashboard.html"><button class="nav__cta">Dashboard</button></a>';
+  }
+}
