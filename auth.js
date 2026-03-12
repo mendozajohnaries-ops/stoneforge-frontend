@@ -3,7 +3,7 @@
 // Change API_BASE to your PHP server URL
 // ============================================
 
-const API_BASE = 'https://your-php-server.com/api'; // ← change this
+const API_BASE = 'https://stoneforge-backend.onrender.com/api'; // ← change this
 
 // ---- Shared helpers ----
 

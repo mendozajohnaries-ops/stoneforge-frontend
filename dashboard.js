@@ -2,7 +2,7 @@
 // dashboard.js — Loads player data from PHP API
 // ============================================
 
-const API_BASE = 'https://your-php-server.com/api'; // ← same as auth.js
+const API_BASE = 'https://stoneforge-backend.onrender.com/api'; // ← same as auth.js
 
 async function apiGet(endpoint) {
     const res = await fetch(`${API_BASE}/${endpoint}`, {
@@ -167,7 +167,7 @@ async function initDashboard() {
 
     // 6. Logout button
     document.getElementById('logout-btn').addEventListener('click', async () => {
-        await fetch(`${API_BASE}/logout.php`, {
+        await fetch(`${API_BASE}/logout`, {
             method: 'POST',
             credentials: 'include',
         });
