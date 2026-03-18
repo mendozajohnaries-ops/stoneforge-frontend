@@ -318,6 +318,9 @@ if (signupForm_auth) {
         const password = passwordEl.value;
 
         if (!username || !email || !password) { showError('Please fill in all fields.'); return; }
+        if (username.length < 3) { showError('Username must be at least 3 characters.'); return; }
+        if (!/^[a-zA-Z0-9]+$/.test(username)) { showError('Username can only contain letters and numbers.'); return; }
+        if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
 
         setLoading(true, 'submit-btn', 'Create Account', 'Creating account...');
 
