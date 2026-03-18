@@ -32,9 +32,7 @@
           <li><a href="index.html#about" class="nav__link">About</a></li>
           <li><a href="index.html#features" class="nav__link">Features</a></li>
           <li><a href="download.html" class="nav__link">Download</a></li>
-          <li id="nav-auth-item">
-            <a href="login-page.html"><button class="nav__cta">Sign In</button></a>
-          </li>
+          <li><a href="login-page.html"><button class="nav__cta">Sign In</button></a></li>
         </ul>
       </div>
     </nav>
@@ -47,20 +45,21 @@
         <span class="auth-card__logo-text">StoneForge</span>
       </div>
 
-      <div class="auth-error" id="auth-error" style="
-          display: none;
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.3);
-          border-radius: 8px;
-          padding: 0.75rem 1rem;
-          margin-bottom: 1rem;
-          font-size: 0.88rem;
-          color: #fca5a5;
-          font-family: var(--font-ui);
-      "></div>
-
       <h1 class="auth-card__title">Create account</h1>
-      <p class="auth-card__subtitle">Join StoneForge and start your journey</p>
+      <p class="auth-card__subtitle">Your account works in-game and on the website</p>
+
+      <!-- Error banner -->
+      <div class="auth-error" id="auth-error" style="
+        display: none;
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.3);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        color: #fca5a5;
+        font-family: var(--font-ui);
+      "></div>
 
       <form id="signup-form" novalidate>
         <div class="form-group">
@@ -78,17 +77,41 @@
         <div class="form-group">
           <label class="form-label" for="password">Password</label>
           <input class="form-input" type="password" id="password" name="password"
-            placeholder="Create a password" required autocomplete="new-password">
+            placeholder="Minimum 8 characters" required minlength="8" autocomplete="new-password">
         </div>
 
-        <div class="form-group" style="margin-bottom: var(--space-6);">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
           <label class="form-label" for="confirm-password">Confirm Password</label>
           <input class="form-input" type="password" id="confirm-password" name="confirm_password"
             placeholder="Confirm your password" required minlength="8" autocomplete="new-password">
           <span class="form-error" id="password-error">Passwords do not match.</span>
         </div>
 
-        <button type="submit" id="submit-btn" class="btn-submit">Create Account</button>
+        <!-- Terms & Conditions -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" id="terms-toggle">
+            <span style="font-size:0.82rem;color:var(--clr-text-dim);font-family:var(--font-ui);">Terms &amp; Conditions</span>
+            <span style="font-size:0.78rem;color:var(--clr-orange);font-family:var(--font-ui);" id="terms-arrow">View ▾</span>
+          </div>
+          <div id="terms-body" style="display:none;margin-top:0.75rem;max-height:120px;overflow-y:auto;font-size:0.78rem;color:var(--clr-text-dim);line-height:1.7;font-family:var(--font-ui);border-top:1px solid rgba(255,255,255,0.06);padding-top:0.75rem;">
+            1. <strong>Eligibility</strong> — You must be at least 13 years old to create an account.<br>
+            2. <strong>Account</strong> — You are responsible for keeping your credentials secure. Do not share your account.<br>
+            3. <strong>Conduct</strong> — You agree not to cheat, exploit bugs, or disrupt other players.<br>
+            4. <strong>Data</strong> — We collect your username and email to manage your account. We do not sell your data.<br>
+            5. <strong>Virtual Currency</strong> — Coyns (CN) earned in-game have no real-world monetary value.<br>
+            6. <strong>Termination</strong> — We reserve the right to suspend accounts that violate these terms.<br>
+            7. <strong>Changes</strong> — These terms may be updated at any time. Continued use means you accept updates.
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:1.25rem;">
+          <input type="checkbox" id="terms-checkbox" style="width:16px;height:16px;margin-top:2px;accent-color:var(--clr-orange);cursor:pointer;flex-shrink:0;">
+          <label for="terms-checkbox" style="font-size:0.82rem;color:var(--clr-text-dim);font-family:var(--font-ui);cursor:pointer;line-height:1.5;">
+            I have read and agree to the <span style="color:var(--clr-orange);text-decoration:underline;cursor:pointer;" id="terms-link">Terms and Conditions</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submit-btn" disabled style="opacity:0.5;cursor:not-allowed;">Create Account</button>
       </form>
 
       <div class="auth-footer">

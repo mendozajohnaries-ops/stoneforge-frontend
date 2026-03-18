@@ -257,7 +257,37 @@ if (googleBtn) {
 
 const signupForm_auth = document.getElementById('signup-form');
 if (signupForm_auth) {
-    const submitBtn  = document.getElementById('submit-btn');
+    // Terms checkbox — enable/disable submit button
+    const termsCheckbox = document.getElementById('terms-checkbox');
+    const termsToggle   = document.getElementById('terms-toggle');
+    const termsBody     = document.getElementById('terms-body');
+    const termsArrow    = document.getElementById('terms-arrow');
+    const submitBtn     = document.getElementById('submit-btn');
+
+    if (termsCheckbox && submitBtn) {
+        termsCheckbox.addEventListener('change', () => {
+            submitBtn.disabled = !termsCheckbox.checked;
+            submitBtn.style.opacity  = termsCheckbox.checked ? '1'            : '0.5';
+            submitBtn.style.cursor   = termsCheckbox.checked ? 'pointer'      : 'not-allowed';
+        });
+    }
+
+    if (termsToggle && termsBody) {
+        termsToggle.addEventListener('click', () => {
+            const open = termsBody.style.display === 'block';
+            termsBody.style.display = open ? 'none' : 'block';
+            if (termsArrow) termsArrow.textContent = open ? 'View ▾' : 'Hide ▴';
+        });
+        // terms-link click also opens
+        const termsLink = document.getElementById('terms-link');
+        if (termsLink) {
+            termsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                termsBody.style.display = 'block';
+                if (termsArrow) termsArrow.textContent = 'Hide ▴';
+            });
+        }
+    }
     const passwordEl = document.getElementById('password');
     const confirmEl  = document.getElementById('confirm-password');
     const passwordErr = document.getElementById('password-error');

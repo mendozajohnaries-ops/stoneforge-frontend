@@ -29,7 +29,8 @@ function renderProfile(user, details) {
     const name = user?.display_name || user?.username || 'Player';
     document.getElementById('display-name').textContent     = name;
     document.getElementById('avatar-initials').textContent  = name.charAt(0).toUpperCase();
-    document.getElementById('playfab-id').textContent       = 'Player ID: ' + (user?.playfab_id || '—');
+    const pid = user?.playfab_id || '';
+    document.getElementById('playfab-id').textContent = 'Player ID: ' + (pid ? pid.slice(0,4) + '...' : '—');
 
     const created   = details?.created    || user?.created;
     const lastLogin = details?.last_login || user?.last_login;
@@ -45,7 +46,7 @@ function renderGold(virtualCurrency) {
 
     if (gc === null) {
         el.textContent   = '—';
-        noteEl.textContent = 'Get coyns by purchasing';
+        noteEl.textContent = 'Earn gold by playing StoneForge';
     } else {
         el.textContent   = gc.toLocaleString();
         noteEl.textContent = gc === 0

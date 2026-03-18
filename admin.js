@@ -85,13 +85,16 @@ function renderPlayers(players) {
                         <div class="player-avatar">${letter}</div>
                         <div>
                             <div style="color:var(--clr-white);font-weight:600;">${name}</div>
-                            <div class="player-id-small">${p.playfab_id}</div>
+                            <div class="player-id-small">${p.playfab_id.slice(0,4)}...</div>
                         </div>
                     </div>
                 </td>
                 <td>${formatDate(p.created)}</td>
                 <td>${formatDateTime(p.last_login)}</td>
                 <td style="color:var(--clr-orange-light);font-weight:600;">$${cash}</td>
+                <td>
+                    <button class="btn-delete" data-id="${p.playfab_id}" data-name="${name}" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;padding:0.3rem 0.75rem;border-radius:6px;font-family:var(--font-ui);font-size:0.78rem;font-weight:600;cursor:pointer;">Delete</button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -105,6 +108,38 @@ document.getElementById('player-search')?.addEventListener('input', e => {
         (p.playfab_id   || '').toLowerCase().includes(q)
     );
     renderPlayers(filtered);
+});
+
+// ---- Delete player ----
+async function deletePlayer(playfabId, displayName) {
+    if (!confirm(`Delete player "${displayName}"? This cannot be undone.`)) return;
+
+    const cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
+    try {
+        const res  = await fetch(`${API_BASE}/admin/delete-player`, {
+            method:  'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'x-playfab-id': cachedUser.playfab_id },
+            body: JSON.stringify({ playfab_id: playfabId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            allPlayers = allPlayers.filter(p => p.playfab_id !== playfabId);
+            renderOverview(allPlayers);
+            renderReports(allPlayers);
+            renderPlayers(allPlayers);
+        } else {
+            alert('Failed to delete: ' + (data.error || 'Unknown error'));
+        }
+    } catch {
+        alert('Could not connect to server.');
+    }
+}
+
+// Delegate delete button clicks
+document.getElementById('players-body')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-delete');
+    if (btn) deletePlayer(btn.dataset.id, btn.dataset.name);
 });
 
 async function initAdmin() {
