@@ -46,12 +46,12 @@ function renderGold(virtualCurrency) {
 
     if (gc === null) {
         el.textContent   = '—';
-        noteEl.textContent = 'Earn gold by playing StoneForge';
+        noteEl.textContent = 'Purchase Coyns in-game';
     } else {
         el.textContent   = gc.toLocaleString();
         noteEl.textContent = gc === 0
-            ? 'Earn gold by playing StoneForge'
-            : 'Spend gold at the in-game shop';
+            ? 'Purchase Coyns in-game'
+            : 'Spend Coyns at the in-game shop';
     }
 }
 
