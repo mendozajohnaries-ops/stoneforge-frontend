@@ -129,7 +129,7 @@ function checkPaymentReturn() {
         window.history.replaceState({}, '', 'dashboard.html');
         // Refresh coyns after delay to allow webhook processing
         setTimeout(async () => {
-            const { ok, data } = await apiGet('get-inventory');
+            const { ok, data } = await apiGet(`get-inventory?playfab_id=${cachedUser.playfab_id}`);
             if (ok) renderCoyns(data.virtual_currency);
             document.getElementById('payment-banner').style.display = 'none';
         }, 4000);
@@ -154,7 +154,7 @@ async function initDashboard() {
     // Fetch details + inventory in parallel
     const [detailsRes, inventoryRes] = await Promise.allSettled([
         apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
-        apiGet('get-inventory'),
+        apiGet(`get-inventory?playfab_id=${cachedUser.playfab_id}`),
     ]);
 
     const details = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
