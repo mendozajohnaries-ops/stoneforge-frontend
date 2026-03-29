@@ -9,162 +9,68 @@
   <link rel="stylesheet" href="nav.css">
   <style>
     body { background: var(--clr-bg); min-height: 100svh; overflow-x: hidden; }
+    .dashboard { max-width: var(--max-width); margin: 0 auto; padding: calc(var(--nav-height) + 2.5rem) 2rem 4rem; }
 
-    .dashboard {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: calc(var(--nav-height) + 2.5rem) 2rem 4rem;
-    }
-
-    /* Loading */
-    .loading-screen {
-      position: fixed; inset: 0; background: var(--clr-bg);
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 1rem; z-index: 999;
-    }
-    .loading-spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: var(--clr-orange);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
+    .loading-screen { position: fixed; inset: 0; background: var(--clr-bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; z-index: 999; }
+    .loading-spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--clr-orange); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-screen p { color: var(--clr-text-muted); font-family: var(--font-ui); font-size: 0.9rem; }
 
-    /* Profile header card */
-    .profile-header {
-      background: var(--clr-surface);
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-lg);
-      padding: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-    }
-
+    .profile-header { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .profile-header__left { display: flex; align-items: center; gap: 1.25rem; }
-
-    .profile-avatar {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: linear-gradient(135deg, #2a2a1a, #1a2a1a);
-      border: 2px solid var(--clr-green);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-display); font-size: 2rem;
-      color: var(--clr-green-light); flex-shrink: 0;
-    }
-
-    .profile-info__name {
-      font-family: var(--font-display); font-size: 1.75rem;
-      color: var(--clr-white); line-height: 1.1;
-    }
-    .profile-info__meta {
-      font-size: 0.82rem; color: var(--clr-text-dim);
-      font-family: var(--font-ui); margin-top: 0.3rem;
-    }
-    .profile-info__id {
-      font-size: 0.75rem; color: var(--clr-text-dim);
-      font-family: var(--font-body); margin-top: 0.25rem;
-      letter-spacing: 0.03em;
-    }
-
-    .btn-logout {
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.25);
-      color: #fca5a5; padding: 0.6rem 1.4rem;
-      border-radius: 8px; font-family: var(--font-ui);
-      font-size: 0.88rem; font-weight: 600;
-      cursor: pointer; transition: background 0.15s ease;
-      white-space: nowrap;
-    }
+    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #2a2a1a, #1a2a1a); border: 2px solid var(--clr-green); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 2rem; color: var(--clr-green-light); flex-shrink: 0; }
+    .profile-info__name { font-family: var(--font-display); font-size: 1.75rem; color: var(--clr-white); line-height: 1.1; }
+    .profile-info__meta { font-size: 0.82rem; color: var(--clr-text-dim); font-family: var(--font-ui); margin-top: 0.3rem; }
+    .profile-info__id { font-size: 0.75rem; color: var(--clr-text-dim); font-family: var(--font-body); margin-top: 0.25rem; letter-spacing: 0.03em; }
+    .btn-logout { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; padding: 0.6rem 1.4rem; border-radius: 8px; font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease; white-space: nowrap; }
     .btn-logout:hover { background: rgba(239,68,68,0.2); }
 
-    /* Cards grid */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-
-    .card {
-      background: var(--clr-surface);
-      border: 1px solid var(--clr-border);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      transition: border-color 0.2s ease;
-    }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .card { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 1.5rem; transition: border-color 0.2s ease; }
     .card:hover { border-color: var(--clr-border-hover); }
+    .card__title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--clr-text-dim); font-family: var(--font-ui); margin-bottom: 1rem; }
 
-    .card__title {
-      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--clr-text-dim);
-      font-family: var(--font-ui); margin-bottom: 1rem;
-    }
+    .date-row { display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 1rem; }
+    .date-row__label { font-size: 0.72rem; color: var(--clr-text-dim); font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.08em; }
+    .date-row__value { font-family: var(--font-ui); font-size: 0.92rem; color: var(--clr-white); font-weight: 600; }
 
-    /* Dates card */
-    .dates-card { display: flex; flex-direction: column; gap: 1rem; }
-    .date-row { display: flex; flex-direction: column; gap: 0.2rem; }
-    .date-row__label {
-      font-size: 0.72rem; color: var(--clr-text-dim);
-      font-family: var(--font-ui); text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .date-row__value {
-      font-family: var(--font-ui); font-size: 0.92rem;
-      color: var(--clr-white); font-weight: 600;
-    }
+    /* Coyns card */
+    .coyns-card { position: relative; overflow: hidden; }
+    .coyns-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top right, rgba(217,119,6,0.08) 0%, transparent 60%); pointer-events: none; }
+    .coyns-display { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .coyns-icon { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #b45309, #d97706, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 0 16px rgba(245,158,11,0.3); }
+    .coyns-amount { font-family: var(--font-display); font-size: 2.5rem; color: var(--clr-orange-light); line-height: 1; }
+    .coyns-label { font-size: 0.78rem; color: var(--clr-text-dim); font-family: var(--font-ui); margin-top: 0.2rem; }
 
-    /* Gold Coins card */
-    .gold-card { position: relative; overflow: hidden; }
-    .gold-card::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at top right, rgba(217,119,6,0.08) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .gold-display {
-      display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem;
-    }
-    .gold-icon {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(135deg, #b45309, #d97706, #f59e0b);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; flex-shrink: 0;
-      box-shadow: 0 0 16px rgba(245,158,11,0.3);
-    }
-    .gold-amount {
-      font-family: var(--font-display); font-size: 2.5rem;
-      color: var(--clr-orange-light); line-height: 1;
-    }
-    .gold-label {
-      font-size: 0.78rem; color: var(--clr-text-dim);
-      font-family: var(--font-ui); margin-top: 0.2rem;
-    }
-    .gold-note {
-      font-size: 0.72rem; color: var(--clr-text-dim);
-      font-family: var(--font-ui); margin-top: 1rem;
-      padding-top: 0.85rem;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      font-style: italic;
-    }
+    /* Buy Now button */
+    .btn-buy { width: 100%; background: var(--clr-orange); color: #fff; border: none; border-radius: 8px; padding: 0.75rem; font-family: var(--font-ui); font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s ease; letter-spacing: 0.02em; margin-bottom: 0.75rem; }
+    .btn-buy:hover { opacity: 0.9; }
+    .btn-buy:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .skeleton {
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-      background-size: 400% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 4px; height: 1rem;
-    }
-    @keyframes shimmer {
-      0% { background-position: 100% 0; }
-      100% { background-position: -100% 0; }
-    }
+    /* Package modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+    .modal { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 2rem; width: 100%; max-width: 480px; }
+    .modal__title { font-family: var(--font-display); font-size: 1.5rem; color: var(--clr-white); margin-bottom: 0.5rem; }
+    .modal__sub { font-size: 0.85rem; color: var(--clr-text-dim); font-family: var(--font-ui); margin-bottom: 1.5rem; }
+    .modal__close { float: right; background: none; border: none; color: var(--clr-text-dim); font-size: 1.25rem; cursor: pointer; margin-top: -0.25rem; }
+    .packages-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    .pkg-card { background: rgba(255,255,255,0.03); border: 1px solid var(--clr-border); border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.15s ease; text-align: center; }
+    .pkg-card:hover { border-color: var(--clr-orange); background: rgba(217,119,6,0.08); }
+    .pkg-card.selected { border-color: var(--clr-orange); background: rgba(217,119,6,0.12); }
+    .pkg-card__coyns { font-family: var(--font-display); font-size: 1.4rem; color: var(--clr-orange-light); }
+    .pkg-card__label { font-size: 0.72rem; color: var(--clr-text-dim); font-family: var(--font-ui); margin: 0.15rem 0; }
+    .pkg-card__price { font-size: 1rem; color: var(--clr-white); font-family: var(--font-ui); font-weight: 700; }
+    .btn-checkout { width: 100%; background: var(--clr-orange); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-family: var(--font-ui); font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s ease; }
+    .btn-checkout:hover { opacity: 0.9; }
+    .btn-checkout:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    @media (max-width: 640px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-      .profile-header { flex-direction: column; align-items: flex-start; }
-    }
+    /* Payment processing banner */
+    .payment-banner { background: rgba(95,143,71,0.1); border: 1px solid var(--clr-green); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.88rem; color: var(--clr-green-light); font-family: var(--font-ui); display: none; }
+
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 400% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; height: 1rem; }
+    @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+    @media (max-width: 640px) { .dashboard-grid { grid-template-columns: 1fr; } .profile-header { flex-direction: column; align-items: flex-start; } .packages-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -183,9 +89,7 @@
           <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
           <span class="nav__logo-text">StoneForge</span>
         </a>
-        <button class="nav__burger" id="burger" aria-label="Toggle menu">
-          <span></span><span></span><span></span>
-        </button>
+        <button class="nav__burger" id="burger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
         <ul class="nav__links" id="nav-links">
           <li class="nav__sidebar-brand">
             <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
@@ -195,15 +99,18 @@
           <li><a href="index.html#about" class="nav__link">About</a></li>
           <li><a href="index.html#features" class="nav__link">Features</a></li>
           <li><a href="download.html" class="nav__link">Download</a></li>
-          <li id="nav-auth-item">
-            <a href="login-page.html"><button class="nav__cta">Sign In</button></a>
-          </li>
+          <li id="nav-auth-item"><a href="login-page.html"><button class="nav__cta">Sign In</button></a></li>
         </ul>
       </div>
     </nav>
   </header>
 
   <div class="dashboard" id="dashboard" style="display:none;">
+
+    <!-- Payment processing banner -->
+    <div class="payment-banner" id="payment-banner">
+      ⏳ Processing your payment... Your Coyns balance will update shortly.
+    </div>
 
     <!-- Profile header -->
     <div class="profile-header">
@@ -220,34 +127,44 @@
     <!-- Cards -->
     <div class="dashboard-grid">
 
-      <!-- Dates -->
+      <!-- Account Info -->
       <div class="card">
         <div class="card__title">📅 Account Info</div>
-        <div class="dates-card">
-          <div class="date-row">
-            <div class="date-row__label">Member Since</div>
-            <div class="date-row__value" id="account-created">—</div>
-          </div>
-          <div class="date-row">
-            <div class="date-row__label">Last Seen</div>
-            <div class="date-row__value" id="account-last-login">—</div>
-          </div>
+        <div class="date-row">
+          <div class="date-row__label">Member Since</div>
+          <div class="date-row__value" id="account-created">—</div>
+        </div>
+        <div class="date-row">
+          <div class="date-row__label">Last Seen</div>
+          <div class="date-row__value" id="account-last-login">—</div>
         </div>
       </div>
 
-      <!-- Gold Coins -->
-      <div class="card gold-card">
+      <!-- Coyns -->
+      <div class="card coyns-card">
         <div class="card__title">🪙 Coyns</div>
-        <div class="gold-display">
-          <div class="gold-icon">🪙</div>
+        <div class="coyns-display">
+          <div class="coyns-icon">🪙</div>
           <div>
-            <div class="gold-amount" id="gold-amount">—</div>
-            <div class="gold-label">CN Balance</div>
+            <div class="coyns-amount" id="coyns-amount">—</div>
+            <div class="coyns-label">CN Balance</div>
           </div>
         </div>
-        <div class="gold-note" id="gold-note">Get coyns by purchasing</div>
+        <button class="btn-buy" id="buy-btn">Buy Now</button>
+        <div style="font-size:0.72rem;color:var(--clr-text-dim);font-family:var(--font-ui);" id="coyns-note">Purchase Coyns in-game</div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Package Modal -->
+  <div class="modal-overlay" id="pkg-modal" style="display:none;">
+    <div class="modal">
+      <button class="modal__close" id="modal-close">✕</button>
+      <div class="modal__title">Buy Coyns</div>
+      <div class="modal__sub">Select a package to continue</div>
+      <div class="packages-grid" id="packages-grid"></div>
+      <button class="btn-checkout" id="checkout-btn" disabled>Select a package</button>
     </div>
   </div>
 
