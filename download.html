@@ -238,91 +238,112 @@
 
   <script src="StoneForge.js"></script>
   <script>
-    const API_BASE      = 'https://stoneforge-backend.onrender.com/api';
-    const FULL_GAME_URL = 'https://drive.google.com/drive/folders/1u-lrULU2BEpGLfAqHs5qNczTRUU-5YGu?usp=sharing';
+    // Wrap in IIFE to avoid any const redeclaration conflicts with StoneForge.js
+    (function () {
+      var DL_API_BASE      = 'https://stoneforge-backend.onrender.com/api';
+      var DL_FULL_GAME_URL = 'https://drive.google.com/drive/folders/1u-lrULU2BEpGLfAqHs5qNczTRUU-5YGu?usp=sharing';
 
-    async function initDownload() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('payment') === 'success') {
-        document.getElementById('banner-success').style.display = 'block';
-        window.history.replaceState({}, '', 'download.html');
+      var S_ORANGE = 'display:block;width:100%;padding:0.85rem 1.5rem;background:#c2630a;color:#fff;text-align:center;border-radius:10px;font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:pointer;box-sizing:border-box;';
+      var S_GREEN  = 'display:block;width:100%;padding:0.85rem 1.5rem;background:#5f8f47;color:#fff;text-align:center;border-radius:10px;font-size:0.95rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;cursor:pointer;box-sizing:border-box;';
+      var S_DISABLED = 'display:block;width:100%;padding:0.85rem 1.5rem;background:#c2630a;color:#fff;text-align:center;border-radius:10px;font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:not-allowed;opacity:0.45;box-sizing:border-box;';
+
+      function setFullAction(html) {
+        var el = document.getElementById('full-action');
+        if (el) el.innerHTML = html;
       }
-      if (params.get('payment') === 'cancelled') {
-        document.getElementById('banner-cancelled').style.display = 'block';
-        window.history.replaceState({}, '', 'download.html');
-      }
-
-      const user = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
-
-      // Not signed in — disabled orange button, no action
-      if (!user) {
-        document.getElementById('full-note').textContent = '₱350 one-time purchase — sign in required';
-        // Initial HTML already shows the correct disabled state; nothing more to do
-        return;
+      function setFullNote(text) {
+        var el = document.getElementById('full-note');
+        if (el) el.textContent = text;
       }
 
-      // Signed in — immediately show clickable orange button while ownership check loads
-      const STYLE_ORANGE = 'display:block;width:100%;padding:0.85rem 1.5rem;background:var(--clr-orange);color:#fff;text-align:center;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:pointer;transition:opacity 0.15s ease;box-sizing:border-box;';
-      const STYLE_GREEN  = 'display:block;width:100%;padding:0.85rem 1.5rem;background:var(--clr-green);color:#fff;text-align:center;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;transition:opacity 0.15s ease;box-sizing:border-box;';
+      function showDisabled() {
+        setFullAction('<button disabled style="' + S_DISABLED + '">🔒 Purchase to Unlock</button>');
+      }
+      function showBuyBtn() {
+        setFullAction('<button id="buy-btn" style="' + S_ORANGE + '">🔒 Purchase to Unlock</button>');
+        var btn = document.getElementById('buy-btn');
+        if (btn) btn.addEventListener('click', handlePurchase);
+      }
+      function showDownloadBtn() {
+        setFullNote('You own the full game');
+        setFullAction('<a href="' + DL_FULL_GAME_URL + '" target="_blank" style="' + S_GREEN + '">⬇ Download Full Game</a>');
+      }
 
-      document.getElementById('full-action').innerHTML = `<button id="buy-btn" style="${STYLE_ORANGE}">🔒 Purchase to Unlock</button>`;
-      document.getElementById('buy-btn').addEventListener('click', handlePurchase);
+      async function handlePurchase() {
+        var user = null;
+        try { user = JSON.parse(sessionStorage.getItem('sf_user') || 'null'); } catch(e) {}
+        if (!user) { window.location.href = 'login-page.html'; return; }
 
-      try {
-        const res  = await fetch(`${API_BASE}/check-ownership?playfab_id=${user.playfab_id}`, { credentials: 'include' });
-        const data = await res.json();
+        var btn = document.getElementById('buy-btn');
+        if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
 
-        if (data.owns_game) {
-          document.getElementById('full-note').textContent = 'You own the full game';
-          document.getElementById('full-action').innerHTML = `<a href="${FULL_GAME_URL}" target="_blank" style="${STYLE_GREEN}">⬇ Download Full Game</a>`;
+        try {
+          var res  = await fetch(DL_API_BASE + '/purchase', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.playfab_id }),
+          });
+          var data = await res.json();
+          if (data.success && data.checkout_url) {
+            window.location.href = data.checkout_url;
+          } else {
+            alert(data.error || 'Failed to start purchase. Try again.');
+            showBuyBtn();
+          }
+        } catch(e) {
+          alert('Could not connect to server. Try again.');
+          showBuyBtn();
         }
-        // else: already showing clickable orange, nothing to change
-      } catch {
-        // Ownership check failed — already showing clickable orange, nothing to change
       }
-    }
 
-    async function handlePurchase() {
-      const user = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
-      if (!user) { window.location.href = 'login-page.html'; return; }
+      async function initDownload() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('payment') === 'success') {
+          document.getElementById('banner-success').style.display = 'block';
+          window.history.replaceState({}, '', 'download.html');
+        }
+        if (params.get('payment') === 'cancelled') {
+          document.getElementById('banner-cancelled').style.display = 'block';
+          window.history.replaceState({}, '', 'download.html');
+        }
 
-      const btn = document.getElementById('buy-btn');
-      btn.textContent = 'Redirecting...';
-      btn.disabled    = true;
-      try {
-        const res  = await fetch(`${API_BASE}/purchase`, {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: user.playfab_id }),
+        var user = null;
+        try { user = JSON.parse(sessionStorage.getItem('sf_user') || 'null'); } catch(e) {}
+
+        if (!user) {
+          setFullNote('₱350 one-time purchase — sign in required');
+          showDisabled();
+          return;
+        }
+
+        // Signed in — show clickable orange immediately, then check ownership
+        showBuyBtn();
+
+        try {
+          var res  = await fetch(DL_API_BASE + '/check-ownership?playfab_id=' + user.playfab_id, { credentials: 'include' });
+          var data = await res.json();
+          if (data.owns_game) {
+            showDownloadBtn();
+          }
+          // else: already showing clickable orange
+        } catch(e) {
+          // Ownership check failed — already showing clickable orange
+        }
+      }
+
+      // Patch notes toggle
+      var patchToggle = document.getElementById('patch-toggle');
+      var patchBody   = document.getElementById('patch-body');
+      if (patchToggle) {
+        patchToggle.addEventListener('click', function() {
+          var open = patchBody.style.display !== 'none';
+          patchBody.style.display = open ? 'none' : 'block';
+          patchToggle.querySelector('.patch-toggle').textContent = open ? '▶' : '▼';
         });
-        const data = await res.json();
-
-        if (data.success && data.checkout_url) {
-          window.location.href = data.checkout_url;
-        } else {
-          alert(data.error || 'Failed to start purchase. Try again.');
-          btn.textContent = '🔒 Purchase to Unlock';
-          btn.disabled    = false;
-        }
-      } catch {
-        alert('Could not connect to server. Try again.');
-        btn.textContent = '🔒 Purchase to Unlock';
-        btn.disabled    = false;
       }
-    }
 
-    // Patch notes toggle
-    const patchToggle = document.getElementById('patch-toggle');
-    const patchBody   = document.getElementById('patch-body');
-    if (patchToggle) {
-      patchToggle.addEventListener('click', () => {
-        const open = patchBody.style.display !== 'none';
-        patchBody.style.display = open ? 'none' : 'block';
-        patchToggle.querySelector('.patch-toggle').textContent = open ? '▶' : '▼';
-      });
-    }
-
-    initDownload();
+      initDownload();
+    })();
   </script>
 </body>
 </html>
