@@ -33,14 +33,7 @@
     .dl-btn-link:hover { opacity: 0.85; }
     .dl-btn-link--orange { background: var(--clr-orange); }
 
-    .full-owned-badge {
-      display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px;
-      font-size: 0.72rem; font-weight: 700; font-family: var(--font-ui);
-      text-transform: uppercase; letter-spacing: 0.08em;
-      background: rgba(95,143,71,0.2); color: var(--clr-green-light);
-      border: 1px solid var(--clr-green); margin-bottom: 0.5rem;
-      display: none;
-    }
+
   </style>
 </head>
 <body>
@@ -135,9 +128,8 @@
           </div>
         </div>
         <div class="dl-card__btn-wrap">
-          <div id="full-owned-badge" class="full-owned-badge">✓ Owned</div>
           <div id="full-action">
-            <button class="dl-btn" disabled>Loading...</button>
+            <button class="dl-btn dl-btn--loading" disabled style="width:100%;padding:0.85rem 1.5rem;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;color:#fff;background:rgba(255,255,255,0.08);cursor:not-allowed;">Loading...</button>
           </div>
           <span class="dl-btn-note" id="full-note">₱350 one-time purchase</span>
         </div>
@@ -249,6 +241,8 @@
     const API_BASE      = 'https://stoneforge-backend.onrender.com/api';
     const FULL_GAME_URL = 'https://drive.google.com/drive/folders/1u-lrULU2BEpGLfAqHs5qNczTRUU-5YGu?usp=sharing';
 
+    const BTN_BASE = 'width:100%;padding:0.85rem 1.5rem;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:pointer;transition:opacity 0.15s ease;';
+
     async function initDownload() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('payment') === 'success') {
@@ -262,10 +256,11 @@
 
       const user = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
 
+      // Not signed in — disabled button
       if (!user) {
         document.getElementById('full-note').textContent = '₱350 one-time purchase — sign in required';
         document.getElementById('full-action').innerHTML = `
-          <a href="login-page.html" class="dl-btn-link dl-btn-link--orange">Sign In to Purchase</a>
+          <button disabled style="${BTN_BASE}background:var(--clr-orange);color:#fff;opacity:0.45;cursor:not-allowed;">🔒 Purchase to Unlock</button>
         `;
         return;
       }
@@ -275,20 +270,20 @@
         const data = await res.json();
 
         if (data.owns_game) {
-          document.getElementById('full-owned-badge').style.display = 'inline-block';
           document.getElementById('full-note').textContent = 'You own the full game';
           document.getElementById('full-action').innerHTML = `
             <a href="${FULL_GAME_URL}" target="_blank" class="dl-btn-link">⬇ Download Full Game</a>
           `;
         } else {
           document.getElementById('full-action').innerHTML = `
-            <button class="dl-btn dl-btn--orange" id="buy-btn" style="background:var(--clr-orange);color:#fff;">Buy Full Game — ₱350</button>
+            <button id="buy-btn" style="${BTN_BASE}background:var(--clr-orange);color:#fff;">🔒 Purchase to Unlock</button>
           `;
           document.getElementById('buy-btn').addEventListener('click', handlePurchase);
         }
       } catch {
+        // Fallback — signed in but ownership check failed; allow purchase attempt
         document.getElementById('full-action').innerHTML = `
-          <button class="dl-btn dl-btn--orange" id="buy-btn" style="background:var(--clr-orange);color:#fff;">Buy Full Game — ₱350</button>
+          <button id="buy-btn" style="${BTN_BASE}background:var(--clr-orange);color:#fff;">🔒 Purchase to Unlock</button>
         `;
         document.getElementById('buy-btn')?.addEventListener('click', handlePurchase);
       }
@@ -314,12 +309,12 @@
           window.location.href = data.checkout_url;
         } else {
           alert(data.error || 'Failed to start purchase. Try again.');
-          btn.textContent = 'Buy Full Game — ₱350';
+          btn.textContent = '🔒 Purchase to Unlock';
           btn.disabled    = false;
         }
       } catch {
         alert('Could not connect to server. Try again.');
-        btn.textContent = 'Buy Full Game — ₱350';
+        btn.textContent = '🔒 Purchase to Unlock';
         btn.disabled    = false;
       }
     }

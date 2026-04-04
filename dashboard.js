@@ -3,7 +3,6 @@
 // ============================================
 
 const API_BASE  = 'https://stoneforge-backend.onrender.com/api';
-const FULL_GAME_URL = 'https://drive.google.com/drive/folders/1u-lrULU2BEpGLfAqHs5qNczTRUU-5YGu?usp=sharing';
 let cachedUser  = null;
 
 async function apiGet(endpoint) {
@@ -34,22 +33,6 @@ function renderProfile(user, details) {
     document.getElementById('account-last-login').textContent = formatDateTime(lastLogin);
 }
 
-function renderGameOwnership(ownsGame) {
-    const actionEl  = document.getElementById('game-action');
-    const subEl     = document.getElementById('game-sub');
-    const badgeEl   = document.getElementById('owner-badge-container');
-
-    if (ownsGame) {
-        subEl.textContent = 'You own the full game';
-        badgeEl.innerHTML = '<div class="owner-badge">⚔️ Full Game Owner</div>';
-        actionEl.innerHTML = `<a href="${FULL_GAME_URL}" target="_blank" class="btn-download">⬇ Download Full Game</a>`;
-    } else {
-        subEl.textContent = 'Full version with all features';
-        badgeEl.innerHTML = '';
-        actionEl.innerHTML = '<div class="btn-locked">🔒 Purchase to Unlock</div>';
-    }
-}
-
 async function initDashboard() {
     cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
     if (!cachedUser) { window.location.href = 'login-page.html'; return; }
@@ -59,18 +42,14 @@ async function initDashboard() {
     document.getElementById('dashboard').style.display      = 'block';
 
     renderProfile(cachedUser, null);
-    renderGameOwnership(false);
 
-    const [detailsRes, ownershipRes] = await Promise.allSettled([
+    const [detailsRes] = await Promise.allSettled([
         apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
-        apiGet(`check-ownership?playfab_id=${cachedUser.playfab_id}`),
     ]);
 
-    const details  = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
-    const ownsGame = (ownershipRes.status === 'fulfilled' && ownershipRes.value.ok) ? ownershipRes.value.data.owns_game : false;
+    const details = (detailsRes.status === 'fulfilled' && detailsRes.value.ok) ? detailsRes.value.data : null;
 
     renderProfile(cachedUser, details);
-    renderGameOwnership(ownsGame);
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
