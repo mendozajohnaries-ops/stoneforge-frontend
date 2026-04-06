@@ -129,6 +129,12 @@
 
   <div class="admin" id="admin-content" style="display:none;">
 
+    <!-- Admin Dashboard Header -->
+    <div style="text-align:center;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--clr-border);">
+      <div style="font-family:var(--font-display);font-size:clamp(1.8rem,4vw,2.8rem);color:var(--clr-white);letter-spacing:0.05em;text-transform:uppercase;">Admin Dashboard</div>
+      <div style="font-size:0.82rem;color:var(--clr-text-dim);font-family:var(--font-ui);margin-top:0.4rem;letter-spacing:0.15em;text-transform:uppercase;">StoneForge Management Console</div>
+    </div>
+
     <div class="admin-header">
       <div>
         <div class="admin-header__title">Title Overview</div>
@@ -169,6 +175,29 @@
       <table class="reports-table">
         <thead><tr><th>Metric</th><th>Last 24 Hours</th><th>All Time</th></tr></thead>
         <tbody id="reports-body"><tr><td colspan="3" class="no-data">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- Purchases -->
+    <div class="section-label">💳 Purchases</div>
+    <div class="reports-card" style="margin-bottom:2rem;">
+      <table class="reports-table">
+        <thead>
+          <tr>
+            <th>Player Name</th>
+            <th>Player ID</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="purchases-body">
+          <tr><td colspan="3" class="no-data">Loading...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr style="border-top:1px solid var(--clr-border);">
+            <td colspan="2" style="padding:0.85rem 1.25rem;font-family:var(--font-ui);font-size:0.88rem;color:var(--clr-white);font-weight:700;">Total Revenue</td>
+            <td style="padding:0.85rem 1.25rem;font-family:var(--font-ui);font-size:0.88rem;color:var(--clr-orange-light);font-weight:700;" id="purchases-total">₱0</td>
+          </tr>
+        </tfoot>
       </table>
     </div>
 

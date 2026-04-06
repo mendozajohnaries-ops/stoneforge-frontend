@@ -63,10 +63,8 @@ function renderReports(players) {
     const rows = [
         { label: 'Unique Users', today: activeToday, all: players.length },
         { label: 'New Users',    today: newToday,    all: players.length },
-        { label: 'Purchases',    today: 'N/A',        all: 'N/A' },
-        { label: 'Spenders',     today: spenders,     all: spenders },
         { label: 'ARPU',         today: 'N/A',        all: '$0.00' },
-        { label: 'ARPPU',        today: 'N/A',        all: spenders > 0 ? '$' + (totalCash / spenders).toFixed(2) : '$0.00' },
+        { label: 'ARPPU',        today: 'N/A',        all: '$0.00' },
     ];
     document.getElementById('reports-body').innerHTML = rows.map(r => `
         <tr><td>${r.label}</td><td>${r.today}</td><td>${r.all}</td></tr>
@@ -249,6 +247,32 @@ document.getElementById('suspend-modal')?.addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeSuspendModal();
 });
 
+// ---- Render purchases ----
+function renderPurchases(purchases) {
+    const tbody = document.getElementById('purchases-body');
+    const totalEl = document.getElementById('purchases-total');
+
+    if (!purchases || purchases.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="no-data">No purchases yet.</td></tr>';
+        totalEl.textContent = '₱0';
+        return;
+    }
+
+    tbody.innerHTML = purchases.map(p => {
+        const name   = p.display_name || 'Unknown';
+        const pid    = 'UF-' + (p.playfab_id || '').slice(0, 4);
+        return `
+            <tr>
+                <td style="color:var(--clr-white);font-weight:600;">${name}</td>
+                <td style="font-family:var(--font-body);font-size:0.82rem;color:var(--clr-text-dim);">${pid}</td>
+                <td style="color:var(--clr-orange-light);font-weight:600;">₱350</td>
+            </tr>
+        `;
+    }).join('');
+
+    totalEl.textContent = '₱' + (purchases.length * 350).toLocaleString();
+}
+
 // ---- Main init ----
 async function initAdmin() {
     const cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
@@ -287,6 +311,16 @@ async function initAdmin() {
     renderOverview(allPlayers);
     renderReports(allPlayers);
     renderPlayers(getFilteredPlayers());
+
+    // Load purchases
+    try {
+        const purchRes  = await fetch(`${API_BASE}/admin/purchases`, {
+            credentials: 'include',
+            headers: { 'x-playfab-id': cachedUser.playfab_id },
+        });
+        const purchData = await purchRes.json();
+        if (purchData.success) renderPurchases(purchData.purchases);
+    } catch { renderPurchases([]); }
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
