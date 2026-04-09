@@ -16,18 +16,23 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-screen p { color: var(--clr-text-muted); font-family: var(--font-ui); font-size: 0.9rem; }
 
+    /* Profile header */
     .profile-header { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .profile-header__left { display: flex; align-items: center; gap: 1.25rem; }
     .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #2a2a1a, #1a2a1a); border: 2px solid var(--clr-green); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 2rem; color: var(--clr-green-light); flex-shrink: 0; }
     .profile-info__name { font-family: var(--font-display); font-size: 1.75rem; color: var(--clr-white); line-height: 1.1; }
     .profile-info__meta { font-size: 0.82rem; color: var(--clr-text-dim); font-family: var(--font-ui); margin-top: 0.3rem; }
     .profile-info__id { font-size: 0.75rem; color: var(--clr-text-dim); font-family: var(--font-body); margin-top: 0.25rem; letter-spacing: 0.03em; }
-
     .owner-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: linear-gradient(135deg, rgba(95,143,71,0.2), rgba(122,181,92,0.1)); border: 1px solid var(--clr-green); border-radius: 20px; padding: 0.3rem 0.85rem; font-size: 0.78rem; font-weight: 700; color: var(--clr-green-light); font-family: var(--font-ui); margin-top: 0.5rem; }
 
+    /* Header right actions */
+    .profile-header__actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-report { background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.25); color: var(--clr-orange-light); padding: 0.6rem 1.2rem; border-radius: 8px; font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease; white-space: nowrap; display: flex; align-items: center; gap: 0.4rem; }
+    .btn-report:hover { background: rgba(217,119,6,0.18); }
     .btn-logout { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; padding: 0.6rem 1.4rem; border-radius: 8px; font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease; white-space: nowrap; }
     .btn-logout:hover { background: rgba(239,68,68,0.2); }
 
+    /* Dashboard grid */
     .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
     .card { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); padding: 1.5rem; transition: border-color 0.2s ease; }
     .card:hover { border-color: var(--clr-border-hover); }
@@ -37,12 +42,94 @@
     .date-row__label { font-size: 0.72rem; color: var(--clr-text-dim); font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 0.08em; }
     .date-row__value { font-family: var(--font-ui); font-size: 0.92rem; color: var(--clr-white); font-weight: 600; }
 
-
+    /* Achievements card — full width */
+    .card--full { grid-column: 1 / -1; }
+    .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.85rem; }
+    .achievement-item { display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--clr-border); border-radius: 10px; padding: 0.85rem 1rem; transition: border-color 0.15s ease; }
+    .achievement-item--unlocked { border-color: rgba(95,143,71,0.3); background: rgba(95,143,71,0.05); }
+    .achievement-item--unlocked:hover { border-color: rgba(95,143,71,0.5); }
+    .achievement-item--locked { opacity: 0.45; }
+    .achievement-icon { font-size: 1.6rem; flex-shrink: 0; width: 2.2rem; text-align: center; }
+    .achievement-info__name { font-family: var(--font-ui); font-size: 0.85rem; font-weight: 700; color: var(--clr-white); }
+    .achievement-info__desc { font-family: var(--font-ui); font-size: 0.72rem; color: var(--clr-text-dim); margin-top: 0.15rem; }
+    .achievement-info__badge { display: inline-block; margin-top: 0.35rem; font-size: 0.65rem; font-weight: 700; font-family: var(--font-ui); padding: 0.1rem 0.5rem; border-radius: 10px; }
+    .achievement-info__badge--unlocked { background: rgba(95,143,71,0.2); color: var(--clr-green-light); }
+    .achievement-info__badge--locked   { background: rgba(255,255,255,0.06); color: var(--clr-text-dim); }
 
     .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 400% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; height: 1rem; }
     @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 
-    @media (max-width: 640px) { .dashboard-grid { grid-template-columns: 1fr; } .profile-header { flex-direction: column; align-items: flex-start; } }
+    /* =============================================
+       Report Modal
+    ============================================= */
+    .rmodal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1100; padding: 1rem; }
+    .rmodal { background: var(--clr-surface); border: 1px solid var(--clr-border); border-radius: var(--radius-lg); width: 100%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; animation: modalIn 0.2s ease; overflow: hidden; }
+    @keyframes modalIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+    .rmodal__header { display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 1.5rem 0; }
+    .rmodal__title { font-family: var(--font-display); font-size: 1.3rem; color: var(--clr-white); }
+    .rmodal__close { background: none; border: none; color: var(--clr-text-dim); font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
+    .rmodal__close:hover { color: var(--clr-white); }
+    .rmodal__body { padding: 1.25rem 1.5rem 1.5rem; overflow-y: auto; flex: 1; }
+
+    /* Steps */
+    .rmodal__step { display: none; }
+    .rmodal__step--active { display: block; }
+
+    /* Search */
+    .rmodal__search-wrap { position: relative; margin-bottom: 0.75rem; }
+    .rmodal__search { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border); border-radius: 8px; padding: 0.65rem 1rem 0.65rem 2.4rem; color: var(--clr-white); font-family: var(--font-ui); font-size: 0.9rem; outline: none; box-sizing: border-box; }
+    .rmodal__search:focus { border-color: var(--clr-border-hover); }
+    .rmodal__search::placeholder { color: var(--clr-text-dim); }
+    .rmodal__search-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--clr-text-dim); font-size: 0.9rem; pointer-events: none; }
+    .rmodal__search-hint { font-size: 0.78rem; color: var(--clr-text-dim); font-family: var(--font-ui); margin-bottom: 0.75rem; }
+
+    .rmodal__results { max-height: 260px; overflow-y: auto; }
+    .rmodal__result-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.1s ease; }
+    .rmodal__result-item:hover { background: rgba(255,255,255,0.05); }
+    .rmodal__result-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #1a2a1a, #2a1a0a); border: 1px solid var(--clr-border); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.85rem; color: var(--clr-green-light); flex-shrink: 0; }
+    .rmodal__result-name { font-family: var(--font-ui); font-size: 0.88rem; color: var(--clr-white); font-weight: 600; }
+    .rmodal__result-id  { font-family: var(--font-body); font-size: 0.72rem; color: var(--clr-text-dim); }
+    .rmodal__no-results { text-align: center; padding: 2rem; color: var(--clr-text-dim); font-family: var(--font-ui); font-size: 0.85rem; }
+
+    /* Step 2 */
+    .rmodal__selected-player { display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.04); border: 1px solid var(--clr-border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; }
+    .rmodal__selected-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #1a2a1a, #2a1a0a); border: 1px solid var(--clr-green); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 0.9rem; color: var(--clr-green-light); flex-shrink: 0; }
+    .rmodal__selected-name { font-family: var(--font-ui); font-size: 0.9rem; color: var(--clr-white); font-weight: 600; }
+    .rmodal__selected-id   { font-family: var(--font-body); font-size: 0.72rem; color: var(--clr-text-dim); }
+
+    .rmodal__label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--clr-text-dim); font-family: var(--font-ui); margin-bottom: 0.6rem; display: block; }
+    .rmodal__categories { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .rmodal__cat { display: flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.04); border: 1px solid var(--clr-border); border-radius: 20px; padding: 0.35rem 0.85rem; font-family: var(--font-ui); font-size: 0.8rem; color: var(--clr-text-muted); cursor: pointer; transition: all 0.12s ease; user-select: none; }
+    .rmodal__cat:hover { border-color: var(--clr-border-hover); color: var(--clr-white); }
+    .rmodal__cat--selected { background: rgba(217,119,6,0.15); border-color: rgba(217,119,6,0.5); color: var(--clr-orange-light); font-weight: 700; }
+    .rmodal__cat input[type="checkbox"] { display: none; }
+
+    .rmodal__textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border); border-radius: 8px; padding: 0.65rem 1rem; color: var(--clr-white); font-family: var(--font-ui); font-size: 0.88rem; outline: none; resize: vertical; min-height: 70px; box-sizing: border-box; margin-bottom: 1.25rem; }
+    .rmodal__textarea:focus { border-color: var(--clr-border-hover); }
+    .rmodal__textarea::placeholder { color: var(--clr-text-dim); }
+
+    .rmodal__error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.84rem; color: #fca5a5; font-family: var(--font-ui); margin-bottom: 1rem; }
+    .rmodal__success { background: rgba(95,143,71,0.1); border: 1px solid rgba(95,143,71,0.3); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .rmodal__success-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+    .rmodal__success-msg  { font-family: var(--font-ui); font-size: 0.95rem; color: var(--clr-green-light); font-weight: 700; }
+    .rmodal__success-sub  { font-family: var(--font-ui); font-size: 0.82rem; color: var(--clr-text-dim); margin-top: 0.3rem; }
+
+    .rmodal__actions { display: flex; gap: 0.75rem; }
+    .rmodal__btn-back   { flex: 0 0 auto; background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border); border-radius: 8px; padding: 0.7rem 1.2rem; font-family: var(--font-ui); font-size: 0.9rem; color: var(--clr-text-dim); cursor: pointer; }
+    .rmodal__btn-submit { flex: 1; background: var(--clr-orange); border: none; border-radius: 8px; padding: 0.7rem; font-family: var(--font-ui); font-size: 0.9rem; font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s ease; }
+    .rmodal__btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+    .rmodal__btn-close  { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border); border-radius: 8px; padding: 0.7rem; font-family: var(--font-ui); font-size: 0.9rem; color: var(--clr-white); cursor: pointer; }
+
+    @media (max-width: 640px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .card--full { grid-column: 1; }
+      .profile-header { flex-direction: column; align-items: flex-start; }
+      .achievements-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 400px) {
+      .achievements-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -85,10 +172,12 @@
           <div class="profile-info__name" id="display-name">—</div>
           <div class="profile-info__id" id="playfab-id">—</div>
           <div id="owner-badge-container"></div>
-
         </div>
       </div>
-      <button class="btn-logout" id="logout-btn">Sign Out</button>
+      <div class="profile-header__actions">
+        <button class="btn-report" id="report-btn">⚑ Report Player</button>
+        <button class="btn-logout" id="logout-btn">Sign Out</button>
+      </div>
     </div>
 
     <div class="dashboard-grid">
@@ -106,8 +195,81 @@
         </div>
       </div>
 
+      <!-- Achievements card — full width, placeholder UI -->
+      <div class="card card--full" id="achievements-card">
+        <div class="card__title">🏆 Achievements <span style="font-size:0.65rem;color:var(--clr-text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:0.5rem;">Syncing with game...</span></div>
+        <div class="achievements-grid" id="achievements-grid">
+          <!-- Rendered by dashboard.js -->
+        </div>
+      </div>
 
+    </div>
+  </div>
 
+  <!-- Report Modal -->
+  <div class="rmodal-overlay" id="report-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="rmodal-title">
+    <div class="rmodal">
+      <div class="rmodal__header">
+        <div class="rmodal__title" id="rmodal-title">Report a Player</div>
+        <button class="rmodal__close" id="rmodal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="rmodal__body">
+
+        <!-- Step 1: Search -->
+        <div class="rmodal__step rmodal__step--active" id="rmodal-step-1">
+          <p class="rmodal__search-hint">Search by username or Player ID to find who you want to report.</p>
+          <div class="rmodal__search-wrap">
+            <span class="rmodal__search-icon">🔍</span>
+            <input type="text" class="rmodal__search" id="rmodal-search" placeholder="Username or Player ID..." autocomplete="off" maxlength="60">
+          </div>
+          <div class="rmodal__results" id="rmodal-results">
+            <div class="rmodal__no-results" style="padding:1rem;color:var(--clr-text-dim);font-family:var(--font-ui);font-size:0.82rem;">Type at least 2 characters to search.</div>
+          </div>
+        </div>
+
+        <!-- Step 2: Categories + Note -->
+        <div class="rmodal__step" id="rmodal-step-2">
+          <div class="rmodal__selected-player" id="rmodal-selected-player">
+            <div class="rmodal__selected-avatar" id="rmodal-sel-avatar">?</div>
+            <div>
+              <div class="rmodal__selected-name" id="rmodal-sel-name">—</div>
+              <div class="rmodal__selected-id"   id="rmodal-sel-id">—</div>
+            </div>
+          </div>
+
+          <label class="rmodal__label">Reason for Report</label>
+          <div class="rmodal__categories" id="rmodal-categories">
+            <label class="rmodal__cat"><input type="checkbox" value="Cheating / Hacking"> Cheating / Hacking</label>
+            <label class="rmodal__cat"><input type="checkbox" value="Harassment">         Harassment</label>
+            <label class="rmodal__cat"><input type="checkbox" value="Griefing">           Griefing</label>
+            <label class="rmodal__cat"><input type="checkbox" value="Exploiting Bugs">    Exploiting Bugs</label>
+            <label class="rmodal__cat"><input type="checkbox" value="Inappropriate Name"> Inappropriate Name</label>
+            <label class="rmodal__cat"><input type="checkbox" value="Spam">               Spam</label>
+          </div>
+
+          <label class="rmodal__label">Additional Details <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+          <textarea class="rmodal__textarea" id="rmodal-note" placeholder="Describe what happened..."></textarea>
+
+          <div class="rmodal__error" id="rmodal-error" style="display:none;"></div>
+          <div class="rmodal__actions">
+            <button class="rmodal__btn-back" id="rmodal-back-btn">← Back</button>
+            <button class="rmodal__btn-submit" id="rmodal-submit-btn">Submit Report</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div class="rmodal__step" id="rmodal-step-3">
+          <div class="rmodal__success">
+            <span class="rmodal__success-icon">✅</span>
+            <div class="rmodal__success-msg">Report submitted</div>
+            <div class="rmodal__success-sub">Our team will review this report. Thank you for helping keep StoneForge safe.</div>
+          </div>
+          <div class="rmodal__actions" style="margin-top:1.25rem;">
+            <button class="rmodal__btn-close" id="rmodal-done-btn">Done</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
