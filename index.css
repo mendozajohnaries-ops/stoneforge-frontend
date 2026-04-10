@@ -384,15 +384,21 @@
   background: var(--clr-surface-2);
   border: 1px dashed rgba(255,255,255,0.12);
   border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  color: var(--clr-text-dim);
-  font-size: 0.85rem;
-  font-family: var(--font-ui);
-  transition: border-color var(--ease-normal), background var(--ease-normal);
+  overflow: hidden;
+  padding: 0;
+}
+
+.screenshot-card__icon {
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+
+.screenshot-card__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .screenshot-card:hover {
@@ -402,7 +408,7 @@
 
 .screenshot-card__icon {
   font-size: 2rem;
-  opacity: 0.3;
+  opacity: 1;
 }
 
 /* ---- DOWNLOAD CTA ---- */
