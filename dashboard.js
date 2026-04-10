@@ -294,13 +294,18 @@ async function initDashboard() {
         window.location.href = 'login-page.html';
     });
 
-    // Auto-open modals from game intent — after everything is ready
-    const dashParams = new URLSearchParams(window.location.search);
-    if (dashParams.get('report') === 'true') {
+    // Auto-open modals from game intent — check both URL and sessionStorage
+    const dashParams    = new URLSearchParams(window.location.search);
+    const reportFromUrl = dashParams.get('report') === 'true';
+    const reportFromSS  = sessionStorage.getItem('report_intent') === 'true';
+    const shopFromUrl   = dashParams.get('shop') === 'true';
+
+    if (reportFromUrl || reportFromSS) {
+        sessionStorage.removeItem('report_intent');
         window.history.replaceState({}, '', 'dashboard.html');
         openReportModal();
     }
-    if (dashParams.get('shop') === 'true') {
+    if (shopFromUrl) {
         window.history.replaceState({}, '', 'dashboard.html');
     }
 }
