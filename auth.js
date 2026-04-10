@@ -2,10 +2,13 @@
 // auth.js — Login, signup, logout logic
 // ============================================
 
-// Save shop intent if coming from game
+// Save intents if coming from game
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('shop') === 'true') {
     sessionStorage.setItem('shop_intent', 'true');
+}
+if (urlParams.get('report') === 'true') {
+    sessionStorage.setItem('report_intent', 'true');
 }
 
 const API_BASE = 'https://stoneforge-backend.onrender.com/api';
