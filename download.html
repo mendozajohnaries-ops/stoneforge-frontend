@@ -104,10 +104,11 @@
           </div>
         </div>
         <div class="dl-card__btn-wrap">
-          <a href="https://drive.google.com/drive/folders/1GLmfc9BfRcUDVQx8J9w8cAmrTkvK57Yz?usp=sharing"
-             target="_blank" class="dl-btn-link">
+
+          <a href="#" download class="dl-btn-link">
             ⬇ Download Free Trial
           </a>
+
           <span class="dl-btn-note">No account required</span>
         </div>
       </div>
@@ -242,6 +243,7 @@
     (function () {
       var DL_API_BASE      = 'https://stoneforge-backend.onrender.com/api';
       var DL_FULL_GAME_URL = 'https://drive.google.com/drive/folders/1u-lrULU2BEpGLfAqHs5qNczTRUU-5YGu?usp=sharing';
+      var DL_TRIAL_URL = 'https://github.com/user-attachments/files/26619237/StoneForge.-.Free.Trial.Version-20260410T030806Z-3-001.zip';
 
       var S_ORANGE = 'display:block;width:100%;padding:0.85rem 1.5rem;background:#c2630a;color:#fff;text-align:center;border-radius:10px;font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:pointer;box-sizing:border-box;';
       var S_GREEN  = 'display:block;width:100%;padding:0.85rem 1.5rem;background:#5f8f47;color:#fff;text-align:center;border-radius:10px;font-size:0.95rem;font-weight:700;letter-spacing:0.02em;text-decoration:none;cursor:pointer;box-sizing:border-box;';
@@ -264,9 +266,10 @@
         var btn = document.getElementById('buy-btn');
         if (btn) btn.addEventListener('click', handlePurchase);
       }
+
       function showDownloadBtn() {
-        setFullNote('You own the full game');
-        setFullAction('<a href="' + DL_FULL_GAME_URL + '" target="_blank" style="' + S_GREEN + '">⬇ Download Full Game</a>');
+          setFullNote('You own the full game');
+          setFullAction('<a href="' + DL_FULL_GAME_URL + '" download style="' + S_GREEN + '">⬇ Download Full Game</a>');
       }
 
       async function handlePurchase() {
@@ -297,6 +300,9 @@
       }
 
       async function initDownload() {
+        var trialBtn = document.querySelector('.dl-btn-link[download]');
+        if (trialBtn) trialBtn.href = DL_TRIAL_URL;
+
         var params = new URLSearchParams(window.location.search);
         if (params.get('payment') === 'success') {
           document.getElementById('banner-success').style.display = 'block';
