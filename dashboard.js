@@ -270,17 +270,6 @@ async function initDashboard() {
 
     initReportModal();
 
-    // Auto-open report modal if coming from game
-    const dashParams = new URLSearchParams(window.location.search);
-    if (dashParams.get('report') === 'true') {
-        window.history.replaceState({}, '', 'dashboard.html');
-        setTimeout(() => openReportModal(), 500);
-    }
-    // Auto-open shop modal if coming from game
-    if (dashParams.get('shop') === 'true') {
-        window.history.replaceState({}, '', 'dashboard.html');
-    }
-
     const [detailsRes, ownershipRes, statsRes] = await Promise.allSettled([
         apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
         apiGet(`check-ownership?playfab_id=${cachedUser.playfab_id}`),
@@ -304,6 +293,16 @@ async function initDashboard() {
         sessionStorage.removeItem('sf_user');
         window.location.href = 'login-page.html';
     });
+
+    // Auto-open modals from game intent — after everything is ready
+    const dashParams = new URLSearchParams(window.location.search);
+    if (dashParams.get('report') === 'true') {
+        window.history.replaceState({}, '', 'dashboard.html');
+        openReportModal();
+    }
+    if (dashParams.get('shop') === 'true') {
+        window.history.replaceState({}, '', 'dashboard.html');
+    }
 }
 
 initDashboard();
