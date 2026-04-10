@@ -202,7 +202,7 @@ function showBlockedModal(type, data) {
             <div class="blocked-modal__body">
                 ${detailsHtml}
                 <div class="blocked-modal__appeal">
-                    If you believe this is a mistake, please contact StoneForge support.
+                    If you believe this is a mistake, contact us at support@stoneforge.gg
                 </div>
             </div>
             <div class="blocked-modal__footer">
@@ -210,102 +210,45 @@ function showBlockedModal(type, data) {
             </div>
         </div>
     `;
-
     document.body.appendChild(modal);
-
-    modal.querySelector('.blocked-modal__backdrop')?.addEventListener('click', () => modal.remove());
-    document.getElementById('blocked-modal-close')?.addEventListener('click', () => modal.remove());
+    modal.querySelector('.blocked-modal__backdrop').addEventListener('click', () => modal.remove());
+    document.getElementById('blocked-modal-close').addEventListener('click', () => modal.remove());
 }
 
-// ---- LOGIN FORM (username + password) ----
+// ---- Google (email) sign-in modal ----
 
-const loginForm_auth = document.getElementById('login-form');
-if (loginForm_auth) {
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.dataset.defaultText = 'Sign In';
+function initGoogleModal() {
+    const googleBtn = document.getElementById('google-signin-btn');
+    if (!googleBtn) return;
 
-    loginForm_auth.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        hideError();
-
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-
-        if (!username || !password) { showError('Please fill in all fields.'); return; }
-
-        setLoading(true, 'submit-btn', 'Sign In', 'Signing in...');
-
-        try {
-            const { ok, status, data } = await apiPost('login', { username, password });
-            if (!ok) {
-                // Show styled modal for ban/suspension
-                if (status === 403 && data.blocked) {
-                    showBlockedModal(data.blocked, data);
-                    return;
-                }
-                showError(data.error || 'Login failed. Check your credentials.');
-                return;
-            }
-            saveUserAndRedirect(data, username);
-        } catch (err) {
-            showError('Could not connect to the server. Try again.');
-        } finally {
-            setLoading(false, 'submit-btn', 'Sign In');
-        }
-    });
-}
-
-// ---- GOOGLE MODAL (email + password) ----
-
-const googleBtn = document.getElementById('google-btn');
-if (googleBtn) {
     const modal = document.createElement('div');
     modal.id = 'google-modal';
     modal.innerHTML = `
-        <div class="google-modal__backdrop"></div>
-        <div class="google-modal__card">
-            <div class="google-modal__header">
-                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width:24px;height:24px;">
-                <span>Sign in with Google account</span>
-                <button class="google-modal__close" id="google-modal-close">✕</button>
+        <div class="google-modal__backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:9998;display:flex;align-items:center;justify-content:center;">
+            <div class="google-modal__card" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:16px;width:100%;max-width:400px;margin:1rem;padding:1.75rem;animation:gmIn 0.2s ease;">
+                <div class="google-modal__header">
+                    <span>Sign in with Email</span>
+                    <button id="google-modal-close" class="google-modal__close">✕</button>
+                </div>
+                <p class="google-modal__hint">Enter your StoneForge email and password.</p>
+                <div id="google-error" class="google-modal__error" style="display:none;"></div>
+                <div class="google-modal__field">
+                    <label for="google-email">Email</label>
+                    <input type="email" id="google-email" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <div class="google-modal__field">
+                    <label for="google-password">Password</label>
+                    <input type="password" id="google-password" placeholder="Password" autocomplete="current-password">
+                </div>
+                <button id="google-submit" class="google-modal__submit">Continue</button>
             </div>
-            <p class="google-modal__hint">Use the email you registered with</p>
-            <div class="google-modal__error" id="google-error" style="display:none;"></div>
-            <div class="google-modal__field">
-                <label>Email</label>
-                <input type="email" id="google-email" placeholder="Enter your email" autocomplete="email">
-            </div>
-            <div class="google-modal__field">
-                <label>Password</label>
-                <input type="password" id="google-password" placeholder="Enter your password" autocomplete="current-password">
-            </div>
-            <button class="google-modal__submit" id="google-submit">Continue</button>
         </div>
     `;
 
     const style = document.createElement('style');
     style.textContent = `
-        #google-modal {
-            position: fixed; inset: 0; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .google-modal__backdrop {
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-        }
-        .google-modal__card {
-            position: relative; z-index: 1;
-            background: #1a1a1a;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 100%; max-width: 400px;
-            margin: 1rem;
-            animation: modalIn 0.2s ease;
-        }
-        @keyframes modalIn {
-            from { opacity: 0; transform: translateY(-12px); }
+        @keyframes gmIn {
+            from { opacity: 0; transform: translateY(-10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         .google-modal__header {
@@ -475,6 +418,36 @@ if (signupForm_auth) {
     passwordEl.addEventListener('input', validatePasswords);
     confirmEl.addEventListener('input', validatePasswords);
 
+    // ---- OTP helpers ----
+
+    // Holds the email used to request the OTP so verify-otp can reference it
+    let _pendingEmail = '';
+
+    function showOtpStep(email) {
+        _pendingEmail = email;
+        const otpEmailDisplay = document.getElementById('otp-email-display');
+        if (otpEmailDisplay) otpEmailDisplay.textContent = email;
+
+        // Swap panels
+        const formWrap  = document.getElementById('signup-form-wrap');
+        const otpStep   = document.getElementById('otp-step');
+        if (formWrap) formWrap.style.display = 'none';
+        if (otpStep)  otpStep.style.display  = 'block';
+
+        // Focus the OTP input
+        document.getElementById('otp-input')?.focus();
+    }
+
+    function showSignupForm() {
+        const formWrap = document.getElementById('signup-form-wrap');
+        const otpStep  = document.getElementById('otp-step');
+        if (formWrap) formWrap.style.display = 'block';
+        if (otpStep)  otpStep.style.display  = 'none';
+        hideError();
+    }
+
+    // ---- Signup submit → send OTP ----
+
     signupForm_auth.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideError();
@@ -490,16 +463,102 @@ if (signupForm_auth) {
         if (!/^[a-zA-Z0-9]+$/.test(username)) { showError('Username can only contain letters and numbers.'); return; }
         if (password.length < 6)  { showError('Password must be at least 6 characters.'); return; }
 
-        setLoading(true, 'submit-btn', 'Create Account', 'Creating account...');
+        setLoading(true, 'submit-btn', 'Create Account', 'Sending code...');
 
         try {
-            const { ok, data } = await apiPost('register', { username, email, password });
-            if (!ok) { showError(data.error || 'Registration failed.'); return; }
-            saveUserAndRedirect(data, username);
+            const { ok, data } = await apiPost('send-otp', { username, email, password });
+            if (!ok) { showError(data.error || 'Failed to send verification email.'); return; }
+            showOtpStep(email);
         } catch (err) {
             showError('Could not connect to the server. Try again.');
         } finally {
             setLoading(false, 'submit-btn', 'Create Account');
+        }
+    });
+
+    // ---- OTP verify button ----
+
+    document.addEventListener('click', async (e) => {
+        if (e.target.id !== 'otp-verify-btn') return;
+        hideError();
+
+        const otpInput = document.getElementById('otp-input');
+        const otp = otpInput?.value.trim();
+
+        if (!otp || otp.length !== 5) { showError('Enter the 5-digit code sent to your email.'); return; }
+
+        const btn = document.getElementById('otp-verify-btn');
+        btn.disabled    = true;
+        btn.textContent = 'Verifying...';
+
+        try {
+            const { ok, data } = await apiPost('verify-otp', { email: _pendingEmail, otp });
+            if (!ok) {
+                showError(data.error || 'Verification failed.');
+                btn.disabled    = false;
+                btn.textContent = 'Verify';
+                return;
+            }
+            saveUserAndRedirect(data, data.username);
+        } catch (err) {
+            showError('Could not connect to the server. Try again.');
+            btn.disabled    = false;
+            btn.textContent = 'Verify';
+        }
+    });
+
+    // ---- Resend OTP ----
+
+    document.addEventListener('click', async (e) => {
+        if (e.target.id !== 'otp-resend-btn') return;
+
+        const btn = document.getElementById('otp-resend-btn');
+        btn.style.pointerEvents = 'none';
+        btn.textContent = 'Sending...';
+        hideError();
+
+        // Re-read the form values from the hidden signup form
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        try {
+            const { ok, data } = await apiPost('send-otp', { username, email: _pendingEmail, password });
+            if (!ok) {
+                showError(data.error || 'Failed to resend code.');
+            } else {
+                btn.textContent = 'Code resent!';
+                setTimeout(() => {
+                    btn.textContent         = 'Resend code';
+                    btn.style.pointerEvents = 'auto';
+                }, 4000);
+                return;
+            }
+        } catch (err) {
+            showError('Could not connect to the server. Try again.');
+        }
+
+        btn.textContent         = 'Resend code';
+        btn.style.pointerEvents = 'auto';
+    });
+
+    // ---- Back to form ----
+
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'otp-back-btn') showSignupForm();
+    });
+
+    // ---- Allow only digits in OTP input ----
+
+    document.addEventListener('input', (e) => {
+        if (e.target.id !== 'otp-input') return;
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 5);
+    });
+
+    // ---- Enter key on OTP input triggers verify ----
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && document.activeElement?.id === 'otp-input') {
+            document.getElementById('otp-verify-btn')?.click();
         }
     });
 }
