@@ -562,3 +562,38 @@ if (signupForm_auth) {
         }
     });
 }
+
+// ---- LOGIN FORM ----
+const loginForm_auth = document.getElementById('login-form');
+if (loginForm_auth) {
+    loginForm_auth.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) { showError('Please fill in all fields.'); return; }
+
+        setLoading(true, 'submit-btn', 'Sign In', 'Signing in...');
+
+        try {
+            const { ok, status, data } = await apiPost('login', { username, password });
+            if (!ok) {
+                if (status === 403 && data.blocked) {
+                    showBlockedModal(data.blocked, data);
+                    return;
+                }
+                showError(data.error || 'Login failed. Check your credentials.');
+                return;
+            }
+            saveUserAndRedirect(data, username);
+        } catch (err) {
+            showError('Could not connect to the server. Try again.');
+        } finally {
+            setLoading(false, 'submit-btn', 'Sign In');
+        }
+    });
+
+    initGoogleModal();
+}
