@@ -275,10 +275,10 @@
         if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
 
         try {
-          var res  = await fetch(DL_API_BASE + '/purchase', {
+          var res = await fetch(DL_API_BASE + '/create-checkout', {
             method: 'POST', credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: user.playfab_id }),
+            headers: { 'Content-Type': 'application/json', 'x-playfab-id': user.playfab_id },
+            body: JSON.stringify({ package_id: 'full_game' }),
           });
           var data = await res.json();
           if (data.success && data.checkout_url) {
