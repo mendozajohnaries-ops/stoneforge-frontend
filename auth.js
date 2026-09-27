@@ -55,7 +55,16 @@ function saveUserAndRedirect(data, username) {
         is_admin:     data.is_admin     || false,
     }));
 
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
     const shopIntent = sessionStorage.getItem('shop_intent');
+
+    // Return the user to the page that requested authentication.
+    // Only allow relative redirects to avoid open-redirect vulnerabilities.
+    if (redirect && !redirect.startsWith('http://') && !redirect.startsWith('https://') && !redirect.startsWith('//')) {
+        window.location.href = redirect;
+        return;
+    }
+
     if (shopIntent === 'true') {
         sessionStorage.removeItem('shop_intent');
         window.location.href = data.is_admin ? 'admin.html' : 'dashboard.html?shop=true';

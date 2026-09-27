@@ -197,15 +197,28 @@ function setupReviewForm() {
   const ratingInput = document.getElementById('review-rating');
   const textInput = document.getElementById('review-text');
   const counter = document.getElementById('review-counter');
+  const submit = document.getElementById('review-submit');
+  const message = document.getElementById('review-form-message');
 
-  if (!form || !signin || !note || !picker || !ratingInput || !textInput) return;
+  if (!form || !signin || !note || !picker || !ratingInput || !textInput || !submit || !message) return;
 
-  const user = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
+  let user = null;
+  try {
+    user = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
+  } catch (err) {
+    console.error('Invalid saved user session:', err);
+  }
+
   if (!user) return;
 
   form.hidden = false;
   signin.style.display = 'none';
   note.textContent = 'Choose a star rating and optionally share your experience.';
+
+  function showMessage(text, isError = false) {
+    message.textContent = text;
+    message.style.color = isError ? '#ef4444' : '';
+  }
 
   function setRating(value) {
     ratingInput.value = String(value);
@@ -215,41 +228,47 @@ function setupReviewForm() {
   }
 
   picker.querySelectorAll('.star-picker__star').forEach(button => {
-    button.addEventListener('click', () => setRating(Number(button.dataset.rating)));
+    button.addEventListener('click', () => {
+      setRating(Number(button.dataset.rating));
+      showMessage('');
+    });
   });
 
   textInput.addEventListener('input', () => {
     counter.textContent = `${textInput.value.length} / 500`;
   });
 
+  // Prevent native form submission completely. The review is submitted by the button below.
+  form.addEventListener('submit', event => event.preventDefault());
+
   fetch(`${REVIEWS_API}/reviews/mine`, { credentials: 'include' })
     .then(async response => {
       const data = await response.json();
+      if (response.status === 401) return;
       if (!response.ok) throw new Error(data.error || 'Failed to load your review.');
       if (data.review) {
         setRating(data.review.rating);
         textInput.value = data.review.review || '';
         counter.textContent = `${textInput.value.length} / 500`;
         note.textContent = 'You can update your existing review.';
-        document.getElementById('review-submit').textContent = 'Update Review';
+        submit.textContent = 'Update Review';
       }
     })
     .catch(err => console.error('My review load error:', err));
 
-  form.addEventListener('submit', async event => {
+  submit.addEventListener('click', async event => {
     event.preventDefault();
 
-    const message = document.getElementById('review-form-message');
-    const submit = document.getElementById('review-submit');
-    message.textContent = '';
+    showMessage('');
 
     const rating = Number(ratingInput.value);
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      message.textContent = 'Please select a star rating.';
+      showMessage('Please select a star rating before submitting.', true);
       return;
     }
 
     submit.disabled = true;
+    const originalText = submit.textContent;
     submit.textContent = 'Saving...';
 
     try {
@@ -263,17 +282,32 @@ function setupReviewForm() {
         })
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Could not save your review.');
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = {};
+      }
 
-      message.textContent = 'Review saved.';
+      if (response.status === 401) {
+        showMessage('Your login session expired. Please sign in again.', true);
+        submit.disabled = false;
+        submit.textContent = originalText;
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not save your review.');
+      }
+
+      showMessage('Review saved successfully.');
       submit.textContent = 'Update Review';
       await loadReviews();
     } catch (err) {
-      message.textContent = err.message;
+      showMessage(err.message || 'Could not save your review.', true);
+      submit.textContent = originalText;
     } finally {
       submit.disabled = false;
-      if (submit.textContent === 'Saving...') submit.textContent = 'Submit Review';
     }
   });
 }
