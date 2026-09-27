@@ -33,6 +33,7 @@
           <li><a href="index.html" class="nav__link nav__link--active">Home</a></li>
           <li><a href="#about" class="nav__link">About</a></li>
           <li><a href="#features" class="nav__link">Features</a></li>
+          <li><a href="#reviews" class="nav__link">Reviews</a></li>
           <li><a href="download.html" class="nav__link">Download</a></li>
           <li id="nav-auth-item">
             <a href="login-page.html"><button class="nav__cta">Sign In</button></a>
@@ -239,6 +240,57 @@
       </div>
     </section>
 
+
+    <!-- ===== REVIEWS ===== -->
+    <section class="reviews section" id="reviews">
+      <div class="reviews__inner">
+        <div class="reviews__header">
+          <p class="section-eyebrow">Community Feedback</p>
+          <h2 class="section-title">Reviews & Ratings</h2>
+          <p class="section-subtitle" style="margin: 0 auto; text-align: center;">
+            See what players think about their StoneForge experience.
+          </p>
+        </div>
+
+        <div class="reviews__summary">
+          <div class="reviews__score">
+            <span class="reviews__average" id="reviews-average">—</span>
+            <div class="reviews__stars reviews__stars--summary" id="reviews-summary-stars" aria-label="Average rating">☆☆☆☆☆</div>
+            <span class="reviews__count" id="reviews-count">No reviews yet</span>
+          </div>
+
+          <div class="reviews__form-card" id="review-form-card">
+            <div class="reviews__form-title">Rate StoneForge</div>
+            <p class="reviews__form-note" id="review-form-note">Sign in to leave a rating and review.</p>
+
+            <form id="review-form" class="review-form" hidden>
+              <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Choose a rating">
+                <button type="button" class="star-picker__star" data-rating="1" aria-label="1 star">★</button>
+                <button type="button" class="star-picker__star" data-rating="2" aria-label="2 stars">★</button>
+                <button type="button" class="star-picker__star" data-rating="3" aria-label="3 stars">★</button>
+                <button type="button" class="star-picker__star" data-rating="4" aria-label="4 stars">★</button>
+                <button type="button" class="star-picker__star" data-rating="5" aria-label="5 stars">★</button>
+              </div>
+              <input type="hidden" id="review-rating" value="">
+              <textarea id="review-text" class="review-form__textarea" maxlength="500"
+                placeholder="Tell us about your experience (optional)"></textarea>
+              <div class="review-form__footer">
+                <span class="review-form__counter" id="review-counter">0 / 500</span>
+                <button type="submit" class="btn btn--primary" id="review-submit">Submit Review</button>
+              </div>
+              <p class="review-form__message" id="review-form-message" role="status"></p>
+            </form>
+
+            <a href="login-page.html" class="btn btn--ghost reviews__signin" id="review-signin">Sign In to Review</a>
+          </div>
+        </div>
+
+        <div class="reviews__list" id="reviews-list">
+          <div class="reviews__empty">Loading reviews...</div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== DOWNLOAD CTA ===== -->
     <section class="download-cta section">
       <div class="download-cta__inner">
@@ -302,6 +354,7 @@
         <ul class="footer__list">
           <li><a href="#about" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">About</a></li>
           <li><a href="#features" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Features</a></li>
+          <li><a href="#reviews" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Reviews</a></li>
           <li><a href="download.html" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Download</a></li>
           <li><a href="login-page.html" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Sign In</a></li>
         </ul>
