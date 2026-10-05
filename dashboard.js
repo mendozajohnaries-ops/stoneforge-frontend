@@ -257,8 +257,12 @@ function initReportModal() {
 // Main init
 // ============================================
 async function initDashboard() {
-    cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
-    if (!cachedUser) { window.location.href = 'login-page.html'; return; }
+    let session;
+    try { session = await apiGet('me'); }
+    catch { document.getElementById('loading-screen').textContent = 'Cannot reach the server. Please reload to retry.'; return; }
+    if (!session.ok) { window.location.href = 'login-page.html?redirect=dashboard.html'; return; }
+    cachedUser = session.data;
+    sessionStorage.setItem('sf_user', JSON.stringify(cachedUser));
     if (cachedUser.is_admin) { window.location.href = 'admin.html'; return; }
 
     document.getElementById('loading-screen').style.display = 'none';
@@ -277,7 +281,7 @@ async function initDashboard() {
     ]);
 
     const details  = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
-    const ownsGame = (ownershipRes.status === 'fulfilled' && ownershipRes.value.ok) ? ownershipRes.value.data.owns_game : false;
+    const ownsGame = cachedUser.owns_game === true;
     const stats    = (statsRes.status === 'fulfilled'     && statsRes.value.ok)     ? statsRes.value.data.stats : null;
 
     renderProfile(cachedUser, details);

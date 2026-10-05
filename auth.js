@@ -13,6 +13,16 @@ if (urlParams.get('report') === 'true') {
 
 const API_BASE = 'https://stoneforge-backend.onrender.com/api';
 
+// Preserve the game handoff when moving between website login and signup.
+const handoffReturn = urlParams.get('redirect');
+if (handoffReturn) {
+    for (const link of document.querySelectorAll('a[href="login-page.html"], a[href="signup-page.html"]')) {
+        const destination = new URL(link.href);
+        destination.searchParams.set('redirect', handoffReturn);
+        link.href = destination.href;
+    }
+}
+
 // ---- Shared helpers ----
 
 function showError(message) {
@@ -60,9 +70,14 @@ function saveUserAndRedirect(data, username) {
 
     // Return the user to the page that requested authentication.
     // Only allow relative redirects to avoid open-redirect vulnerabilities.
-    if (redirect && !redirect.startsWith('http://') && !redirect.startsWith('https://') && !redirect.startsWith('//')) {
-        window.location.href = redirect;
-        return;
+    if (redirect) {
+        let target;
+        try { target = new URL(redirect, window.location.href); } catch { target = null; }
+        const root = new URL('.', window.location.href);
+        if (target && target.origin === root.origin && ['game-verify.html', 'dashboard.html', 'download.html'].some(page => target.pathname === root.pathname + page)) {
+            window.location.href = target.href;
+            return;
+        }
     }
 
     if (shopIntent === 'true') {
@@ -174,14 +189,15 @@ function showBlockedModal(type, data) {
         ? 'Your account has been permanently removed from StoneForge.'
         : 'Your account access is temporarily restricted.';
 
-    // Build detail rows
+    const escapeText = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+    // Build detail rows using escaped account data, never executable markup.
     let detailsHtml = '';
 
     if (!isBanned && data.until) {
         detailsHtml += `
             <div class="blocked-modal__field">
                 <div class="blocked-modal__field-label">Suspended Until</div>
-                <div class="blocked-modal__field-value">${data.until}</div>
+                <div class="blocked-modal__field-value">${escapeText(data.until)}</div>
             </div>
         `;
     }
@@ -191,7 +207,7 @@ function showBlockedModal(type, data) {
         detailsHtml += `
             <div class="blocked-modal__field">
                 <div class="blocked-modal__field-label">Reason</div>
-                <div class="blocked-modal__field-value blocked-modal__field-value--reason">${reason}</div>
+                <div class="blocked-modal__field-value blocked-modal__field-value--reason">${escapeText(reason)}</div>
             </div>
         `;
     }
