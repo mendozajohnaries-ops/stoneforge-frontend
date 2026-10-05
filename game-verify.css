@@ -1,0 +1,7 @@
+body { margin: 0; background: #201810; color: #f8ebd0; font: 17px/1.6 system-ui, sans-serif; }
+main { max-width: 600px; margin: 10vh auto; padding: 32px; border: 2px solid #98612f; border-radius: 10px; background: #302315; }
+h1 { font-size: 28px; }
+button { display: block; padding: 12px 20px; font: inherit; border-radius: 6px; border: 0; background: #a6cb71; color: #18220e; cursor: pointer; }
+button:disabled { opacity: .5; cursor: wait; }
+a { display: block; margin-top: 16px; color: #eac28a; }
+[hidden] { display: none !important; }
