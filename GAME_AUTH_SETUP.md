@@ -42,8 +42,10 @@ Story remains offline and is not gated by deployment or account verification.
 `node --test game-verify.test.js` runs six isolated production-script tests,
 not browser cookie/visual tests. Test login/signup continuity, browser privacy
 settings, no ownership, blocked account, errors and real Windows callback.
-The existing download page still describes the old deliverable; installer
-creation/download replacement is a separate follow-up, not part of this patch.
+Private Full Game installer downloads are implemented separately on
+`codex/feature-private-installer-download`. See `INSTALLER_DOWNLOAD_SETUP.md`
+for backend-first deployment and the download acceptance checklist. The original
+game-authentication test scope above does not certify that separate integration.
 
 Full integration guide:
 `C:/Users/USER/NewStoneForge-FullGame/Docs/WebsiteAuthenticationSetup.md`.
