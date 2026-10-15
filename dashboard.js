@@ -254,6 +254,74 @@ function initReportModal() {
 }
 
 // ============================================
+// School profile field
+// ============================================
+let savedSchool = '';
+
+function renderSchool(school) {
+    savedSchool = typeof school === 'string' ? school : '';
+    const value = document.getElementById('school-value');
+    const input = document.getElementById('school-input');
+    if (value) value.textContent = savedSchool || 'Not set';
+    if (input) input.value = savedSchool;
+}
+
+function initSchoolEditor(initialSchool = '') {
+    const editBtn = document.getElementById('school-edit-btn');
+    const form = document.getElementById('school-edit-form');
+    const input = document.getElementById('school-input');
+    const cancelBtn = document.getElementById('school-cancel-btn');
+    const saveBtn = document.getElementById('school-save-btn');
+    const message = document.getElementById('school-message');
+    if (!editBtn || !form || !input || !cancelBtn || !saveBtn || !message) return;
+
+    renderSchool(initialSchool);
+    const showMessage = (text, isError = false) => {
+        message.textContent = text;
+        message.classList.toggle('is-error', isError);
+    };
+    editBtn.addEventListener('click', () => {
+        input.value = savedSchool;
+        showMessage('');
+        form.hidden = false;
+        editBtn.hidden = true;
+        input.focus();
+    });
+    cancelBtn.addEventListener('click', () => {
+        input.value = savedSchool;
+        form.hidden = true;
+        editBtn.hidden = false;
+        showMessage('');
+    });
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const school = input.value.trim();
+        if (!school) { showMessage('Enter your school name, or cancel to leave it unset.', true); input.focus(); return; }
+        if (school.length > 120) { showMessage('School name must be 120 characters or fewer.', true); return; }
+        saveBtn.disabled = true;
+        showMessage('Saving...');
+        try {
+            const response = await fetch(`${API_BASE}/profile/school`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ school })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Could not save school. Please try again.');
+            renderSchool(data.school || school);
+            form.hidden = true;
+            editBtn.hidden = false;
+            showMessage('School saved.');
+        } catch (error) {
+            showMessage(error.message || 'Could not save school. Please try again.', true);
+        } finally {
+            saveBtn.disabled = false;
+        }
+    });
+}
+
+// ============================================
 // Main init
 // ============================================
 async function initDashboard() {
@@ -274,19 +342,22 @@ async function initDashboard() {
 
     initReportModal();
 
-    const [detailsRes, ownershipRes, statsRes] = await Promise.allSettled([
+    const [detailsRes, ownershipRes, statsRes, profileRes] = await Promise.allSettled([
         apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
         apiGet(`check-ownership?playfab_id=${cachedUser.playfab_id}`),
         apiGet('get-stats'),
+        apiGet('profile'),
     ]);
 
     const details  = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
     const ownsGame = cachedUser.owns_game === true;
     const stats    = (statsRes.status === 'fulfilled'     && statsRes.value.ok)     ? statsRes.value.data.stats : null;
+    const profile  = (profileRes.status === 'fulfilled' && profileRes.value.ok) ? profileRes.value.data : null;
 
     renderProfile(cachedUser, details);
     renderOwnerBadge(ownsGame);
     renderAchievements(stats);
+    initSchoolEditor(profile?.school || '');
 
     // Remove "Syncing..." subtitle once we have stats
     const achSubtitle = document.querySelector('#achievements-card .card__title span');
