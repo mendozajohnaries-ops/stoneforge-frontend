@@ -591,8 +591,11 @@ if (signupForm_auth) {
 // ---- LOGIN FORM ----
 const loginForm_auth = document.getElementById('login-form');
 if (loginForm_auth) {
+    loginForm_auth.setAttribute('novalidate', '');
+
     loginForm_auth.addEventListener('submit', async (e) => {
         e.preventDefault();
+        e.stopImmediatePropagation();
         hideError();
 
         const username = document.getElementById('username').value.trim();
