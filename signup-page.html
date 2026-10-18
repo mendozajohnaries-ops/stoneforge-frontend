@@ -89,6 +89,18 @@
             <span class="form-error" id="password-error">Passwords do not match.</span>
           </div>
 
+          <div class="form-group">
+            <label class="form-label" for="user-type">User Type</label>
+            <select class="form-input" id="user-type" name="user_type" required>
+              <option value="" selected disabled>Select your User Type</option>
+              <option value="regular">Regular User</option><option value="student">Student</option><option value="teacher">Teacher / Instructor</option>
+            </select>
+          </div>
+          <div class="form-group" id="signup-school-group" hidden>
+            <label class="form-label" for="signup-school" id="signup-school-label">School name</label>
+            <input class="form-input" id="signup-school" name="school" maxlength="120" autocomplete="organization" placeholder="Enter your school name">
+          </div>
+
           <!-- Terms & Conditions -->
           <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" id="terms-toggle">
@@ -99,8 +111,8 @@
               1. <strong>Eligibility</strong> — You must be at least 13 years old to create an account.<br>
               2. <strong>Account</strong> — You are responsible for keeping your credentials secure. Do not share your account.<br>
               3. <strong>Conduct</strong> — You agree not to cheat, exploit bugs, or disrupt other players.<br>
-              4. <strong>Data</strong> — We collect your username and email to manage your account. We do not sell your data.<br>
-              5. <strong>Virtual Currency</strong> — Coyns (CN) earned in-game have no real-world monetary value.<br>
+              4. <strong>Data</strong> — We use your username, email, selected User Type and school details to manage your profile. User Type is self-declared, not proof of student or instructor status. We do not sell your data.<br>
+              5. <strong>Virtual Currency</strong> — Forge Medals (FM) are optional virtual game currency, not cash or redeemable for money. The Store is currently a preview; payment tests do not grant spendable live currency.<br>
               6. <strong>Termination</strong> — We reserve the right to suspend accounts that violate these terms.<br>
               7. <strong>Changes</strong> — These terms may be updated at any time. Continued use means you accept updates.
             </div>
@@ -175,7 +187,10 @@
     </div>
   </main>
 
+  <style>[hidden] { display:none !important; } select.form-input option { background:#181c16; color:#eef0e8; }</style>
   <script src="StoneForge.js"></script>
+  <script src="profile-fields.js"></script>
   <script src="auth.js"></script>
+  <!-- User Type does not grant account privileges or discounts. -->
 </body>
 </html>

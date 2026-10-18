@@ -394,6 +394,10 @@ function initGoogleModal() {
 
 const signupForm_auth = document.getElementById('signup-form');
 if (signupForm_auth) {
+    const signupType = document.getElementById('user-type');
+    const signupSchool = document.getElementById('signup-school');
+    StoneForgeProfile.bind(signupType, document.getElementById('signup-school-group'), signupSchool, document.getElementById('signup-school-label'));
+    const signupProfile = () => StoneForgeProfile.validate({ user_type: signupType.value, school: signupSchool.value });
     const termsCheckbox = document.getElementById('terms-checkbox');
     const termsToggle   = document.getElementById('terms-toggle');
     const termsBody     = document.getElementById('terms-body');
@@ -491,11 +495,12 @@ if (signupForm_auth) {
         setLoading(true, 'submit-btn', 'Create Account', 'Sending code...');
 
         try {
-            const { ok, data } = await apiPost('send-otp', { username, email, password });
+            const fields = signupProfile();
+            const { ok, data } = await apiPost('send-otp', { username, email, password, ...fields });
             if (!ok) { showError(data.error || 'Failed to send verification email.'); return; }
             showOtpStep(email);
         } catch (err) {
-            showError('Could not connect to the server. Try again.');
+            showError(err.message || 'Could not connect to the server. Try again.');
         } finally {
             setLoading(false, 'submit-btn', 'Create Account');
         }
@@ -547,7 +552,8 @@ if (signupForm_auth) {
         const password = document.getElementById('password').value;
 
         try {
-            const { ok, data } = await apiPost('send-otp', { username, email: _pendingEmail, password });
+            const fields = signupProfile();
+            const { ok, data } = await apiPost('send-otp', { username, email: _pendingEmail, password, ...fields });
             if (!ok) {
                 showError(data.error || 'Failed to resend code.');
             } else {

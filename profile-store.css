@@ -1,0 +1,71 @@
+/* Profile economy: quiet green foundations, warm Forge Medal gold. */
+[hidden] { display:none !important; }
+button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid #e2b85f; outline-offset:4px; }
+.dashboard { max-width:1240px; }
+.profile-info__type { display:inline-block; margin-top:.6rem; font:600 .72rem var(--font-ui); color:#b8c9aa; }
+.account-title { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.profile-action, .forge-secondary, .forge-primary { border-radius:9px; padding:.7rem 1rem; font:600 .82rem var(--font-ui); cursor:pointer; }
+.profile-action,.forge-secondary { background:#22291e; color:#d9e6ce; border:1px solid #46513a; }
+.forge-primary { color:#211608; background:#dfb259; border:1px solid #edc777; }
+.forge-primary:hover { background:#edc777; }
+.forge-primary:disabled { cursor:not-allowed; opacity:.6; }
+.wallet-card { position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; background:radial-gradient(ellipse at top right,#48331c55,transparent 65%),var(--clr-surface); }
+.wallet-heading { display:flex; align-items:center; gap:1rem; }
+.wallet-coin { width:65px; height:65px; object-fit:contain; }
+.wallet-amount { font:700 clamp(2rem,4vw,3.2rem) var(--font-ui); color:#f0cd81; line-height:1; }
+.wallet-unit { margin-left:.4rem; font-size:1rem; color:#c6a866; }
+.wallet-copy, .forge-muted { font:.8rem/1.6 var(--font-ui); color:#a9b29f; }
+.wallet-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin-top:1rem; }
+.wallet-notice { min-height:1.4em; }
+.forge-heading { margin:0; color:#f3e4c8; font:700 1.45rem var(--font-ui); }
+.forge-kicker { color:#c8a866; text-transform:uppercase; letter-spacing:.12em; font:700 .68rem var(--font-ui); }
+.forge-panel-head { display:flex; justify-content:space-between; gap:1rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem; }
+.forge-tag { display:inline-flex; padding:.3rem .6rem; border:1px solid #6e5734; border-radius:100px; color:#dfc48d; font:.68rem var(--font-ui); }
+.forge-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; margin-top:1.5rem; }
+.forge-pack { position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; text-align:center; border:1px solid #655030; border-radius:15px; background:radial-gradient(ellipse at 50% 30%,#89622735,transparent 68%),#20221b; padding:1.3rem 1rem; }
+.forge-pack__name { min-height:2.6em; margin:0; color:#dbd7c9; font:600 .82rem/1.3 var(--font-ui); }
+.forge-pack__amount { font:750 1.65rem var(--font-ui); color:#f6d889; margin-top:.75rem; }
+.forge-pack__unit { font-size:.78rem; font-weight:500; color:#c1a574; }
+.forge-art { width:100%; height:170px; display:grid; place-items:center; overflow:hidden; margin:.1rem 0; }
+.forge-art img { width:170px; height:170px; object-fit:contain; }
+.forge-art--padded img { transform:scale(1.75); }
+.forge-pack__price { color:#f3ead6; font:700 1.25rem var(--font-ui); margin:.4rem 0 1rem; }
+.forge-pack button { width:100%; margin-top:auto; }
+.forge-availability { background:#27281f; border:1px solid #4c4c34; border-radius:10px; padding:.9rem 1rem; margin:1rem 0; color:#c4c5ad; font:.8rem/1.6 var(--font-ui); }
+.forge-future { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin-top:1.4rem; }
+.forge-future article { padding:1rem; border:1px solid #373d32; border-radius:10px; background:#191d17; }
+.forge-future h3 { color:#d4d9c9; font:600 .9rem var(--font-ui); margin:0 0 .5rem; }
+.forge-future p { margin:.25rem 0; }
+.forge-history { margin-top:1rem; font:.8rem var(--font-ui); }
+.forge-error { color:#f2ad9c !important; }
+.achievement-item { min-width:0; align-items:flex-start; padding:1rem; }
+.achievement-item--unlocked .achievement-icon { color:#e5bf6b; }
+.achievement-item--locked,.achievement-item--unavailable { opacity:1; background:#191d17; }
+.achievement-icon { width:2.5rem; height:2.5rem; border:1px solid #48513e; border-radius:9px; display:grid; place-items:center; font:700 1.25rem var(--font-ui); color:#a5ac9a; }
+.achievement-info { min-width:0; }
+.achievement-info__name,.achievement-info__desc { overflow-wrap:anywhere; }
+.achievement-info__name { line-height:1.4; }
+.achievement-info__desc { line-height:1.6; margin:.35rem 0; }
+.achievement-controls { justify-content:space-between; }
+.achievement-count { color:#c1ccae; font:.8rem var(--font-ui); }
+.profile-dialog { width:min(520px,calc(100% - 2rem)); max-height:calc(100dvh - 2rem); overflow:auto; margin:auto; border:1px solid #685433; border-radius:18px; padding:1.7rem; background:#181c16; color:#eef0e8; box-shadow:0 20px 100px #0008; }
+.profile-dialog::backdrop { background:#090d08d9; backdrop-filter:blur(5px); }
+.profile-dialog h2 { font:700 1.5rem var(--font-ui); margin:0 0 .7rem; }
+.profile-dialog label { display:block; font:600 .82rem var(--font-ui); margin:1.2rem 0 .5rem; }
+.profile-dialog select,.profile-dialog input { width:100%; box-sizing:border-box; padding:.85rem; border:1px solid #47513b; border-radius:9px; background:#11160e; color:#eee; font:1rem var(--font-ui); }
+select option { background:#181c16; color:#eef0e8; }
+.profile-dialog__actions { display:flex; justify-content:flex-end; gap:.7rem; margin-top:1.25rem; }
+.profile-dialog__status { min-height:1.5em; font:.8rem/1.5 var(--font-ui); }
+.profile-required-note { border-left:2px solid #d7ad55; padding-left:.8rem; }
+@media(max-width:900px) { .forge-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) {
+ .dashboard { padding:6rem 1rem 2rem; }
+ .profile-header { padding:1.25rem; }
+ .forge-grid { gap:.7rem; }
+ .forge-pack { padding:1rem .65rem; }
+ .forge-pack__amount { font-size:1.4rem; }
+ .forge-art { height:140px; }.forge-art img { width:140px;height:140px; }
+ .forge-future { grid-template-columns:1fr; }
+ .wallet-heading { align-items:flex-start; }
+ .card { padding:1.15rem; }
+}
