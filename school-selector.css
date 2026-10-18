@@ -1,0 +1,15 @@
+/* Shared signup/profile picker; inherits StoneForge's existing palette. */
+.school-picker { position:relative; width:100%; }
+.school-picker input { padding-right:3rem !important; }
+.school-picker-toggle { position:absolute; right:.35rem; top:.35rem; height:2.35rem; width:2.35rem; border:0; border-radius:6px; background:#303b25; color:#dfe9d5; cursor:pointer; }
+.school-picker-toggle:disabled { opacity:.45; cursor:default; }
+.school-options { position:relative; z-index:1; max-height:min(220px,28dvh); overflow-y:auto; overscroll-behavior:contain; margin:.35rem 0 0; padding:.35rem; list-style:none; border:1px solid #6d8057; border-radius:9px; background:#151d12; box-shadow:0 12px 30px #0008; text-align:left; }
+.school-options[hidden],.school-picker-status[hidden],.school-picker-retry[hidden] { display:none !important; }
+.school-options [role=option] { cursor:pointer; padding:.7rem .65rem; border-radius:6px; color:#edf0e9; }
+.school-options [role=option]:hover,.school-options [aria-selected=true] { background:#354527; outline:1px solid #a4b77c; outline-offset:-1px; }
+.school-option-name { display:block; font:600 .85rem/1.4 var(--font-ui,sans-serif); overflow-wrap:anywhere; }
+.school-option-meta { display:block; margin-top:.2rem; color:#b6c6a7; font:.74rem/1.5 var(--font-ui,sans-serif); }
+.school-picker-status { margin:.55rem 0 0; color:#b3c09f; font:.76rem/1.55 var(--font-ui,sans-serif); }
+.school-picker-retry { margin-top:.5rem; border:1px solid #788b58; border-radius:6px; padding:.4rem .65rem; background:#293520; color:#e2e9d8; cursor:pointer; }
+.school-picker input:focus-visible,.school-picker button:focus-visible,.school-picker-retry:focus-visible { outline:3px solid #dfb259; outline-offset:2px; }
+@media(max-width:600px) { .school-options { max-height:185px; }.school-option-name { font-size:.8rem; } }

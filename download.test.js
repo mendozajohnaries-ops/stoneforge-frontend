@@ -192,12 +192,15 @@ test('request timeout aborts and restores a retryable download state', async () 
   assert.equal(f.deadlines.size, 0); assert.match(f.note, /retry/);
 });
 
-test('Trial URL and patch toggle still work; Full Game has installer rather than portable instructions', async () => {
+test('Tutorial is delegated to its separate signed-download client; Full Game and patch toggle remain intact', async () => {
   const f = await fixture([nonOwner]);
-  assert.equal(f.trial.href, 'https://www.dropbox.com/scl/fi/nuympz7slgwfepf5bwp8n/FreeTrialGame.zip?rlkey=o33635td1hlr51vt6e0h4xgt1&st=neotzbof&dl=1');
+  assert.equal(f.trial.href, undefined);
   await f.elements.get('patch-toggle').click(); assert.equal(f.elements.get('patch-body').style.display, 'block');
   const html = fs.readFileSync(require.resolve('./download.html'), 'utf8');
   assert.match(html, /<script src="download.js"><\/script>/); assert.match(html, /StoneForgeSetup.exe/);
   assert.ok(!html.includes('drive.google.com')); assert.ok(!html.includes('No installation required'));
   assert.ok(!html.includes('Save system not yet implemented'));
+  assert.match(html, /StoneForgeTutorialSetup.exe/);
+  assert.ok(html.indexOf('src="tutorial-download.js"')<html.indexOf('src="download.js"'));
+  assert.doesNotMatch(fs.readFileSync(require.resolve('./download.js'),'utf8'),/dropbox|TRIAL_URL/);
 });

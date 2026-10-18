@@ -5,7 +5,6 @@
 // file URL or R2 credentials belong in this file.
 (function () {
   var API_BASE = 'https://stoneforge-backend.onrender.com/api';
-  var TRIAL_URL = 'https://www.dropbox.com/scl/fi/nuympz7slgwfepf5bwp8n/FreeTrialGame.zip?rlkey=o33635td1hlr51vt6e0h4xgt1&st=neotzbof&dl=1';
   var FILE_NAME = 'StoneForgeSetup.exe';
   var busy = false;
   var checking = false;
@@ -156,8 +155,6 @@
   }
 
   async function initDownload() {
-    var trial = document.querySelector('.dl-btn-link[download]');
-    if (trial) trial.href = TRIAL_URL;
     var params = new URLSearchParams(window.location.search);
     returningFromPayment = params.get('payment') === 'success';
     if (returningFromPayment) banner('Returned from checkout. Confirming payment with the server...');
