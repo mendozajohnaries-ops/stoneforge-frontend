@@ -111,6 +111,11 @@
   font-family: var(--font-ui);
 }
 
+#tutorial-download { border:0; cursor:pointer; }
+#tutorial-download:disabled { cursor:wait; opacity:.6; }
+#tutorial-download:focus-visible { outline:3px solid var(--clr-green-light); outline-offset:4px; }
+#tutorial-note { max-width:230px; text-align:center; line-height:1.5; }
+
 /* Page sections */
 .dl-page {
   background: var(--clr-bg);

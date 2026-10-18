@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "complete": false,
+  "schools": [
+    {
+      "id": "ncst-dasmarinas",
+      "name": "National College of Science and Technology",
+      "aliases": [
+        "NCST",
+        "NCST Main"
+      ],
+      "campus": "Dasmariñas Main",
+      "city": "Dasmariñas",
+      "sector": "Private",
+      "program": "STEM"
+    },
+    {
+      "id": "sample-east",
+      "name": "Sample Academy",
+      "aliases": [
+        "SA East"
+      ],
+      "campus": "East",
+      "city": "Imus",
+      "sector": "Private",
+      "program": "STEM"
+    },
+    {
+      "id": "sample-west",
+      "name": "Sample Academy",
+      "aliases": [
+        "SA West"
+      ],
+      "campus": "West",
+      "city": "General Trias",
+      "sector": "Public",
+      "program": "STEM"
+    }
+  ]
+}

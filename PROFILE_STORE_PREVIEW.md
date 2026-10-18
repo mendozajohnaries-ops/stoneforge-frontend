@@ -7,6 +7,7 @@ Implemented in the existing buildless website; no replacement Site, hosting mani
 - Required User Type on signup (Regular User, Student, Teacher / Instructor). Student school is required; instructor institution optional. Shared validation is used for signup and profile completion.
 - Existing accounts get a one-time profile prompt instead of being assigned a guessed type. Sign out remains available while incomplete.
 - User Types are self-declared, do not grant privileges, and do not affect pricing.
+- School search is now shared between signup and Edit Profile; see SCHOOL_SELECTOR.md for canonical campus selection, preserved legacy text and explicit coverage limits.
 - Account Info plus a Forge Medal wallet card. Read-only balance comes from the authenticated backend; failures display Unavailable, never invented zero.
 - Store section uses the supplied Unity medal artwork, copied byte-for-byte into Assets/store. Unity originals are untouched. Pack images are lazy-loaded; transparent margins on bundle artwork are handled with CSS.
 - Four priced bundle cards; same prices for everyone. Default buttons are disabled Coming soon. Explicitly allowlisted testers may see Test checkout only when the dedicated test backend is configured.
@@ -16,7 +17,7 @@ Implemented in the existing buildless website; no replacement Site, hosting mani
 
 ## Tests
 
-node --test game-verify.test.js download.test.js achievements.test.js profile-store.test.js
+node --test game-verify.test.js download.test.js achievements.test.js profile-store.test.js school-selector.test.js
 
 DOM/VM tests are not visual browser certification. Browser automation was disabled by the desktop Work settings during implementation. Responsive layout, keyboard focus, native dialog/dropdown behavior and real deployed sessions still need manual browser acceptance.
 

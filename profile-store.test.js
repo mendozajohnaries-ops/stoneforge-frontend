@@ -1,12 +1,15 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const fields=require('./profile-fields');global.StoneForgeProfile=fields;
+global.StoneForgeSchools=require('./school-selector');
+const schoolCatalog=require('./test-fixtures/school-catalog.json');
 const store=require('./profile-store');
 test('frontend requires an explicit supported User Type and student school; no discount or privileges',()=>{
  for(const user_type of ['',null,'admin','instructor','toString'])assert.throws(()=>fields.validate({user_type}));
  assert.throws(()=>fields.validate({user_type:'student',school:''}));
- assert.deepEqual(fields.validate({user_type:'student',school:' Cavite   School '}),{user_type:'student',school:'Cavite School'});
- assert.deepEqual(fields.validate({user_type:'teacher',school:''}),{user_type:'teacher',school:''});
+ assert.throws(()=>fields.validate({user_type:'student',school:'Cavite School'}));
+ assert.deepEqual(fields.validate({user_type:'student',school:' Cavite   School ',school_id:'sample-school'}),{user_type:'student',school:'Cavite School',school_id:'sample-school'});
+ assert.deepEqual(fields.validate({user_type:'teacher',school:''}),{user_type:'teacher',school:'',school_id:null});
  assert.deepEqual(fields.validate({user_type:'regular',school:'old'}),{user_type:'regular'});
 });
 class Node{
@@ -15,7 +18,8 @@ class Node{
  append(...nodes){this.children.push(...nodes);}
  replaceChildren(...nodes){this.children=nodes;}
  setAttribute(k,v){this.attributes[k]=v;}
- addEventListener(name,fn){this.listeners[name]=fn;}
+ removeAttribute(k){delete this.attributes[k];}
+ addEventListener(name,fn){const previous=this.listeners[name];this.listeners[name]=previous?event=>{previous(event);fn(event);}:fn;}
  removeEventListener(name){delete this.listeners[name];}
  showModal(){this.open=true;}close(){this.open=false;}focus(){}scrollIntoView(){this.scrolled=true;}
  async fire(name,event={}){if(!event.preventDefault)event.preventDefault=function(){this.prevented=true;};return this.listeners[name]?.(event);}
@@ -27,6 +31,7 @@ test('conditional school field is required only for Student, and omitted for Reg
  type.value='regular';type.listeners.change();assert.equal(school.disabled,true);assert.equal(group.hidden,true);
 });
 const ids=['profile-signout','profile-completion-dialog','profile-completion-form','profile-user-type','profile-school','profile-school-group','profile-school-label',
+ 'profile-school-options','profile-school-status','profile-school-toggle','profile-school-retry',
  'profile-cancel','profile-required-note','profile-save-status','profile-save','profile-edit','profile-retry','profile-state-status',
  'user-type-value','profile-user-type-badge','school-value','school-display-row','forge-pack-grid','wallet-balance','wallet-state',
  'wallet-test-row','wallet-test-balance','store-state','wallet-refresh','open-forge-store','forge-store'];
@@ -37,7 +42,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'fm_chest',name:'Chest',medals:2200,price_centavos:39900,image:'Assets/store/fm-chest.png'}]};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
 function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=false,testBalance=0}={}){
- const nodes=Object.fromEntries(ids.map(id=>[id,new Node()])),calls=[],navigation=[],storage=new Map();
+ const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  const current={owner:'alice',user_type:type,school:type==='student'?'Cavite School':'Existing School',requires_profile_completion:!type};
  const all=()=>{const results=[];function walk(node){results.push(node);node.children.forEach(walk);}Object.values(nodes).forEach(walk);return results;};
  const document={hidden:false,getElementById:id=>nodes[id],createElement:tag=>new Node(tag),querySelectorAll:()=>all().filter(node=>node.dataset.forgePack),
@@ -47,6 +52,7 @@ function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=fals
  const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=> 'alice',initialProfile:{...current},
   fetch:async(url,options)=>{
    calls.push({url,options});
+   if(url.endsWith('/schools'))return{ok:true,json:async()=>schoolCatalog};
    if(url.endsWith('/profile')&&options.method==='PUT'){const body=JSON.parse(options.body);Object.assign(current,body,{requires_profile_completion:false});return{ok:true,json:async()=>({...current})};}
    if(url.endsWith('/profile'))return{ok:true,json:async()=>({...current})};
    if(url.endsWith('/store/catalog'))return{ok:true,json:async()=>catalog};
@@ -102,18 +108,22 @@ test('signup and dashboard load modules in order, preserve preview and do not co
 
 test('actual signup handler refuses missing User Type/student school before OTP request',async()=>{
  const vm=require('node:vm');
- const names=['signup-form','password','confirm-password','username','email','user-type','signup-school','signup-school-group','signup-school-label','submit-btn'];
- const nodes=Object.fromEntries(names.map(id=>[id,new Node()]));
+ const names=['signup-form','password','confirm-password','username','email','user-type','signup-school','signup-school-group','signup-school-label','submit-btn',
+  'signup-school-options','signup-school-status','signup-school-toggle','signup-school-retry'];
+ const nodes=Object.fromEntries(names.map(id=>{const node=new Node();node.id=id;return[id,node];}));
  nodes.password.value=nodes['confirm-password'].value='pass123';nodes.username.value='testuser';nodes.email.value='test@example.test';
  nodes['confirm-password'].setCustomValidity=()=>{};
  const calls=[],errors=[];
- const document={getElementById:id=>nodes[id]||null,addEventListener(){}};
- const context={document,StoneForgeProfile:fields,setLoading(){},hideError(){},showError:message=>errors.push(message),
+ const document={getElementById:id=>nodes[id]||null,createElement:tag=>new Node(tag),addEventListener(){}};
+ const context={document,StoneForgeProfile:fields,StoneForgeSchools:{...global.StoneForgeSchools,mount:options=>global.StoneForgeSchools.mount({...options,fetch:async()=>({ok:true,json:async()=>schoolCatalog})})},API_BASE:'https://api.example/api',setLoading(){},hideError(){},showError:message=>errors.push(message),
   apiPost:async(endpoint,body)=>{calls.push({endpoint,body});return{ok:true,data:{success:true}};},setTimeout(){},saveUserAndRedirect(){}};
  vm.createContext(context);const source=fs.readFileSync('auth.js','utf8');
  vm.runInContext(source.slice(source.indexOf('const signupForm_auth =')),context);
  await nodes['signup-form'].fire('submit');assert.equal(calls.length,0);assert.match(errors.pop(),/User Type/);
- nodes['user-type'].value='student';await nodes['signup-form'].fire('submit');assert.equal(calls.length,0);assert.match(errors.pop(),/school/);
- nodes['signup-school'].value='Cavite School';await nodes['signup-form'].fire('submit');
- assert.equal(calls.length,1);assert.equal(calls[0].endpoint,'send-otp');assert.equal(calls[0].body.user_type,'student');assert.equal(calls[0].body.school,'Cavite School');
+ nodes['user-type'].value='student';await nodes['user-type'].fire('change');
+ await nodes['signup-form'].fire('submit');assert.equal(calls.length,0);assert.match(errors.pop(),/school/);
+ await settled();nodes['signup-school'].value='NCST';await nodes['signup-school'].fire('input');
+ await nodes['signup-school-options'].children[0].fire('click');await nodes['signup-form'].fire('submit');
+ assert.equal(calls.length,1);assert.equal(calls[0].endpoint,'send-otp');assert.equal(calls[0].body.user_type,'student');
+ assert.equal(calls[0].body.school,'National College of Science and Technology');assert.equal(calls[0].body.school_id,'ncst-dasmarinas');
 });

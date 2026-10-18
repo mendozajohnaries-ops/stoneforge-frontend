@@ -160,6 +160,7 @@
     }
   </style>
   <link rel="stylesheet" href="profile-store.css">
+  <link rel="stylesheet" href="school-selector.css">
 </head>
 <body>
 
@@ -282,7 +283,7 @@
       <select id="profile-user-type" name="user_type" required>
         <option value="" selected disabled>Select your User Type</option><option value="regular">Regular User</option><option value="student">Student</option><option value="teacher">Teacher / Instructor</option>
       </select>
-      <div id="profile-school-group" hidden><label for="profile-school" id="profile-school-label">School name</label><input id="profile-school" maxlength="120" autocomplete="organization" placeholder="Enter your school name"></div>
+      <div id="profile-school-group" hidden><label for="profile-school" id="profile-school-label">School name</label><div class="school-picker"><input id="profile-school" name="school" maxlength="200" autocomplete="off" placeholder="Search school, acronym or city" aria-describedby="profile-school-status"><button type="button" class="school-picker-toggle" id="profile-school-toggle" aria-label="Show school choices">⌄</button><ul id="profile-school-options" class="school-options" role="listbox" aria-label="Cavite school choices" hidden></ul></div><p id="profile-school-status" class="school-picker-status" role="status" aria-live="polite">Loading Cavite school choices…</p><button type="button" id="profile-school-retry" class="school-picker-retry" hidden>Retry school directory</button></div>
       <p id="profile-save-status" class="profile-dialog__status" role="status" aria-live="polite"></p>
       <div class="profile-dialog__actions"><button type="button" id="profile-signout" class="forge-secondary" hidden>Sign out</button><button type="button" id="profile-cancel" class="forge-secondary" hidden>Cancel</button><button type="submit" id="profile-save" class="forge-primary">Save profile</button></div>
     </form>
@@ -358,6 +359,7 @@
   <script src="StoneForge.js"></script>
   <script src="achievements.js"></script>
   <script src="profile-fields.js"></script>
+  <script src="school-selector.js"></script>
   <script src="profile-store.js"></script>
   <script src="dashboard.js"></script>
   <!-- Catalog/progress are authenticated server data, not editable browser unlocks. -->

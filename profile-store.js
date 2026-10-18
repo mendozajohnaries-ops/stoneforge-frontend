@@ -7,6 +7,7 @@
   let profile=null,wallet=null,catalog=null,stopped=false,profileBusy=false,checkoutBusy=false,generation=0;
   const type=el('profile-user-type'),school=el('profile-school');
   const updateFields=StoneForgeProfile.bind(type,el('profile-school-group'),school,el('profile-school-label'));
+  const schoolPicker=StoneForgeSchools.mount({document,input:school,type,apiBase,fetch:request});
   const sameOwner=()=>!stopped&&currentOwner()===owner;
   const notice=(id,text,error=false)=>{el(id).textContent=text;el(id).classList.toggle('forge-error',error);};
   async function api(path,options={}){
@@ -23,12 +24,12 @@
    profile=data;
    el('user-type-value').textContent=StoneForgeProfile.types[data.user_type]||'Not set';
    el('profile-user-type-badge').textContent=StoneForgeProfile.types[data.user_type]||'Complete your profile';
-   el('school-value').textContent=data.school||'Not set';
+   el('school-value').textContent=data.school?[data.school,data.school_campus,data.school_city].filter(Boolean).join(' · '):'Not set';
    el('school-display-row').hidden=data.user_type==='regular';
    if(!complete())openProfile();renderButtons();
   }
   function openProfile(){
-   type.value=profile?.user_type||'';school.value=profile?.school||'';updateFields();
+   type.value=profile?.user_type||'';updateFields();schoolPicker.reset(profile||{});
    el('profile-cancel').hidden=!complete();
    el('profile-signout').hidden=complete();
    el('profile-required-note').hidden=complete();
@@ -47,7 +48,7 @@
   el('profile-retry').addEventListener('click',loadProfile);
   form.addEventListener('submit',async event=>{
    event.preventDefault();if(profileBusy||!sameOwner())return;
-   let fields;try{fields=StoneForgeProfile.validate({user_type:type.value,school:school.value});}
+   let fields;try{fields=StoneForgeProfile.validate({user_type:type.value,...schoolPicker.values()},{previous:profile});}
    catch(error){notice('profile-save-status',error.message,true);return;}
    profileBusy=true;el('profile-save').disabled=true;notice('profile-save-status','Saving profile…');
    try{
@@ -131,7 +132,7 @@
   document.addEventListener('visibilitychange',onVisible);
   const timer=setInterval(onVisible,60000);
   initialize();
-  return{refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);document.removeEventListener('visibilitychange',onVisible);
+  return{refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);schoolPicker.stop();document.removeEventListener('visibilitychange',onVisible);
    if(dialog.open)dialog.close();el('wallet-balance').textContent='—';el('wallet-test-row').hidden=true;
    el('wallet-test-balance').textContent='';wallet=null;renderButtons();}};
  }

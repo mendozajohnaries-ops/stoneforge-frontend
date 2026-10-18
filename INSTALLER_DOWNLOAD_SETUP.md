@@ -1,5 +1,7 @@
 # Full Game installer download page
 
+For the separate free Tutorial installer, see TUTORIAL_DOWNLOAD_SETUP.md. Tutorial credentials/object do not replace any Full Game setting below.
+
 Branch: `codex/feature-private-installer-download`.
 Local changes only; no website deployment performed by Codex.
 
@@ -15,8 +17,9 @@ serving `https://stoneforgegame.vercel.app`. Keep the root URL `/download.html`.
 Review/push/open a PR only when authorized and check the deployment branch before
 merging. No public R2 bucket, static Full Game URL or frontend key is needed.
 
-The existing Free Trial Dropbox link is unchanged. This patch covers Full Game
-only: Windows installer v1.4.4, `StoneForgeSetup.exe`, approximately 147 MB.
+This document covers the protected Full Game: Windows installer v1.4.4,
+`StoneForgeSetup.exe`, approximately 147 MB. The newer Tutorial feature replaces its
+old Dropbox ZIP through a separate free signed-download route.
 
 ## UI behavior
 

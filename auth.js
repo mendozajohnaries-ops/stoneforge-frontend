@@ -397,7 +397,8 @@ if (signupForm_auth) {
     const signupType = document.getElementById('user-type');
     const signupSchool = document.getElementById('signup-school');
     StoneForgeProfile.bind(signupType, document.getElementById('signup-school-group'), signupSchool, document.getElementById('signup-school-label'));
-    const signupProfile = () => StoneForgeProfile.validate({ user_type: signupType.value, school: signupSchool.value });
+    const signupSchoolPicker = StoneForgeSchools.mount({ document, input:signupSchool, type:signupType, apiBase:API_BASE });
+    const signupProfile = () => StoneForgeProfile.validate({ user_type:signupType.value, ...signupSchoolPicker.values() });
     const termsCheckbox = document.getElementById('terms-checkbox');
     const termsToggle   = document.getElementById('terms-toggle');
     const termsBody     = document.getElementById('terms-body');
