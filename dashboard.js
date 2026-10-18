@@ -276,9 +276,9 @@ async function initDashboard() {
         window.history.replaceState({}, '', 'dashboard.html');
         openReportModal();
     }
-    if (shopFromUrl) {
+    else if (shopFromUrl) {
         window.history.replaceState({}, '', 'dashboard.html');
-        document.getElementById('forge-store').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        storeBrowser.open();
     }
 }
 
