@@ -6,7 +6,7 @@ const API_BASE  = 'https://stoneforge-backend.onrender.com/api';
 let cachedUser  = null;
 
 async function apiGet(endpoint, headers = {}) {
-    const res  = await fetch(`${API_BASE}/${endpoint}`, { credentials: 'include', headers });
+    const res  = await fetch(`${API_BASE}/${endpoint}`, { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15000), headers });
     const data = await res.json();
     return { ok: res.ok, data };
 }
@@ -42,42 +42,13 @@ function renderOwnerBadge(ownsGame) {
     }
 }
 
-// ============================================
-// Achievements — placeholder UI (TODO: wire to PlayFab stats)
-// ============================================
-const ACHIEVEMENT_DEFS = [
-    { id: 'tutorial',   icon: '📖', name: 'First Steps',       desc: 'Complete the tutorial',         statKey: 'TutorialComplete' },
-    { id: 'mine_first', icon: '⛏️', name: 'Stone Breaker',     desc: 'Mine your first stone',          statKey: 'FirstStoneMined' },
-    { id: 'build_100',  icon: '🏗️', name: "Builder's Mark",    desc: 'Place 100 blocks',               statKey: 'BlocksPlaced' },
-    { id: 'craft_item', icon: '🔨', name: 'Forgemaster',        desc: 'Craft your first item',          statKey: 'ItemsCrafted' },
-    { id: 'chapter2',   icon: '🗺️', name: 'Adventurer',        desc: 'Reach Chapter 2',                statKey: 'Chapter2Complete' },
-    { id: 'rare_ore',   icon: '💎', name: 'Diamond Miner',      desc: 'Mine a rare ore deposit',        statKey: 'RareOreMined' },
-];
-
-function renderAchievements(stats) {
-    // stats = { StatName: value } from PlayFab — null means not yet loaded
-    const grid = document.getElementById('achievements-grid');
-    if (!grid) return;
-
-    grid.innerHTML = ACHIEVEMENT_DEFS.map(a => {
-        // TODO: map a.statKey to actual PlayFab stat names from Gabriel's team
-        // For now, treat any stat value > 0 as unlocked
-        const unlocked = stats ? (stats[a.statKey] > 0) : false;
-        const cls      = unlocked ? 'achievement-item--unlocked' : 'achievement-item--locked';
-        const badge    = unlocked
-            ? '<span class="achievement-info__badge achievement-info__badge--unlocked">✓ Unlocked</span>'
-            : '<span class="achievement-info__badge achievement-info__badge--locked">Locked</span>';
-        return `
-            <div class="achievement-item ${cls}">
-                <div class="achievement-icon">${a.icon}</div>
-                <div class="achievement-info">
-                    <div class="achievement-info__name">${a.name}</div>
-                    <div class="achievement-info__desc">${a.desc}</div>
-                    ${badge}
-                </div>
-            </div>
-        `;
-    }).join('');
+let achievementBrowser = null;
+let storeBrowser = null;
+async function signOut() {
+    achievementBrowser?.stop(); storeBrowser?.stop(); cachedUser = null;
+    await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+    sessionStorage.removeItem('sf_user');
+    window.location.href = 'login-page.html';
 }
 
 // ============================================
@@ -254,74 +225,6 @@ function initReportModal() {
 }
 
 // ============================================
-// School profile field
-// ============================================
-let savedSchool = '';
-
-function renderSchool(school) {
-    savedSchool = typeof school === 'string' ? school : '';
-    const value = document.getElementById('school-value');
-    const input = document.getElementById('school-input');
-    if (value) value.textContent = savedSchool || 'Not set';
-    if (input) input.value = savedSchool;
-}
-
-function initSchoolEditor(initialSchool = '') {
-    const editBtn = document.getElementById('school-edit-btn');
-    const form = document.getElementById('school-edit-form');
-    const input = document.getElementById('school-input');
-    const cancelBtn = document.getElementById('school-cancel-btn');
-    const saveBtn = document.getElementById('school-save-btn');
-    const message = document.getElementById('school-message');
-    if (!editBtn || !form || !input || !cancelBtn || !saveBtn || !message) return;
-
-    renderSchool(initialSchool);
-    const showMessage = (text, isError = false) => {
-        message.textContent = text;
-        message.classList.toggle('is-error', isError);
-    };
-    editBtn.addEventListener('click', () => {
-        input.value = savedSchool;
-        showMessage('');
-        form.hidden = false;
-        editBtn.hidden = true;
-        input.focus();
-    });
-    cancelBtn.addEventListener('click', () => {
-        input.value = savedSchool;
-        form.hidden = true;
-        editBtn.hidden = false;
-        showMessage('');
-    });
-    form.addEventListener('submit', async event => {
-        event.preventDefault();
-        const school = input.value.trim();
-        if (!school) { showMessage('Enter your school name, or cancel to leave it unset.', true); input.focus(); return; }
-        if (school.length > 120) { showMessage('School name must be 120 characters or fewer.', true); return; }
-        saveBtn.disabled = true;
-        showMessage('Saving...');
-        try {
-            const response = await fetch(`${API_BASE}/profile/school`, {
-                method: 'PUT',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ school })
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || 'Could not save school. Please try again.');
-            renderSchool(data.school || school);
-            form.hidden = true;
-            editBtn.hidden = false;
-            showMessage('School saved.');
-        } catch (error) {
-            showMessage(error.message || 'Could not save school. Please try again.', true);
-        } finally {
-            saveBtn.disabled = false;
-        }
-    });
-}
-
-// ============================================
 // Main init
 // ============================================
 async function initDashboard() {
@@ -332,42 +235,35 @@ async function initDashboard() {
     cachedUser = session.data;
     sessionStorage.setItem('sf_user', JSON.stringify(cachedUser));
     if (cachedUser.is_admin) { window.location.href = 'admin.html'; return; }
+    document.getElementById('logout-btn').addEventListener('click', signOut);
 
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('dashboard').style.display      = 'block';
 
     renderProfile(cachedUser, null);
     renderOwnerBadge(false);
-    renderAchievements(null); // placeholder locked state while loading
+    achievementBrowser = StoneForgeAchievements.mount({ document, apiBase: API_BASE,
+        owner: cachedUser.playfab_id, currentOwner: () => cachedUser?.playfab_id });
 
     initReportModal();
 
-    const [detailsRes, ownershipRes, statsRes, profileRes] = await Promise.allSettled([
+    const [detailsRes, ownershipRes, profileRes] = await Promise.allSettled([
         apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
         apiGet(`check-ownership?playfab_id=${cachedUser.playfab_id}`),
-        apiGet('get-stats'),
         apiGet('profile'),
     ]);
+    if (!cachedUser) return;
 
     const details  = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
     const ownsGame = cachedUser.owns_game === true;
-    const stats    = (statsRes.status === 'fulfilled'     && statsRes.value.ok)     ? statsRes.value.data.stats : null;
     const profile  = (profileRes.status === 'fulfilled' && profileRes.value.ok) ? profileRes.value.data : null;
 
     renderProfile(cachedUser, details);
     renderOwnerBadge(ownsGame);
-    renderAchievements(stats);
-    initSchoolEditor(profile?.school || '');
+    storeBrowser = StoneForgeStore.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
+        currentOwner: () => cachedUser?.playfab_id, initialProfile: profile, onSignOut: signOut });
 
-    // Remove "Syncing..." subtitle once we have stats
-    const achSubtitle = document.querySelector('#achievements-card .card__title span');
-    if (achSubtitle) achSubtitle.style.display = 'none';
 
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
-        sessionStorage.removeItem('sf_user');
-        window.location.href = 'login-page.html';
-    });
 
     // Auto-open modals from game intent — check both URL and sessionStorage
     const dashParams    = new URLSearchParams(window.location.search);
@@ -382,6 +278,7 @@ async function initDashboard() {
     }
     if (shopFromUrl) {
         window.history.replaceState({}, '', 'dashboard.html');
+        document.getElementById('forge-store').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 

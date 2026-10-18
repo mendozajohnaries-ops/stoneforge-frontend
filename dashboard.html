@@ -68,7 +68,15 @@
     .achievement-item { display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--clr-border); border-radius: 10px; padding: 0.85rem 1rem; transition: border-color 0.15s ease; }
     .achievement-item--unlocked { border-color: rgba(95,143,71,0.3); background: rgba(95,143,71,0.05); }
     .achievement-item--unlocked:hover { border-color: rgba(95,143,71,0.5); }
-    .achievement-item--locked { opacity: 0.45; }
+    .achievement-item--locked, .achievement-item--unavailable { opacity: 0.8; }
+    .achievement-item--progress { border-color: rgba(211,165,71,.55); }
+    .achievement-controls { display:flex; gap:.7rem; align-items:center; flex-wrap:wrap; }
+    .achievement-controls select, .achievement-controls button { padding:.55rem .8rem; border:1px solid var(--clr-border); border-radius:6px; background:#20231e; color:#eee; }
+    #achievement-sync-status { font-family:var(--font-ui); font-size:.78rem; color:#b7c3ad; line-height:1.5; margin:1rem 0; }
+    .achievement-info__category { font-family:var(--font-ui); font-size:.68rem; color:#a9bf99; margin-top:.25rem; }
+    .achievement-info progress { display:block; width:100%; height:.4rem; margin-top:.6rem; accent-color:#83b25d; }
+    .achievement-info__badge--progress { color:#efd38b; background:#3b3020; }
+    .achievement-info__badge--unavailable { color:#c4c4c4; background:#282828; }
     .achievement-icon { font-size: 1.6rem; flex-shrink: 0; width: 2.2rem; text-align: center; }
     .achievement-info__name { font-family: var(--font-ui); font-size: 0.85rem; font-weight: 700; color: var(--clr-white); }
     .achievement-info__desc { font-family: var(--font-ui); font-size: 0.72rem; color: var(--clr-text-dim); margin-top: 0.15rem; }
@@ -151,6 +159,7 @@
       .achievements-grid { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="profile-store.css">
 </head>
 <body>
 
@@ -192,6 +201,7 @@
           <div class="profile-info__name" id="display-name">—</div>
           <div class="profile-info__id" id="playfab-id">—</div>
           <div id="owner-badge-container"></div>
+          <div class="profile-info__type" id="profile-user-type-badge"></div>
         </div>
       </div>
       <div class="profile-header__actions">
@@ -213,34 +223,70 @@
           <div class="date-row__label">Last Seen</div>
           <div class="date-row__value" id="account-last-login">—</div>
         </div>
-        <div class="date-row school-row">
-          <div class="school-row__heading">
-            <div class="date-row__label">School</div>
-            <button type="button" class="school-edit-btn" id="school-edit-btn">Edit</button>
-          </div>
-          <div class="date-row__value" id="school-value">Not set</div>
-          <form id="school-edit-form" class="school-edit-form" hidden>
-            <label class="sr-only" for="school-input">School name</label>
-            <input id="school-input" name="school" type="text" maxlength="120" placeholder="Enter your school name" autocomplete="organization">
-            <div class="school-edit-actions">
-              <button type="submit" class="school-save-btn" id="school-save-btn">Save</button>
-              <button type="button" class="school-cancel-btn" id="school-cancel-btn">Cancel</button>
-            </div>
-            <p class="school-message" id="school-message" role="status" aria-live="polite"></p>
-          </form>
+        <div class="date-row">
+          <div class="account-title"><div class="date-row__label">User Type</div><button type="button" class="profile-action" id="profile-edit">Edit profile</button></div>
+          <div class="date-row__value" id="user-type-value">Loading…</div>
         </div>
+        <div class="date-row" id="school-display-row"><div class="date-row__label">School / Institution</div><div class="date-row__value" id="school-value">—</div></div>
+        <p id="profile-state-status" class="forge-muted" role="status"></p>
+        <button type="button" id="profile-retry" class="forge-secondary" hidden>Retry profile</button>
       </div>
 
-      <!-- Achievements card — full width, placeholder UI -->
+      <section class="card wallet-card" aria-labelledby="wallet-heading">
+        <div><div class="card__title">Your wallet</div><div class="wallet-heading">
+          <img class="wallet-coin" src="Assets/store/fm-handful.png" alt="" width="65" height="65">
+          <div><h2 class="forge-heading" id="wallet-heading">Forge Medals</h2><p><span id="wallet-balance" class="wallet-amount">—</span><span class="wallet-unit">FM</span></p></div>
+        </div>
+        <p class="wallet-copy wallet-notice" id="wallet-state" role="status">Loading your account wallet…</p>
+        <p id="wallet-test-row" class="wallet-copy" hidden><span id="wallet-test-balance"></span></p></div>
+        <div class="wallet-actions"><button type="button" class="forge-primary" id="open-forge-store">Open Store</button><button type="button" class="forge-secondary" id="wallet-refresh">Refresh wallet</button></div>
+      </section>
+
+      <!-- Account-owned achievement preview; locked details remain concealed. -->
       <div class="card card--full" id="achievements-card">
-        <div class="card__title">🏆 Achievements <span style="font-size:0.65rem;color:var(--clr-text-dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:0.5rem;">Syncing with game...</span></div>
+        <div class="card__title">🏆 Achievements</div>
+        <div class="achievement-controls">
+          <label for="achievement-category">Category</label>
+          <select id="achievement-category" aria-label="Achievement category"></select>
+          <button type="button" id="achievement-refresh">Refresh</button>
+          <button type="button" id="achievement-view-all" class="forge-secondary">View all achievements</button>
+        </div>
+        <p id="achievement-sync-status" role="status" aria-live="polite">Loading account achievements…</p>
         <div class="achievements-grid" id="achievements-grid">
           <!-- Rendered by dashboard.js -->
         </div>
       </div>
 
+      <section class="card card--full" id="forge-store" aria-labelledby="forge-store-heading">
+        <div class="forge-panel-head"><div><p class="forge-kicker">The Forge Store</p><h2 class="forge-heading" id="forge-store-heading">Build your next adventure.</h2></div><span class="forge-tag">Store preview</span></div>
+        <p class="forge-muted">Forge Medals are StoneForge’s in-game currency. Choose your own path with future character perks and chroma skins.</p>
+        <div class="forge-availability">Purchases are not open yet. These are the planned prices—not active offers. Your existing game ownership and achievements are unchanged.</div>
+        <div id="forge-pack-grid" class="forge-grid" aria-label="Forge Medal packages"></div>
+        <p id="store-state" class="forge-muted" role="status">Same prices for Regular Users, Students, and Teachers / Instructors.</p>
+        <div class="forge-future" aria-label="Future spending options">
+          <article><h3>Character perks</h3><span class="forge-tag">Coming later</span><p class="forge-muted">Level 1 is included. Upgrades: 50 / 100 / 150 / 250 FM.</p><p class="forge-muted">550 FM total to Level 5.</p></article>
+          <article><h3>New characters</h3><span class="forge-tag">Coming later</span><p class="forge-muted">750 FM per new character.</p><p class="forge-muted">Your four original characters stay free.</p></article>
+          <article><h3>Chroma skins</h3><span class="forge-tag">Coming later</span><p class="forge-muted">300 FM per chroma.</p><p class="forge-muted">A new look, not additional stats.</p></article>
+        </div>
+      </section>
+
     </div>
   </div>
+
+  <dialog id="profile-completion-dialog" class="profile-dialog" aria-labelledby="profile-completion-heading">
+    <h2 id="profile-completion-heading">Complete your profile</h2>
+    <p class="forge-muted">Tell us how you’ll use StoneForge. This does not change your game account, ownership, or achievements.</p>
+    <p class="forge-muted profile-required-note" id="profile-required-note">Choose a User Type to finish your website profile. Your existing game access is unaffected.</p>
+    <form id="profile-completion-form">
+      <label for="profile-user-type">User Type</label>
+      <select id="profile-user-type" name="user_type" required>
+        <option value="" selected disabled>Select your User Type</option><option value="regular">Regular User</option><option value="student">Student</option><option value="teacher">Teacher / Instructor</option>
+      </select>
+      <div id="profile-school-group" hidden><label for="profile-school" id="profile-school-label">School name</label><input id="profile-school" maxlength="120" autocomplete="organization" placeholder="Enter your school name"></div>
+      <p id="profile-save-status" class="profile-dialog__status" role="status" aria-live="polite"></p>
+      <div class="profile-dialog__actions"><button type="button" id="profile-signout" class="forge-secondary" hidden>Sign out</button><button type="button" id="profile-cancel" class="forge-secondary" hidden>Cancel</button><button type="submit" id="profile-save" class="forge-primary">Save profile</button></div>
+    </form>
+  </dialog>
 
   <!-- Report Modal -->
   <div class="rmodal-overlay" id="report-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="rmodal-title">
@@ -310,6 +356,10 @@
   </div>
 
   <script src="StoneForge.js"></script>
+  <script src="achievements.js"></script>
+  <script src="profile-fields.js"></script>
+  <script src="profile-store.js"></script>
   <script src="dashboard.js"></script>
+  <!-- Catalog/progress are authenticated server data, not editable browser unlocks. -->
 </body>
 </html>
