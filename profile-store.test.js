@@ -4,6 +4,18 @@ const fields=require('./profile-fields');global.StoneForgeProfile=fields;
 global.StoneForgeSchools=require('./school-selector');
 const schoolCatalog=require('./test-fixtures/school-catalog.json');
 const store=require('./profile-store');
+
+test('perk preview matches approved role-specific steps without enabling live upgrades',()=>{
+ const html=fs.readFileSync('dashboard.html','utf8');
+ const preview=html.match(/<article id="forge-perk-preview">([\s\S]*?)<\/article>/)?.[1];
+ assert.ok(preview);assert.match(preview,/Level 1 is included/);
+ assert.match(preview,/Captain: 45 \/ 95 \/ 155 \/ 230 FM — 525 FM total/);
+ assert.match(preview,/Engineer: 65 \/ 125 \/ 190 \/ 270 FM — 650 FM total/);
+ assert.match(preview,/Attendant: 30 \/ 70 \/ 120 \/ 180 FM — 400 FM total/);
+ assert.match(preview,/Live upgrades coming later/);assert.match(preview,/TEST upgrades are limited/);
+ assert.match(preview,/Scientist has no paid upgrades/);assert.match(preview,/Explorer is not available/);
+ assert.doesNotMatch(preview,/550 FM|<button|onclick|href=/);
+});
 test('frontend requires an explicit supported User Type and student school; no discount or privileges',()=>{
  for(const user_type of ['',null,'admin','instructor','toString'])assert.throws(()=>fields.validate({user_type}));
  assert.throws(()=>fields.validate({user_type:'student',school:''}));
