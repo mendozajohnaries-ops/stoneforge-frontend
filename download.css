@@ -112,9 +112,25 @@
 }
 
 #tutorial-download { border:0; cursor:pointer; }
-#tutorial-download:disabled { cursor:wait; opacity:.6; }
+#tutorial-download:disabled { cursor:not-allowed; opacity:.6; }
+#tutorial-download[aria-busy="true"] { cursor:wait; }
 #tutorial-download:focus-visible { outline:3px solid var(--clr-green-light); outline-offset:4px; }
 #tutorial-note { max-width:230px; text-align:center; line-height:1.5; }
+
+.dl-maintenance-notice {
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  border: 1px solid rgba(224,178,84,.55);
+  border-radius: var(--radius-md);
+  background: rgba(224,178,84,.09);
+  color: var(--clr-text);
+  font-family: var(--font-ui);
+  line-height: 1.6;
+}
+.dl-maintenance-notice strong { color: #e0b254; }
+.dl-maintenance-notice p { margin-top: var(--space-2); }
+.dl-maintenance-notice[hidden] { display: none; }
+#full-note { max-width:250px; text-align:center; line-height:1.5; }
 
 /* Page sections */
 .dl-page {

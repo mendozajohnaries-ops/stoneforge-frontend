@@ -17,12 +17,12 @@ class Element{
  remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this);}
  click(){if(this.disabled)return;if(this.tag==='a')this.onDownload?.(this);return this.listeners.click?.();}
 }
-function fixture(replies=[]){
+function fixture(replies=[],maintenance={enabled:false}){
  const button=new Element('button'),note=new Element(),body=new Element('body'),requests=[],downloads=[],timers=new Map();
  let timerId=0;
  const document={getElementById:id=>id==='tutorial-download'?button:id==='tutorial-note'?note:null,body,
   createElement:tag=>{const element=new Element(tag);element.onDownload=link=>downloads.push({href:link.href,download:link.download,rel:link.rel,referrerPolicy:link.referrerPolicy});return element;}};
- const controller=mount({document,apiBase:'https://api.example/api',
+ const controller=mount({document,apiBase:'https://api.example/api',maintenance,
   setTimeout:callback=>{const id=++timerId;timers.set(id,callback);return id;},clearTimeout:id=>timers.delete(id),
   fetch:async(url,options)=>{
    requests.push({url,options});const next=replies.shift();if(!next)throw new Error('Unexpected request');
@@ -108,6 +108,28 @@ test('page identifies the exact Tutorial installer and preserves separate Full G
  assert.match(html,/id="tutorial-download"/);assert.match(html,/id="tutorial-note"[^>]*role="status"/);
  assert.match(html,/103\.4 MB/);assert.match(html,/Tutorial v0\.1\.0/);assert.match(html,/StoneForgeTutorialSetup\.exe/);
  assert.match(html,/How to Install the Full Game/);assert.match(html,/StoneForgeSetup\.exe/);
- assert.ok(html.indexOf('src="tutorial-download.js"')<html.indexOf('src="download.js"'));
+ assert.ok(html.indexOf('src="tutorial-download.js?')<html.indexOf('src="download.js?'));
  assert.doesNotMatch(html,/TUTORIAL_R2_SECRET|dropbox|r2\.dev/);
+});
+
+test('Demo maintenance has no click handler, requests, downloads or automatic unlock',async()=>{
+ for(const policy of [require('./download-maintenance'),null,{}]){
+  const f=fixture([{status:200,body:signed()}],policy);
+  try{
+   assert.equal(f.button.disabled,true);assert.equal(f.button.textContent,'Under Maintenance');
+   assert.match(f.note.textContent,/next week/);assert.equal(f.button.listeners.click,undefined);
+   await f.button.click();f.button.disabled=false;await f.button.click();await f.controller.download();
+   assert.equal(f.button.disabled,true);assert.equal(f.requests.length,0);assert.equal(f.downloads.length,0);
+   assert.equal(f.timers.size,0);assert.equal(f.button.attributes['aria-busy'],'false');
+  }finally{f.controller.stop();}
+ }
+});
+
+test('HTML is disabled before JavaScript and loads the versioned maintenance policy first',()=>{
+ const html=fs.readFileSync('download.html','utf8');
+ assert.match(html,/<button[^>]*id="tutorial-download"[^>]*disabled>/);
+ assert.match(html,/<div id="full-action">\s*<button[^>]*disabled[^>]*>Under Maintenance<\/button>/);
+ assert.match(html,/Under Maintenance — Will unlock next week/);
+ assert.ok(html.indexOf('src="download-maintenance.js?')<html.indexOf('src="tutorial-download.js?'));
+ assert.match(fs.readFileSync('download.css','utf8'),/#tutorial-download:disabled\s*\{\s*cursor:not-allowed/);
 });
