@@ -6,6 +6,8 @@
 (function () {
   var API_BASE = 'https://stoneforge-backend.onrender.com/api';
   var FILE_NAME = 'StoneForgeSetup.exe';
+  var maintenance = window.StoneForgeDownloadMaintenance;
+  var paused = !maintenance || maintenance.enabled !== false;
   var busy = false;
   var checking = false;
   var returningFromPayment = false;
@@ -28,6 +30,10 @@
   function banner(text) {
     var element = document.getElementById('banner-success');
     if (element) { element.textContent = text; element.style.display = 'block'; }
+  }
+  function showMaintenance() {
+    action('Under Maintenance', null, false, true);
+    note('Will unlock next week. Full Game downloads and new purchases are temporarily paused. Existing purchases are unchanged.');
   }
   function signIn() {
     note('Sign in with the account used to purchase the full game.');
@@ -62,6 +68,7 @@
   }
 
   async function checkOwnership() {
+    if (paused) { showMaintenance(); return; }
     if (checking || busy) return;
     checking = true;
     action(returningFromPayment ? 'Confirming Purchase...' : 'Checking Account...', null, false, true);
@@ -98,6 +105,7 @@
   }
 
   async function handlePurchase() {
+    if (paused) { showMaintenance(); return; }
     if (busy || checking) return;
     busy = true;
     action('Opening Checkout...', null, false, true);
@@ -131,6 +139,7 @@
   }
 
   async function handleDownload() {
+    if (paused) { showMaintenance(); return; }
     if (busy || checking) return;
     busy = true;
     action('Preparing Download...', null, true, true);
@@ -155,6 +164,16 @@
   }
 
   async function initDownload() {
+    var toggle = document.getElementById('patch-toggle');
+    var body = document.getElementById('patch-body');
+    if (toggle && body) toggle.addEventListener('click', function () {
+      var open = body.style.display !== 'none';
+      body.style.display = open ? 'none' : 'block';
+      toggle.querySelector('.patch-toggle').textContent = open ? '▶' : '▼';
+    });
+    var notice = document.getElementById('download-maintenance-notice');
+    if (notice) notice.hidden = !paused;
+    if (paused) { showMaintenance(); return; }
     var params = new URLSearchParams(window.location.search);
     returningFromPayment = params.get('payment') === 'success';
     if (returningFromPayment) banner('Returned from checkout. Confirming payment with the server...');
@@ -166,13 +185,6 @@
       params.delete('payment');
       window.history.replaceState({}, '', window.location.pathname + (params.toString() ? '?' + params : '') + window.location.hash);
     }
-    var toggle = document.getElementById('patch-toggle');
-    var body = document.getElementById('patch-body');
-    if (toggle && body) toggle.addEventListener('click', function () {
-      var open = body.style.display !== 'none';
-      body.style.display = open ? 'none' : 'block';
-      toggle.querySelector('.patch-toggle').textContent = open ? '▶' : '▼';
-    });
     await checkOwnership();
   }
   initDownload();

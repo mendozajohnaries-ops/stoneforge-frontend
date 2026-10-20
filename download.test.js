@@ -10,7 +10,7 @@ const signed = (signature = 'c') => ({ success: true, expires_in: 300, file_name
   download_url: 'https://' + 'a'.repeat(32) + '.r2.cloudflarestorage.com/stoneforge-fullgame/StoneForgeSetup.exe'
     + '?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300&X-Amz-Signature=' + signature.repeat(64) });
 
-async function fixture(replies, search = '', storage = '{"playfab_id":"FORGED","owns_game":true}') {
+async function fixture(replies, search = '', storage = '{"playfab_id":"FORGED","owns_game":true}', maintenance = { enabled: false }) {
   class Element {
     constructor(tag = 'div') { this.tag = tag; this.style = { display: 'none' }; this.events = {}; this.children = []; }
     addEventListener(type, callback) { this.events[type] = callback; }
@@ -29,7 +29,7 @@ async function fixture(replies, search = '', storage = '{"playfab_id":"FORGED","
   const context = { URL, URLSearchParams, AbortController, Promise, Error, Object,
     document: { getElementById(id) { return elements.get(id); }, body,
       createElement(tag) { return new Element(tag); }, querySelector() { return trial; } },
-    window: { location, history: { replaceState(a, b, url) { history.push(url); } } },
+    window: { location, StoneForgeDownloadMaintenance: maintenance, history: { replaceState(a, b, url) { history.push(url); } } },
     sessionStorage: { getItem() { storageReads++; return storage; } },
     setTimeout(callback, ms) { const id = ++timerId;
       if (ms === 2000) { polls++; queueMicrotask(callback); } else deadlines.set(id, callback);
@@ -197,10 +197,31 @@ test('Tutorial is delegated to its separate signed-download client; Full Game an
   assert.equal(f.trial.href, undefined);
   await f.elements.get('patch-toggle').click(); assert.equal(f.elements.get('patch-body').style.display, 'block');
   const html = fs.readFileSync(require.resolve('./download.html'), 'utf8');
-  assert.match(html, /<script src="download.js"><\/script>/); assert.match(html, /StoneForgeSetup.exe/);
+  assert.match(html, /<script src="download.js\?v=20261020-maintenance"><\/script>/); assert.match(html, /StoneForgeSetup.exe/);
   assert.ok(!html.includes('drive.google.com')); assert.ok(!html.includes('No installation required'));
   assert.ok(!html.includes('Save system not yet implemented'));
   assert.match(html, /StoneForgeTutorialSetup.exe/);
-  assert.ok(html.indexOf('src="tutorial-download.js"')<html.indexOf('src="download.js"'));
+  assert.ok(html.indexOf('src="tutorial-download.js?')<html.indexOf('src="download.js?'));
   assert.doesNotMatch(fs.readFileSync(require.resolve('./download.js'),'utf8'),/dropbox|TRIAL_URL/);
+});
+
+test('maintenance prevents owner/non-owner/payment-return requests and disables checkout/download buttons', async () => {
+  const policy = require('./download-maintenance');
+  assert.equal(policy.enabled, true); assert.match(policy.message, /will unlock next week/);
+  for (const search of ['', '?payment=success', '?payment=cancelled', '?maintenance=false']) {
+    const f = await fixture([owner, nonOwner], search, null, policy);
+    assert.equal(f.button.disabled, true); assert.equal(f.button.textContent, 'Under Maintenance');
+    assert.match(f.note, /next week/); assert.match(f.note, /Existing purchases are unchanged/);
+    await f.button.click(); f.button.disabled = false; await f.button.click();
+    assert.equal(f.requests.length, 0); assert.equal(f.downloads.length, 0);
+    assert.equal(f.location.assigned, undefined); assert.equal(f.deadlines.size, 0);
+    await f.elements.get('patch-toggle').click();
+    assert.equal(f.elements.get('patch-body').style.display, 'block');
+  }
+});
+
+test('missing Full Game policy fails closed, not back to purchase/download', async () => {
+  const f = await fixture([owner], '', null, null);
+  assert.equal(f.button.disabled, true); assert.equal(f.requests.length, 0);
+  assert.equal(f.button.textContent, 'Under Maintenance');
 });

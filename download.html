@@ -88,6 +88,11 @@
         Checkout was cancelled. Game ownership has not been confirmed by this return.
       </div>
 
+      <div class="dl-maintenance-notice" id="download-maintenance-notice" role="status">
+        <strong>Under Maintenance — Will unlock next week</strong>
+        <p>Demo and Full Game downloads are temporarily paused while we fix issues found during testing. Thank you for your patience!</p>
+      </div>
+
       <!-- FREE TRIAL CARD -->
       <div class="dl-card animate-up delay-1">
         <div class="dl-card__left">
@@ -105,12 +110,12 @@
         </div>
         <div class="dl-card__btn-wrap">
 
-          <button type="button" id="tutorial-download" class="dl-btn-link" aria-describedby="tutorial-note">
-            ⬇ Download Free Trial
+          <button type="button" id="tutorial-download" class="dl-btn-link" aria-describedby="tutorial-note" disabled>
+            Under Maintenance
           </button>
 
-          <span class="dl-btn-note" id="tutorial-note" role="status" aria-live="polite">Free Tutorial · No account or purchase required</span>
-          <noscript>Enable JavaScript to request a fresh Tutorial installer link.</noscript>
+          <span class="dl-btn-note" id="tutorial-note" role="status" aria-live="polite">Will unlock next week. Downloads are temporarily paused.</span>
+          <noscript>Demo and Full Game downloads are under maintenance and will unlock next week.</noscript>
         </div>
       </div>
 
@@ -131,9 +136,9 @@
         </div>
         <div class="dl-card__btn-wrap">
           <div id="full-action">
-            <button disabled style="display:block;width:100%;padding:0.85rem 1.5rem;background:var(--clr-orange);color:#fff;text-align:center;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:not-allowed;opacity:0.45;box-sizing:border-box;">Checking Account...</button>
+            <button type="button" disabled style="display:block;width:100%;padding:0.85rem 1.5rem;background:var(--clr-orange);color:#fff;text-align:center;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:not-allowed;opacity:0.55;box-sizing:border-box;">Under Maintenance</button>
           </div>
-          <span class="dl-btn-note" id="full-note">₱350 one-time purchase</span>
+          <span class="dl-btn-note" id="full-note" role="status" aria-live="polite">Will unlock next week. Existing purchases are unchanged.</span>
         </div>
       </div>
 
@@ -267,7 +272,8 @@
   </footer>
 
   <script src="StoneForge.js"></script>
-  <script src="tutorial-download.js"></script>
-  <script src="download.js"></script>
+  <script src="download-maintenance.js?v=20261020"></script>
+  <script src="tutorial-download.js?v=20261020-maintenance"></script>
+  <script src="download.js?v=20261020-maintenance"></script>
 </body>
 </html>

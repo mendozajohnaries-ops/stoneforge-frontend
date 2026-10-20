@@ -18,12 +18,18 @@
     /^[a-f0-9]{64}$/.test(url.searchParams.get('X-Amz-Signature')||'');
   }catch{return false;}
  }
- function mount({document,apiBase,fetch:request=root.fetch.bind(root),setTimeout:schedule=setTimeout,clearTimeout:cancel=clearTimeout}){
+ function mount({document,apiBase,fetch:request=root.fetch.bind(root),setTimeout:schedule=setTimeout,clearTimeout:cancel=clearTimeout,
+  maintenance=root.StoneForgeDownloadMaintenance}){
   const button=document.getElementById('tutorial-download'),note=document.getElementById('tutorial-note');
   if(!button||!note)return null;
   let busy=false,stopped=false,controller;
-  function ready(){button.disabled=false;button.textContent='⬇ Download Free Trial';button.setAttribute('aria-busy','false');}
+  // Missing policy fails closed, including a partially cached/script-error page.
+  const paused=maintenance?.enabled!==false;
+  function showMaintenance(){button.disabled=true;button.textContent='Under Maintenance';button.setAttribute('aria-busy','false');
+   note.textContent='Will unlock next week. Demo downloads are temporarily paused while we fix issues found during testing.';}
+  function ready(){if(paused){showMaintenance();return;}button.disabled=false;button.textContent='⬇ Download Free Trial';button.setAttribute('aria-busy','false');}
   async function download(){
+   if(paused){showMaintenance();return;}
    if(busy||stopped)return;
    busy=true;button.disabled=true;button.textContent='Preparing Tutorial…';button.setAttribute('aria-busy','true');
    note.textContent='Preparing a fresh installer link. No account or purchase required.';
@@ -44,7 +50,7 @@
     if(!stopped)note.textContent='Tutorial download unavailable. Please wait and retry. No account or purchase is required.';
    }finally{cancel(deadline);busy=false;if(!stopped)ready();}
   }
-  button.addEventListener('click',download);ready();note.textContent='Free Tutorial · No account or purchase required';
+  if(!paused)button.addEventListener('click',download);ready();if(!paused)note.textContent='Free Tutorial · No account or purchase required';
   return{download,stop(){stopped=true;controller?.abort();button.removeEventListener('click',download);}};
  }
  const api={RELEASE,validDownload,mount};
