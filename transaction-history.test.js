@@ -9,11 +9,12 @@ const row=(id,type='reward')=>({id,type,description:'First Improvement',status:'
 async function settled(){for(let i=0;i<8;i++)await new Promise(resolve=>setImmediate(resolve));}
 function fixture(response){
  const nodes=Object.fromEntries(['history-items','history-status','history-filter','history-more','history-refresh'].map(k=>[k,new Node()]));
- const document={hidden:false,getElementById:id=>nodes[id],createElement:()=>new Node(),addEventListener(){},removeEventListener(){}};
+ const listeners={};
+ const document={hidden:false,getElementById:id=>nodes[id],createElement:()=>new Node(),addEventListener(name,fn){listeners[name]=fn;},removeEventListener(name){delete listeners[name];}};
  let owner='alice';const calls=[];
  const controller=mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>owner,fetch:async(url,options)=>{
   calls.push({url,options});return{ok:true,json:async()=>typeof response==='function'?response(url):response};}});
- return{nodes,calls,controller,owner(value){owner=value;}};
+ return{nodes,calls,controller,document,listeners,owner(value){owner=value;}};
 }
 test('history loads owner-scoped GET, signs FM, shows pending rather than credit, and preserves text safety',async()=>{
  const f=fixture({version:1,owner:'alice',environment:'test',next_cursor:null,items:[row('a'),row('b','spend'),
@@ -34,6 +35,23 @@ test('pagination de-duplicates across pages; filters reset rather than mix histo
   filtered=true;f.nodes['history-filter'].value='spend';await f.nodes['history-filter'].listeners.change();assert.equal(f.nodes['history-items'].children.length,1);
   assert.match(f.calls.at(-1).url,/type=spend/);assert.doesNotMatch(f.calls.at(-1).url,/cursor=/);
  }finally{f.controller.stop();}
+});
+test('history loads once, ignores tab visibility and only reloads on its own Refresh or manual navigation',async()=>{
+ const f=fixture({version:1,owner:'alice',environment:'test',next_cursor:null,items:[row('a')]});
+ try{await settled();assert.equal(f.calls.length,1);assert.equal(f.listeners.visibilitychange,undefined);assert.equal(f.controller.refresh,undefined);
+  f.document.hidden=true;f.listeners.visibilitychange?.();f.document.hidden=false;f.listeners.visibilitychange?.();await settled();assert.equal(f.calls.length,1);
+  await f.nodes['history-refresh'].listeners.click();assert.equal(f.calls.length,2);
+  assert.match(f.nodes['history-status'].textContent,/Use Refresh to update/);
+  f.nodes['history-filter'].value='reward';await f.nodes['history-filter'].listeners.change();assert.equal(f.calls.length,3);
+ }finally{f.controller.stop();}
+});
+test('wallet refresh no longer reloads history; achievement/wallet background behavior stays intact',()=>{
+ const source=fs.readFileSync('dashboard.js','utf8'),body=source.match(/onWalletRefresh: \(\) => \{([^}]+)\}/)?.[1];assert.ok(body);
+ const calls={history:0,achievements:0};vmRun(body,{transactionBrowser:{refresh(){calls.history++;}},achievementBrowser:{refresh(){calls.achievements++;}}});
+ assert.deepEqual(calls,{history:0,achievements:1});
+ assert.doesNotMatch(fs.readFileSync('transaction-history.js','utf8'),/setInterval|visibilitychange/);
+ assert.match(fs.readFileSync('profile-store.js','utf8'),/setInterval\(onVisible,60000\)/);
+ function vmRun(code,context){require('node:vm').runInNewContext(code,context);}
 });
 test('wrong owner, malformed amounts/dates, duplicate IDs and reward failure never become an empty success',async()=>{
  for(const edit of [d=>d.owner='bob',d=>d.items[0].amount='20',d=>d.items[0].amount=-1,d=>d.items[0].created_at='invalid',d=>d.items.push(d.items[0])]){

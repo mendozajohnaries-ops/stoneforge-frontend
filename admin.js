@@ -7,6 +7,18 @@ let allPlayers     = [];
 let playerStatuses = {}; // { playfab_id: { status, suspension_end } }
 let reportCounts   = {}; // { playfab_id: count }
 let currentTab     = 'all';
+let signingOut = false;
+
+async function signOut() {
+    if (signingOut) return;
+    signingOut = true;
+    try {
+        if (!await StoneForgeSignOut.confirm()) return;
+        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+        sessionStorage.removeItem('sf_user');
+        window.location.href = 'login-page.html';
+    } finally { signingOut = false; }
+}
 
 function formatDate(iso) {
     if (!iso) return '—';
@@ -458,11 +470,7 @@ async function initAdmin() {
         if (purchData.success) renderPurchases(purchData.purchases);
     } catch { renderPurchases([]); }
 
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
-        sessionStorage.removeItem('sf_user');
-        window.location.href = 'login-page.html';
-    });
+    document.getElementById('logout-btn').addEventListener('click', signOut);
 }
 
 initAdmin();
