@@ -182,7 +182,8 @@
 .trailer__video-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9; /* ← add this */
+  aspect-ratio: 16 / 9;
+  min-height: 200px;
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--clr-border);
@@ -190,7 +191,6 @@
   background: #000;
 }
 
-/* replace the video rule with this */
 .trailer__video-wrapper iframe,
 .trailer__video-wrapper video {
   position: absolute;

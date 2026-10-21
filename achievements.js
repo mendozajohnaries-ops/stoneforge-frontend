@@ -56,8 +56,10 @@
             let shown = 0;
             for (const def of definitions) {
                 if (filter.value && filter.value !== 'All' && filter.value !== def.category) continue;
-                if (!expanded && shown++ >= 6) break;
                 const current = state(def, records);
+                if (!expanded && current.status !== 'unlocked') continue;
+                if (!expanded && shown >= 6) break;
+                shown++;
                 const card = element('article', undefined, 'achievement-item achievement-item--' + current.status);
                 const icon = element('div', current.status === 'unlocked' ? '✓' : '?', 'achievement-icon');
                 icon.setAttribute('aria-hidden', 'true'); card.append(icon);
@@ -74,6 +76,9 @@
                 }
                 card.append(info); grid.append(card);
             }
+            if (!shown) grid.append(element('p', expanded ? 'No achievements in this category.' :
+                filter.value && filter.value !== 'All' ? 'No completed achievements in this category yet.' :
+                'No completed achievements yet.', 'achievement-empty'));
         }
         async function load() {
             if (stopped) return;
@@ -99,7 +104,7 @@
             } finally { if (!stopped && requestGeneration === generation) refresh.disabled = false; }
         }
         const onFilter = () => render();
-        const onExpand = () => { expanded = !expanded; viewAll.textContent = expanded ? 'Show fewer achievements' : 'View all achievements'; render(); };
+        const onExpand = () => { expanded = !expanded; viewAll.textContent = expanded ? 'Show completed achievements' : 'View all achievements'; render(); };
         viewAll?.addEventListener('click', onExpand);
         const onVisible = () => { if (!document.hidden) load(); };
         filter.addEventListener('change', onFilter); refresh.addEventListener('click', load);

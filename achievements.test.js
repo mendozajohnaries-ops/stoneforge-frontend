@@ -58,26 +58,47 @@ test('browser renders all 71, filters categories, shows real progress and uses c
         assert.ok(f.calls.every(call=>call.options.credentials==='include'&&!call.options.method&&!call.options.body));
     } finally {f.browser.stop();}
 });
-test('six-card preview expands and collapses; only unlocked details are revealed', async () => {
+test('completed-only preview expands and collapses; locked details stay concealed in the full catalog', async () => {
     const f=fixture({version:1,records:[{id:definitions[0].id,progress:definitions[0].target}]},catalog,true);
     try {
         await f.browser.refresh();
         const grid=f.nodes['achievements-grid'];
-        assert.equal(grid.children.length,6);
+        assert.equal(grid.children.length,1);
         assert.equal(grid.children[0].children[1].children[0].textContent,definitions[0].title);
+        f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,71);
+        assert.equal(f.nodes['achievement-view-all'].textContent,'Show completed achievements');
         for(const card of grid.children.slice(1)) {
             assert.equal(card.children[0].textContent,'?');
             assert.equal(card.children[1].children[0].textContent,'???');
             assert.equal(card.children[1].children[1].textContent,'???');
         }
-        f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,71);
-        assert.equal(f.nodes['achievement-view-all'].textContent,'Show fewer achievements');
-        f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,6);
+        f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,1);
         f.nodes['achievement-category'].value='Collection';f.nodes['achievement-category'].listeners.change();
-        assert.equal(grid.children.length,2);
-        assert.ok(grid.children.every(card=>card.children[1].children[0].textContent==='???'));
+        assert.equal(grid.children.length,1);
+        assert.equal(grid.children[0].textContent,'No completed achievements in this category yet.');
     } finally { f.browser.stop(); }
     assert.equal(f.nodes['achievement-view-all'].listeners.click,undefined);
+});
+test('completed achievements beyond the first six catalog entries are shown without inventing progress',async()=>{
+ const late=definitions.filter(def=>def.available&&def.authority!=='server_perks').at(-1);
+ const f=fixture({version:1,records:[{id:late.id,progress:late.target}]},catalog,true);
+ try{await f.browser.refresh();const cards=f.nodes['achievements-grid'].children;
+  assert.equal(cards.length,1);assert.equal(cards[0].children[1].children[0].textContent,late.title);
+  assert.match(f.nodes['achievement-sync-status'].textContent,/1\/64/);
+  assert.ok(f.calls.every(call=>!call.options.method&&!call.options.body));
+ }finally{f.browser.stop();}
+});
+test('empty completed preview is explicit; at most six earned cards appear and View all retains all entries',async()=>{
+ const empty=fixture({version:1,records:[]},catalog,true);
+ try{await empty.browser.refresh();assert.equal(empty.nodes['achievements-grid'].children[0].textContent,'No completed achievements yet.');
+  empty.nodes['achievement-view-all'].listeners.click();assert.equal(empty.nodes['achievements-grid'].children.length,71);
+ }finally{empty.browser.stop();}
+ const earned=definitions.filter(def=>def.available&&def.authority!=='server_perks').slice(0,8);
+ const f=fixture({version:1,records:earned.map(def=>({id:def.id,progress:def.target}))},catalog,true);
+ try{await f.browser.refresh();const grid=f.nodes['achievements-grid'];assert.equal(grid.children.length,6);
+  assert.ok(grid.children.every(card=>card.children[0].textContent==='✓'));assert.match(f.nodes['achievement-sync-status'].textContent,/8\/64/);
+  f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,71);
+ }finally{f.browser.stop();}
 });
 
 test('unavailable server never appears as a successful locked or reset account', async () => {

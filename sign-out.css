@@ -1,4 +1,4 @@
-.signout-dialog { box-sizing:border-box; width:min(420px,calc(100% - 2rem)); padding:1.75rem; border:1px solid var(--clr-border-hover); border-radius:var(--radius-md); background:var(--clr-surface); color:var(--clr-text); box-shadow:0 20px 70px #0009; }
+.signout-dialog { position:fixed; inset:0; margin:auto; height:fit-content; max-height:calc(100dvh - 2rem); overflow:auto; box-sizing:border-box; width:min(420px,calc(100% - 2rem)); padding:1.75rem; border:1px solid var(--clr-border-hover); border-radius:var(--radius-md); background:var(--clr-surface); color:var(--clr-text); box-shadow:0 20px 70px #0009; }
 .signout-dialog::backdrop { background:#000a; backdrop-filter:blur(3px); }
 .signout-dialog h2 { margin:0 0 .75rem; font:400 1.7rem var(--font-display); color:var(--clr-white); }
 .signout-dialog p { margin:0 0 1.5rem; font:.85rem/1.6 var(--font-ui); }
