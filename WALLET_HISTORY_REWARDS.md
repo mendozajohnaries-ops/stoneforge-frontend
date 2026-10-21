@@ -10,7 +10,7 @@ Catalog v2 keeps 71 stable achievement IDs, enables six server-only perk milesto
 
 On verified wallet refresh, eligible accounts first POST an empty object to the protected reconciliation endpoint, then re-read their authoritative wallet. History and achievements refresh after that read. Old backend purchase receipts can earn their missed milestone once; local saves/screenshots/synced gameplay are not proofs. A reconciliation outage does not fake success or reset the balance: confirmed funds remain visible with a retry notice.
 
-Deploy backend first (see its PERK_REWARDS_HISTORY_SETUP.md), then this frontend, then use the updated matching Unity player. Keep existing TEST flags and exact allowlists; there are no new Render variables. Do not enable live keys, merge environments or remove public-download maintenance. Existing browser sessions should hard-refresh after deployment. No production deployment or personal account reconciliation is performed by this PR.
+Deploy backend first (see its PERK_REWARDS_HISTORY_SETUP.md), then this frontend, then use the updated matching Unity player. Keep existing TEST flags and the exact **perk** allowlist; the FM Store now admits all active signed-in complete-profile accounts without ownership or a Store tester list (see PROFILE_STORE_PREVIEW.md). There are no new Render variables. Do not enable live keys, merge environments or remove public-download maintenance. Existing browser sessions should hard-refresh after deployment. No production deployment or personal account reconciliation is performed by this PR.
 
 Validation command:
 

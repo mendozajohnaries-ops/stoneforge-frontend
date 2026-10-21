@@ -283,7 +283,8 @@
     <div class="forge-dialog__body" id="forge-store-body">
       <p class="forge-muted" id="forge-store-description">Forge Medals are StoneForge’s in-game currency. Upgrade character perks and unlock Explorer in the game.</p>
       <p class="forge-muted" id="store-test-row" hidden><span id="store-test-balance"></span></p>
-      <div class="forge-availability" id="forge-store-availability">Purchases are not open yet. These are the planned prices—not active offers. Your existing game ownership and achievements are unchanged.</div>
+      <div class="forge-availability" id="forge-store-availability" role="status" aria-live="polite">Checking your wallet and checkout access…</div>
+      <button type="button" class="forge-secondary" id="forge-store-retry">Refresh wallet / Retry</button>
       <div id="forge-store-browse">
         <div class="forge-panel-head"><h3 class="forge-pack-heading">Choose your Forge Medals</h3><span class="forge-tag" id="forge-store-mode">Store preview</span></div>
         <div id="forge-pack-grid" class="forge-grid" aria-label="Forge Medal packages"></div>
