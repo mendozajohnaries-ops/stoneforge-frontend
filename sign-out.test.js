@@ -57,3 +57,8 @@ test('both pages load the confirmation module before their logout handlers; requ
  }
  assert.match(fs.readFileSync('dashboard.js','utf8'),/onSignOut: signOut/);
 });
+test('dialog explicitly restores centering overridden by the global margin reset and stays inside small viewports',()=>{
+ const css=fs.readFileSync('sign-out.css','utf8'),rule=css.match(/\.signout-dialog\s*\{([^}]+)\}/)?.[1];assert.ok(rule);
+ for(const pattern of [/position:fixed/,/inset:0/,/margin:auto/,/height:fit-content/,/max-height:calc\(100dvh - 2rem\)/,/overflow:auto/,/width:min\(420px,calc\(100% - 2rem\)\)/])assert.match(rule,pattern);
+ assert.match(fs.readFileSync('base.css','utf8'),/\*[^}]+margin: 0/);
+});
