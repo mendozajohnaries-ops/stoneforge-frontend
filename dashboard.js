@@ -44,8 +44,9 @@ function renderOwnerBadge(ownsGame) {
 
 let achievementBrowser = null;
 let storeBrowser = null;
+let transactionBrowser = null;
 async function signOut() {
-    achievementBrowser?.stop(); storeBrowser?.stop(); cachedUser = null;
+    achievementBrowser?.stop(); storeBrowser?.stop(); transactionBrowser?.stop(); cachedUser = null;
     await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     sessionStorage.removeItem('sf_user');
     window.location.href = 'login-page.html';
@@ -260,8 +261,11 @@ async function initDashboard() {
 
     renderProfile(cachedUser, details);
     renderOwnerBadge(ownsGame);
+    transactionBrowser = StoneForgeTransactions.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
+        currentOwner: () => cachedUser?.playfab_id });
     storeBrowser = StoneForgeStore.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
-        currentOwner: () => cachedUser?.playfab_id, initialProfile: profile, onSignOut: signOut });
+        currentOwner: () => cachedUser?.playfab_id, initialProfile: profile, onSignOut: signOut,
+        onWalletRefresh: () => { transactionBrowser?.refresh(); achievementBrowser?.refresh(); } });
 
 
 
