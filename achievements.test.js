@@ -4,9 +4,9 @@ const { categories, validateCatalog, validateRecords, state, summary, mount } = 
 const fs = require('node:fs');
 const catalog = JSON.parse(fs.readFileSync('test-fixtures/achievement-catalog.json', 'utf8'));
 const definitions = validateCatalog(catalog);
-test('71 shared definitions, 58 earnable, 13 visibly reserved and correct categories', () => {
+test('71 shared definitions, 64 supported, 7 reserved and correct categories', () => {
     assert.equal(definitions.length, 71); assert.equal(categories.length, 7);
-    assert.deepEqual(summary(definitions, new Map()), { available:58, reserved:13, unlocked:0 });
+    assert.deepEqual(summary(definitions, new Map()), { available:64, reserved:7, unlocked:0 });
     for (const def of definitions) assert.equal(state(def, new Map()).status, def.available ? 'locked' : 'unavailable');
 });
 test('counter and unlock display use actual targets; reserved cannot be remotely unlocked', () => {
@@ -23,6 +23,13 @@ test('malformed catalog/snapshot, duplicates and unbounded progress reject safel
     for (const records of [[{id:'fake',progress:1}],[{id:definitions[0].id,progress:-1}],
         [{id:definitions[0].id,progress:2}],Array(72).fill({id:definitions[0].id,progress:1})])
         assert.throws(()=>validateRecords({version:1,records}, definitions));
+});
+
+test('perk achievement uploads cannot masquerade as trusted server snapshots',()=>{
+ const id='perk.first_improvement';
+ assert.throws(()=>validateRecords({version:2,records:[{id,progress:1}]},definitions));
+ assert.throws(()=>validateRecords({version:1,records:[{id,progress:1,source:'server_perks'}]},definitions));
+ assert.equal(validateRecords({version:2,records:[{id,progress:1,source:'server_perks'}]},definitions).get(id).progress,1);
 });
 class Node {
     constructor(tag='div') { this.tag=tag; this.children=[]; this.listeners={}; this.value=''; this.textContent=''; this.attributes={}; }
@@ -45,7 +52,7 @@ test('browser renders all 71, filters categories, shows real progress and uses c
     const f=fixture({version:1,records:[{id:'gameplay.resourceful_survivor',progress:2}]});
     try {
         await f.browser.refresh(); assert.equal(f.nodes['achievements-grid'].children.length,71);
-        assert.match(f.nodes['achievement-sync-status'].textContent,/0\/58.*13 reserved/);
+        assert.match(f.nodes['achievement-sync-status'].textContent,/0\/64.*7 reserved/);
         f.nodes['achievement-category'].value='Collection'; f.nodes['achievement-category'].listeners.change();
         assert.equal(f.nodes['achievements-grid'].children.length,2);
         assert.ok(f.calls.every(call=>call.options.credentials==='include'&&!call.options.method&&!call.options.body));

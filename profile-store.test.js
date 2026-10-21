@@ -5,16 +5,11 @@ global.StoneForgeSchools=require('./school-selector');
 const schoolCatalog=require('./test-fixtures/school-catalog.json');
 const store=require('./profile-store');
 
-test('perk preview matches approved role-specific steps without enabling live upgrades',()=>{
+test('Store uses catalog-driven prices and removes Chroma promotion',()=>{
  const html=fs.readFileSync('dashboard.html','utf8');
- const preview=html.match(/<article id="forge-perk-preview">([\s\S]*?)<\/article>/)?.[1];
- assert.ok(preview);assert.match(preview,/Level 1 is included/);
- assert.match(preview,/Captain: 45 \/ 95 \/ 155 \/ 230 FM — 525 FM total/);
- assert.match(preview,/Engineer: 65 \/ 125 \/ 190 \/ 270 FM — 650 FM total/);
- assert.match(preview,/Attendant: 30 \/ 70 \/ 120 \/ 180 FM — 400 FM total/);
- assert.match(preview,/Live upgrades coming later/);assert.match(preview,/TEST upgrades are limited/);
- assert.match(preview,/Scientist has no paid upgrades/);assert.match(preview,/Explorer is not available/);
- assert.doesNotMatch(preview,/550 FM|<button|onclick|href=/);
+ assert.match(html,/id="forge-character-preview"/);
+ assert.doesNotMatch(html,/Chroma skins|300 FM per chroma|Explorer is not available yet/);
+ assert.match(fs.readFileSync('profile-store.js','utf8'),/catalog\?\.perk_upgrades/);
 });
 test('frontend requires an explicit supported User Type and student school; no discount or privileges',()=>{
  for(const user_type of ['',null,'admin','instructor','toString'])assert.throws(()=>fields.validate({user_type}));
@@ -49,14 +44,17 @@ const ids=['profile-signout','profile-completion-dialog','profile-completion-for
  'user-type-value','profile-user-type-badge','school-value','school-display-row','forge-pack-grid','wallet-balance','wallet-state',
  'wallet-test-row','wallet-test-balance','store-state','wallet-refresh','open-forge-store','forge-store','forge-store-close','forge-store-body',
  'store-wallet-balance','store-test-row','store-test-balance','forge-store-mode','forge-store-availability','forge-store-browse',
- 'forge-confirmation','forge-confirmation-heading','forge-confirm-pack','forge-confirm-price','forge-confirm-back','forge-confirm-continue'];
+ 'forge-confirmation','forge-confirmation-heading','forge-confirm-pack','forge-confirm-price','forge-confirm-back','forge-confirm-continue','forge-perk-preview','forge-character-preview'];
 const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'fm_handful',name:'Handful',medals:200,price_centavos:4900,image:'Assets/store/fm-handful.png'},
  {id:'fm_pouch',name:'Pouch',medals:450,price_centavos:9900,image:'Assets/store/fm-pouch.png'},
  {id:'fm_crate',name:'Crate',medals:1000,price_centavos:19900,image:'Assets/store/fm-crate.png'},
- {id:'fm_chest',name:'Chest',medals:2200,price_centavos:39900,image:'Assets/store/fm-chest.png'}]};
+ {id:'fm_chest',name:'Chest',medals:2200,price_centavos:39900,image:'Assets/store/fm-chest.png'}],
+ perk_upgrades:{id:'multiplayer-perks',version:2,explorer_available:true,explorer_unlock_cost:750,characters:[
+ {id:'captain',costs:[45,95,155,230]},{id:'engineer',costs:[65,125,190,270]},
+ {id:'attendant',costs:[30,70,120,180]},{id:'explorer',costs:[80,140,205,300]}]}};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
-function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=false,testBalance=0,checkoutReply}={}){
+function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=false,testBalance=0,checkoutReply,walletReply,rewardReply}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -75,10 +73,37 @@ function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=fals
    if(url.endsWith('/profile'))return{ok:true,json:async()=>({...current})};
    if(url.endsWith('/store/catalog'))return{ok:true,json:async()=>catalog};
    if(url.endsWith('/store/checkout'))return checkoutReply?checkoutReply():{ok:true,json:async()=>({environment:'test',checkout_url:'https://checkout.paymongo.com/cs_fixture'})};
+   if(url.endsWith('/wallet/reconcile')&&rewardReply)return rewardReply();
+   if(url.endsWith('/wallet')&&walletReply)return{ok:true,json:async()=>walletReply()};
    return{ok:!failWallet,json:async()=>({owner:wrongOwner?'bob':'alice',balance:0,environment:'live',test_checkout_available:eligible,test_balance:testBalance})};
   }});
  return{nodes,calls,controller,navigation,all,document,setOwner(value){accountOwner=value;}};
 }
+
+test('verified display wallet matches the game; reward reconciliation precedes the final balance read',async()=>{
+ let balance=155,reconciles=0;
+ const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_wallet_available:true,test_checkout_available:false,test_balance:balance,display_environment:'test',display_balance:balance,perk_rewards_available:true}),
+  rewardReply:()=>{reconciles++;balance=175;return{ok:true,json:async()=>({owner:'alice',environment:'test',credited:['perk.first_improvement']})};}});
+ try{await settled();assert.equal(reconciles,1);assert.equal(f.nodes['wallet-balance'].textContent,'175');assert.equal(f.nodes['store-wallet-balance'].textContent,'175');
+  const call=f.calls.find(c=>c.url.endsWith('/wallet/reconcile'));assert.equal(call.options.body,'{}');assert.equal(call.options.headers['x-playfab-id'],'alice');
+  assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>n.disabled),'perk testers without checkout permission cannot pay');
+ }finally{f.controller.stop();}
+});
+
+test('catalog v2 renders all four perk price matrices and the real in-game Explorer unlock price',async()=>{
+ const f=fixture();try{await settled();const text=f.all().map(n=>n.textContent).join(' ');
+  for(const value of ['45 / 95 / 155 / 230','65 / 125 / 190 / 270','30 / 70 / 120 / 180','80 / 140 / 205 / 300','750 FM'])assert.ok(text.includes(value));
+  assert.match(text,/Scientist has no paid upgrades/);assert.doesNotMatch(text,/Chroma|Coming soon|Explorer is not available/);
+ }finally{f.controller.stop();}
+});
+
+test('reward outage never fabricates money; wallet mode mismatch fails closed',async()=>{
+ const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_wallet_available:true,test_balance:155,display_environment:'test',display_balance:155,perk_rewards_available:true}),
+  rewardReply:()=>({ok:false,json:async()=>({error:'unavailable'})})});
+ try{await settled();assert.equal(f.nodes['wallet-balance'].textContent,'155');assert.match(f.nodes['wallet-state'].textContent,/sync is pending/);}finally{f.controller.stop();}
+ const bad=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_wallet_available:true,test_balance:155,display_environment:'live',display_balance:0})});
+ try{await settled();assert.equal(bad.nodes['wallet-balance'].textContent,'Unavailable');}finally{bad.controller.stop();}
+});
 test('existing untyped user gets a non-dismissible completion prompt; save preserves identity header',async()=>{
  const f=fixture({type:null});try{
   await settled();assert.equal(f.nodes['profile-completion-dialog'].open,true);assert.equal(f.nodes['profile-cancel'].hidden,true);
@@ -110,7 +135,7 @@ test('test checkout requires package review, guards double clicks and sends only
   await settled();const button=f.all().find(node=>node.dataset.forgePack==='fm_handful');
   f.controller.open();await button.fire('click');
   assert.equal(f.nodes['forge-confirmation'].hidden,false);assert.equal(f.nodes['forge-store-browse'].hidden,true);
-  assert.match(f.nodes['forge-confirm-pack'].textContent,/200 TEST FM/);assert.match(f.nodes['forge-confirm-price'].textContent,/49\.00/);
+  assert.match(f.nodes['forge-confirm-pack'].textContent,/200 FM/);assert.match(f.nodes['forge-confirm-price'].textContent,/49\.00/);
   assert.equal(f.calls.some(call=>call.url.endsWith('/store/checkout')),false);
   await Promise.all([f.nodes['forge-confirm-continue'].fire('click'),f.nodes['forge-confirm-continue'].fire('click')]);await settled();
   const calls=f.calls.filter(call=>call.url.endsWith('/store/checkout'));assert.equal(calls.length,1);
@@ -171,8 +196,8 @@ test('shop intent waits for required profile completion, never stacks the Store 
 test('back/reopen cancels package selection without creating an order; test wallet stays clearly separate',async()=>{
  const f=fixture({eligible:true,testBalance:450});try{
   await settled();f.controller.open();const button=f.all().find(node=>node.dataset.forgePack==='fm_pouch');await button.fire('click');
-  assert.equal(f.nodes['store-wallet-balance'].textContent,'0');assert.match(f.nodes['store-test-balance'].textContent,/450 TEST FM/);
-  assert.equal(f.nodes['store-test-row'].hidden,false);assert.equal(f.nodes['forge-store-mode'].textContent,'Test mode');
+  assert.equal(f.nodes['store-wallet-balance'].textContent,'450');assert.equal(f.nodes['wallet-balance'].textContent,'450');
+  assert.equal(f.nodes['store-test-row'].hidden,true);assert.equal(f.nodes['forge-store-mode'].textContent,'Sandbox demo');
   await f.nodes['forge-confirm-back'].fire('click');assert.equal(f.nodes['forge-confirmation'].hidden,true);assert.equal(f.document.activeElement,button);
   await button.fire('click');await f.nodes['forge-store-close'].fire('click');f.controller.open();
   assert.equal(f.nodes['forge-confirmation'].hidden,true);assert.equal(f.nodes['forge-confirm-continue'].disabled,true);

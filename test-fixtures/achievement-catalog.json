@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "definitions": [
     {
       "id": "chapter1.a_stranger_on_the_shore",
@@ -404,7 +404,8 @@
       "category": "Perks",
       "chapter": 0,
       "target": 1,
-      "available": false,
+      "available": true,
+      "authority": "server_perks",
       "scope": "account",
       "iconItem": ""
     },
@@ -415,7 +416,8 @@
       "category": "Perks",
       "chapter": 0,
       "target": 1,
-      "available": false,
+      "available": true,
+      "authority": "server_perks",
       "scope": "account",
       "iconItem": ""
     },
@@ -426,7 +428,8 @@
       "category": "Perks",
       "chapter": 0,
       "target": 1,
-      "available": false,
+      "available": true,
+      "authority": "server_perks",
       "scope": "account",
       "iconItem": ""
     },
@@ -437,7 +440,8 @@
       "category": "Perks",
       "chapter": 0,
       "target": 1,
-      "available": false,
+      "available": true,
+      "authority": "server_perks",
       "scope": "account",
       "iconItem": ""
     },
@@ -448,7 +452,8 @@
       "category": "Perks",
       "chapter": 0,
       "target": 1,
-      "available": false,
+      "available": true,
+      "authority": "server_perks",
       "scope": "account",
       "iconItem": ""
     },
@@ -470,7 +475,8 @@
       "category": "Perks",
       "chapter": 0,
       "target": 1,
-      "available": false,
+      "available": true,
+      "authority": "server_perks",
       "scope": "account",
       "iconItem": ""
     },

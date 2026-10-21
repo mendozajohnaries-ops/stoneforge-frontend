@@ -52,11 +52,19 @@ html.forge-store-open, html.forge-store-open body { overflow:hidden; }
 .forge-pack__price { color:#f3ead6; font:700 1.25rem var(--font-ui); margin:.4rem 0 1rem; }
 .forge-pack button { width:100%; margin-top:auto; }
 .forge-availability { background:#27281f; border:1px solid #4c4c34; border-radius:10px; padding:.9rem 1rem; margin:1rem 0; color:#c4c5ad; font:.8rem/1.6 var(--font-ui); }
-.forge-future { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin-top:1.4rem; }
+.forge-future { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin-top:1.4rem; }
 .forge-future article { padding:1rem; border:1px solid #373d32; border-radius:10px; background:#191d17; }
 .forge-future h3 { color:#d4d9c9; font:600 .9rem var(--font-ui); margin:0 0 .5rem; }
 .forge-future p { margin:.25rem 0; }
 .forge-history { margin-top:1rem; font:.8rem var(--font-ui); }
+.forge-transactions { display:grid; gap:.7rem; margin:1rem 0; }
+.forge-transaction { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:.5rem 1rem; padding:1rem; background:#191d17; border:1px solid #373d32; border-radius:10px; font:.85rem/1.5 var(--font-ui); }
+.forge-transaction h3 { margin:0; font-size:.9rem; overflow-wrap:anywhere; }
+.forge-transaction p { margin:.25rem 0 0; color:#a9b29f; font-size:.75rem; }
+.forge-transaction__amount { text-align:right; font-weight:700; color:#f0cd81; white-space:nowrap; }
+.forge-transaction__amount--debit { color:#f0b6a9; }
+#history-filter { background:#22291e; color:#d9e6ce; border:1px solid #46513a; border-radius:8px; padding:.7rem; max-width:100%; }
+@media(max-width:480px) { .forge-transaction { grid-template-columns:1fr; } .forge-transaction__amount { text-align:left; } }
 .forge-error { color:#f2ad9c !important; }
 .achievement-item { min-width:0; align-items:flex-start; padding:1rem; }
 .achievement-item--unlocked .achievement-icon { color:#e5bf6b; }

@@ -258,6 +258,17 @@
         </div>
       </div>
 
+      <section class="card card--full" id="transaction-history" aria-labelledby="history-heading">
+        <div class="forge-panel-head"><h2 class="forge-heading" id="history-heading">Transaction History</h2>
+          <div class="wallet-actions"><label for="history-filter">Activity</label>
+            <select id="history-filter"><option value="all">All activity</option><option value="topup">FM purchases</option><option value="spend">Upgrades &amp; unlocks</option><option value="reward">Achievement rewards</option></select>
+            <button type="button" class="forge-secondary" id="history-refresh">Refresh</button></div>
+        </div>
+        <p id="history-status" class="forge-muted" role="status" aria-live="polite">Loading your transactions…</p>
+        <div id="history-items" class="forge-transactions"></div>
+        <button type="button" id="history-more" class="forge-secondary" hidden>Load more</button>
+      </section>
+
     </div>
   </div>
 
@@ -265,28 +276,27 @@
     <header class="forge-dialog__header">
       <div><p class="forge-kicker">Build your next adventure</p><h2 class="forge-heading" id="forge-store-heading">Forge Store</h2></div>
       <div class="forge-dialog__tools">
-        <div class="forge-dialog__wallet" aria-label="Your live Forge Medal balance"><img src="Assets/store/fm-handful.png" alt="" width="32" height="32"><span><span id="store-wallet-balance">—</span> FM</span></div>
+        <div class="forge-dialog__wallet" aria-label="Your Forge Medal balance"><img src="Assets/store/fm-handful.png" alt="" width="32" height="32"><span><span id="store-wallet-balance">—</span> FM</span></div>
         <button type="button" class="forge-dialog__close" id="forge-store-close" aria-label="Close Forge Store" autofocus>✕</button>
       </div>
     </header>
     <div class="forge-dialog__body" id="forge-store-body">
-      <p class="forge-muted" id="forge-store-description">Forge Medals are StoneForge’s in-game currency. Choose your own path with future character perks and chroma skins.</p>
+      <p class="forge-muted" id="forge-store-description">Forge Medals are StoneForge’s in-game currency. Upgrade character perks and unlock Explorer in the game.</p>
       <p class="forge-muted" id="store-test-row" hidden><span id="store-test-balance"></span></p>
       <div class="forge-availability" id="forge-store-availability">Purchases are not open yet. These are the planned prices—not active offers. Your existing game ownership and achievements are unchanged.</div>
       <div id="forge-store-browse">
         <div class="forge-panel-head"><h3 class="forge-pack-heading">Choose your Forge Medals</h3><span class="forge-tag" id="forge-store-mode">Store preview</span></div>
         <div id="forge-pack-grid" class="forge-grid" aria-label="Forge Medal packages"></div>
-        <div class="forge-future" aria-label="Future spending options">
-          <article id="forge-perk-preview"><h3>Character perks</h3><span class="forge-tag">Live upgrades coming later</span><p class="forge-muted">Level 1 is included. Costs for Levels 2 / 3 / 4 / 5:</p><p class="forge-muted">Captain: 45 / 95 / 155 / 230 FM — 525 FM total.</p><p class="forge-muted">Engineer: 65 / 125 / 190 / 270 FM — 650 FM total.</p><p class="forge-muted">Attendant: 30 / 70 / 120 / 180 FM — 400 FM total.</p><p class="forge-muted">TEST upgrades are limited to approved game testers. Scientist has no paid upgrades; Explorer is not available yet.</p></article>
-          <article><h3>New characters</h3><span class="forge-tag">Coming later</span><p class="forge-muted">750 FM per new character.</p><p class="forge-muted">Your four original characters stay free.</p></article>
-          <article><h3>Chroma skins</h3><span class="forge-tag">Coming later</span><p class="forge-muted">300 FM per chroma.</p><p class="forge-muted">A new look, not additional stats.</p></article>
+        <div class="forge-future" aria-label="In-game spending options">
+          <article id="forge-perk-preview"><h3>Character perks</h3><p class="forge-muted">Loading current in-game upgrade prices…</p></article>
+          <article id="forge-character-preview"><h3>Explorer</h3><p class="forge-muted">Loading character availability…</p></article>
         </div>
       </div>
       <section class="forge-confirmation" id="forge-confirmation" aria-labelledby="forge-confirmation-heading" hidden>
-        <h3 id="forge-confirmation-heading" tabindex="-1">Review your test checkout</h3>
+        <h3 id="forge-confirmation-heading" tabindex="-1">Review your FM purchase</h3>
         <p class="forge-muted" id="forge-confirm-pack"></p>
         <p class="forge-confirmation__price" id="forge-confirm-price"></p>
-        <p class="forge-muted">Continue to PayMongo’s hosted test checkout. No real money will be charged. Test FM cannot be spent as live currency.</p>
+        <p class="forge-muted">This is a sandbox demonstration using PayMongo’s test checkout. No real money will be charged; the FM stays in your separate demo wallet.</p>
         <div class="forge-confirmation__actions"><button type="button" class="forge-secondary" id="forge-confirm-back">Back to packages</button><button type="button" class="forge-primary" id="forge-confirm-continue" disabled>Continue to test checkout</button></div>
       </section>
       <p id="store-state" class="forge-muted" role="status" aria-live="polite">Same prices for Regular Users, Students, and Teachers / Instructors.</p>
@@ -377,6 +387,7 @@
 
   <script src="StoneForge.js"></script>
   <script src="achievements.js"></script>
+  <script src="transaction-history.js"></script>
   <script src="profile-fields.js"></script>
   <script src="school-selector.js"></script>
   <script src="profile-store.js"></script>

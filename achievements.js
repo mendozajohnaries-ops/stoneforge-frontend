@@ -3,7 +3,7 @@
     'use strict';
     const categories = ['Story', 'Gameplay', 'Collection', 'Perks', 'Multiplayer', 'Mastery', 'Future'];
     function validateCatalog(data) {
-        if (!data || data.version !== 1 || !Array.isArray(data.definitions) || data.definitions.length !== 71) throw new Error('Invalid achievement catalog.');
+        if (!data || ![1,2].includes(data.version) || !Array.isArray(data.definitions) || data.definitions.length !== 71) throw new Error('Invalid achievement catalog.');
         const ids = new Set();
         for (const def of data.definitions) {
             if (!def || typeof def.id !== 'string' || ids.has(def.id) || !categories.includes(def.category) ||
@@ -11,16 +11,17 @@
                 !Number.isSafeInteger(def.target) || def.target < 1 || def.target > 10000) throw new Error('Invalid achievement definition.');
             ids.add(def.id);
         }
-        if (data.definitions.filter(def => def.available).length !== 58) throw new Error('Catalog availability mismatch.');
+        if (data.definitions.filter(def => def.available).length !== (data.version===2?64:58)) throw new Error('Catalog availability mismatch.');
         return data.definitions;
     }
     function validateRecords(data, definitions) {
-        if (!data || data.version !== 1 || !Array.isArray(data.records) || data.records.length > 71) throw new Error('Invalid achievement progress.');
+        if (!data || ![1,2].includes(data.version) || !Array.isArray(data.records) || data.records.length > 71) throw new Error('Invalid achievement progress.');
         const defs = new Map(definitions.map(def => [def.id, def])), records = new Map();
         for (const record of data.records) {
             const def = record && defs.get(record.id);
             if (!def || !def.available || records.has(record.id) || !Number.isSafeInteger(record.progress) ||
                 record.progress < 0 || record.progress > def.target) throw new Error('Invalid achievement progress.');
+            if(def.authority==='server_perks'&&(data.version!==2||record.source!=='server_perks'))throw new Error('Invalid server achievement proof.');
             records.set(record.id, record);
         }
         return records;
