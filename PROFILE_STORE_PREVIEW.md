@@ -12,10 +12,17 @@ Implemented in the existing buildless website; no replacement Site, hosting mani
 - Store opens as a labelled native dialog from the wallet's Open Store button, not a long profile section. Desktop uses a centered four-card popup; mobile uses a full-screen dialog with its own scrolling and a persistent balance/close header. The supplied Unity artwork remains byte-for-byte unchanged.
 - Escape, the close button or an outside press/click dismisses Store and restores opener focus. Background scrolling is locked only while Store is open; logout/stop clears the modal and lock. Profile completion takes precedence over a pending shop intent, without stacked dialogs.
 - Eligible test packages open an inline review step first. Only explicit Continue creates the existing gated checkout request; back/close does not. Closing an in-flight preparation suppresses its late redirect but does not claim to cancel a server order; its existing request key remains available for safe retry.
-- Four priced bundle cards; same prices for everyone. Default buttons are disabled Coming soon. Explicitly allowlisted testers may see Test checkout only when the dedicated test backend is configured.
+- Four priced bundle cards; same prices for everyone. With the updated dedicated sandbox backend enabled, all active signed-in accounts with complete profiles see Buy FM, including accounts without Full Game ownership. The browser follows authenticated server eligibility; it does not grant access or money locally. Real-money checkout remains disabled.
+- Store shows loading, profile/configuration, expired-session, restricted-access and connection-failure messages. Its Refresh wallet / Retry button reloads a failed catalog if necessary and retries read-only wallet requests; it never creates a checkout or grants FM. Checkout stays disabled during wallet refresh.
 - Characters, chromas and perk upgrades are configuration/previews, not purchasable items.
 - Achievement preview shows six cards, View All shows the catalog, and locked/reserved entries conceal their name/description behind ???. Server snapshots remain owner-checked. No browser unlock or wallet-credit operation exists.
 - The existing shop=true return/deep link opens the popup (or waits for required profile completion). Report intent takes precedence if both are supplied. Payment query strings still never grant money, medals or ownership.
+
+## All-account sandbox deployment
+
+Merge/deploy the companion backend first, then this frontend. No new environment variables are required; the existing TEST Store flag and dedicated PayMongo TEST secrets still control checkout. The old Store tester-ID list no longer limits top-ups. Native perk/reward and Full Game access requirements remain unchanged. A top-up does not purchase the Full Game. Keep the sandbox/no-real-charge notice visible at checkout.
+
+After deployment, hard-refresh and verify a newly registered complete-profile account on another browser/device: Buy FM, package review, sandbox checkout, one credited top-up and matching history. Retry must recover after a temporary connection outage without inventing a zero balance or creating a duplicate payment. Automated tests use mocked providers/DOM and do not certify that real deployment flow.
 
 ## Tests
 

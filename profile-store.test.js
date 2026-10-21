@@ -43,7 +43,7 @@ const ids=['profile-signout','profile-completion-dialog','profile-completion-for
  'profile-cancel','profile-required-note','profile-save-status','profile-save','profile-edit','profile-retry','profile-state-status',
  'user-type-value','profile-user-type-badge','school-value','school-display-row','forge-pack-grid','wallet-balance','wallet-state',
  'wallet-test-row','wallet-test-balance','store-state','wallet-refresh','open-forge-store','forge-store','forge-store-close','forge-store-body',
- 'store-wallet-balance','store-test-row','store-test-balance','forge-store-mode','forge-store-availability','forge-store-browse',
+ 'store-wallet-balance','store-test-row','store-test-balance','forge-store-mode','forge-store-availability','forge-store-retry','forge-store-browse',
  'forge-confirmation','forge-confirmation-heading','forge-confirm-pack','forge-confirm-price','forge-confirm-back','forge-confirm-continue','forge-perk-preview','forge-character-preview'];
 const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'fm_handful',name:'Handful',medals:200,price_centavos:4900,image:'Assets/store/fm-handful.png'},
@@ -54,7 +54,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'captain',costs:[45,95,155,230]},{id:'engineer',costs:[65,125,190,270]},
  {id:'attendant',costs:[30,70,120,180]},{id:'explorer',costs:[80,140,205,300]}]}};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
-function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=false,testBalance=0,checkoutReply,walletReply,rewardReply}={}){
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,rewardReply,failCatalog=false}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -71,11 +71,12 @@ function fixture({type='regular',eligible=false,failWallet=false,wrongOwner=fals
    if(url.endsWith('/schools'))return{ok:true,json:async()=>schoolCatalog};
    if(url.endsWith('/profile')&&options.method==='PUT'){const body=JSON.parse(options.body);Object.assign(current,body,{requires_profile_completion:false});return{ok:true,json:async()=>({...current})};}
    if(url.endsWith('/profile'))return{ok:true,json:async()=>({...current})};
-   if(url.endsWith('/store/catalog'))return{ok:true,json:async()=>catalog};
+   if(url.endsWith('/store/catalog')){if(typeof failCatalog==='function'?failCatalog():failCatalog)throw new Error('Catalog timeout');return{ok:true,json:async()=>catalog};}
    if(url.endsWith('/store/checkout'))return checkoutReply?checkoutReply():{ok:true,json:async()=>({environment:'test',checkout_url:'https://checkout.paymongo.com/cs_fixture'})};
    if(url.endsWith('/wallet/reconcile')&&rewardReply)return rewardReply();
    if(url.endsWith('/wallet')&&walletReply)return{ok:true,json:async()=>walletReply()};
-   return{ok:!failWallet,json:async()=>({owner:wrongOwner?'bob':'alice',balance:0,environment:'live',test_checkout_available:eligible,test_balance:testBalance})};
+   const failed=typeof failWallet==='function'?failWallet():failWallet;
+   return{ok:!failed,status:failed?failStatus:200,json:async()=>({owner:wrongOwner?'bob':'alice',balance:0,environment:'live',test_checkout_available:eligible,test_balance:testBalance})};
   }});
  return{nodes,calls,controller,navigation,all,document,setOwner(value){accountOwner=value;}};
 }
@@ -97,6 +98,57 @@ test('catalog v2 renders all four perk price matrices and the real in-game Explo
  }finally{f.controller.stop();}
 });
 
+test('all-account sandbox response enables Buy FM without an ownership or tester check in the browser',async()=>{
+ for(const type of ['regular','student','teacher']){
+  const f=fixture({type,walletReply:()=>({owner:'alice',environment:'live',balance:0,test_checkout_available:true,
+   test_checkout_scope:'all_authenticated',checkout_unavailable_reason:null,test_wallet_available:true,test_balance:200,
+   display_environment:'test',display_balance:200,perk_rewards_available:false})});
+  try{await settled();f.controller.open();
+   assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>!n.disabled&&n.textContent==='Buy FM'));
+   assert.match(f.nodes['forge-store-availability'].textContent,/all signed-in accounts/);
+   assert.match(f.nodes['forge-store-availability'].textContent,/Full Game ownership is not required/);
+   assert.match(f.nodes['forge-store-availability'].textContent,/No real money/);
+   assert.equal(f.nodes['wallet-balance'].textContent,'200');
+   assert.equal(f.calls.some(c=>c.url.endsWith('/wallet/reconcile')),false);
+   await f.all().find(n=>n.dataset.forgePack==='fm_handful').fire('click');
+   await f.nodes['forge-confirm-continue'].fire('click');assert.equal(f.navigation.length,1);
+  }finally{f.controller.stop();}
+ }
+});
+test('in-modal retry recovers a failed wallet/catalog without creating a payment',async()=>{
+ let offline=true;const f=fixture({eligible:true,testBalance:450,failWallet:()=>offline,failCatalog:()=>offline});
+ try{await settled();f.controller.open();
+  assert.equal(f.nodes['wallet-balance'].textContent,'Unavailable');assert.match(f.nodes['forge-store-availability'].textContent,/connection and retry/);
+  offline=false;await f.nodes['forge-store-retry'].fire('click');await settled();
+  assert.equal(f.nodes['wallet-balance'].textContent,'450');assert.equal(f.nodes['forge-pack-grid'].children.length,4);
+  assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>!n.disabled));
+  assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);assert.equal(f.navigation.length,0);
+  f.setOwner('bob');const count=f.calls.length;await f.nodes['forge-store-retry'].fire('click');assert.equal(f.calls.length,count);
+ }finally{f.controller.stop();}
+});
+test('availability distinguishes session expiry, restricted access and disabled checkout',async()=>{
+ for(const [failStatus,pattern] of [[401,/session expired.*Sign in/],[403,/access is restricted/]]){
+  const f=fixture({failWallet:true,failStatus});try{await settled();assert.match(f.nodes['forge-store-availability'].textContent,pattern);
+   assert.equal(f.nodes['wallet-balance'].textContent,'Unavailable');assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>n.disabled));
+  }finally{f.controller.stop();}
+ }
+ const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_checkout_available:false,checkout_unavailable_reason:'store_disabled'})});
+ try{await settled();assert.match(f.nodes['forge-store-availability'].textContent,/temporarily disabled/);}finally{f.controller.stop();}
+});
+test('loading wallet disables checkout and late refresh cannot overwrite the newer balance',async()=>{
+ let reads=0,release;
+ const f=fixture({walletReply:()=>{
+  const data={owner:'alice',environment:'live',balance:0,test_checkout_available:true,test_balance:++reads===1?200:450};
+  if(reads===2)return new Promise(resolve=>{release=()=>resolve({...data,test_balance:200});});
+  return data;
+ }});
+ try{await settled();f.controller.open();const slow=f.controller.refresh();await settled();
+  assert.equal(f.nodes['forge-store-retry'].disabled,true);assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>n.disabled));
+  assert.match(f.nodes['forge-store-availability'].textContent,/Checking your wallet/);
+  await f.controller.refresh();assert.equal(f.nodes['wallet-balance'].textContent,'450');
+  release();await slow;assert.equal(f.nodes['wallet-balance'].textContent,'450');assert.equal(f.nodes['forge-store-retry'].disabled,false);
+ }finally{if(release)release();f.controller.stop();}
+});
 test('reward outage never fabricates money; wallet mode mismatch fails closed',async()=>{
  const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_wallet_available:true,test_balance:155,display_environment:'test',display_balance:155,perk_rewards_available:true}),
   rewardReply:()=>({ok:false,json:async()=>({error:'unavailable'})})});
@@ -175,7 +227,7 @@ test('Tab and Shift+Tab wrap between visible enabled Store controls, including p
  for(const eligible of [false,true]){
   const f=fixture({eligible});try{
    await settled();f.controller.open();const buttons=f.all().filter(node=>node.dataset.forgePack&&!node.disabled);
-   const last=buttons.at(-1)||f.nodes['forge-store-close'];
+   const last=buttons.at(-1)||f.nodes['forge-store-retry'];
    const backwards={key:'Tab',shiftKey:true};await f.nodes['forge-store'].fire('keydown',backwards);
    assert.equal(backwards.prevented,true);assert.equal(f.document.activeElement,last);
    const forwards={key:'Tab',shiftKey:false};await f.nodes['forge-store'].fire('keydown',forwards);
@@ -245,13 +297,14 @@ test('actual dashboard shop/payment return opens Store UI without fulfillment or
   assert.deepEqual(actions,['history',query.includes('report=true')?'report':'store']);
  }
 });
-test('signup and dashboard load modules in order, preserve preview and do not collect student IDs',()=>{
+test('signup and dashboard load modules in order, preserve sandbox disclosure and do not collect student IDs',()=>{
  const signup=fs.readFileSync('signup-page.html','utf8'),dash=fs.readFileSync('dashboard.html','utf8'),auth=fs.readFileSync('auth.js','utf8');
  assert.match(signup,/id="user-type"[^>]*required/);assert.match(signup,/<option value="" selected disabled>/);
  assert.ok(signup.indexOf('src="profile-fields.js"')<signup.indexOf('src="auth.js"'));
  assert.ok(dash.indexOf('src="profile-store.js"')<dash.indexOf('src="dashboard.js"'));
  assert.match(auth,/apiPost\('send-otp', \{ username, email, password, \.\.\.fields \}\)/);
- assert.match(dash,/Purchases are not open yet/);assert.doesNotMatch(signup,/Coyns|LRN|student-number|student_id/i);
+ assert.match(dash,/Checking your wallet and checkout access/);assert.match(dash,/id="forge-store-retry"/);
+ assert.match(dash,/No real money will be charged/);assert.doesNotMatch(signup,/Coyns|LRN|student-number|student_id/i);
  assert.doesNotMatch(fs.readFileSync('profile-store.js','utf8'),/balance\s*\+=|wallet\/credit|discount/i);
 });
 
