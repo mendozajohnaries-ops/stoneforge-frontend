@@ -1,5 +1,9 @@
 # Game account verification page
 
+> Current Batch 3 accepts valid free accounts without historical game ownership.
+> See [README.md](README.md). PKCE/state/identity checks remain enforced; the
+> matching Unity client update is a separate batch.
+
 Feature branch: `codex/feature-game-auth`. The existing website is deployed on
 Vercel; this new game-authentication patch has not been published by Codex.
 

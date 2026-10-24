@@ -103,12 +103,10 @@ test('stopped component ignores a late signed response and removes click handler
  const click=f.button.click();f.controller.stop();resolve({status:200,body:signed()});await click;
  assert.equal(f.downloads.length,0);assert.equal(f.button.listeners.click,undefined);assert.equal(f.timers.size,0);
 });
-test('page identifies the exact Tutorial installer and preserves separate Full Game instructions/scripts',()=>{
+test('legacy Tutorial client remains detached from the unified download page',()=>{
  const html=fs.readFileSync('download.html','utf8');
- assert.match(html,/id="tutorial-download"/);assert.match(html,/id="tutorial-note"[^>]*role="status"/);
- assert.match(html,/103\.4 MB/);assert.match(html,/Tutorial v0\.1\.0/);assert.match(html,/StoneForgeTutorialSetup\.exe/);
- assert.match(html,/How to Install the Full Game/);assert.match(html,/StoneForgeSetup\.exe/);
- assert.ok(html.indexOf('src="tutorial-download.js?')<html.indexOf('src="download.js?'));
+ assert.doesNotMatch(html,/id="tutorial-download"|src="tutorial-download.js/);
+ assert.match(html,/StoneForgeSetup\.exe/);assert.match(html,/unified build/);
  assert.doesNotMatch(html,/TUTORIAL_R2_SECRET|dropbox|r2\.dev/);
 });
 
@@ -117,7 +115,7 @@ test('Demo maintenance has no click handler, requests, downloads or automatic un
   const f=fixture([{status:200,body:signed()}],policy);
   try{
    assert.equal(f.button.disabled,true);assert.equal(f.button.textContent,'Under Maintenance');
-   assert.match(f.note.textContent,/next week/);assert.equal(f.button.listeners.click,undefined);
+   assert.match(f.note.textContent,/unified build/);assert.equal(f.button.listeners.click,undefined);
    await f.button.click();f.button.disabled=false;await f.button.click();await f.controller.download();
    assert.equal(f.button.disabled,true);assert.equal(f.requests.length,0);assert.equal(f.downloads.length,0);
    assert.equal(f.timers.size,0);assert.equal(f.button.attributes['aria-busy'],'false');
@@ -127,9 +125,8 @@ test('Demo maintenance has no click handler, requests, downloads or automatic un
 
 test('HTML is disabled before JavaScript and loads the versioned maintenance policy first',()=>{
  const html=fs.readFileSync('download.html','utf8');
- assert.match(html,/<button[^>]*id="tutorial-download"[^>]*disabled>/);
- assert.match(html,/<div id="full-action">\s*<button[^>]*disabled[^>]*>Under Maintenance<\/button>/);
- assert.match(html,/Under Maintenance — Will unlock next week/);
- assert.ok(html.indexOf('src="download-maintenance.js?')<html.indexOf('src="tutorial-download.js?'));
- assert.match(fs.readFileSync('download.css','utf8'),/#tutorial-download:disabled\s*\{\s*cursor:not-allowed/);
+ assert.match(html,/<div id="game-action"><button[^>]*disabled>Under Maintenance<\/button>/);
+ assert.match(html,/Under Maintenance · Preparing the Unified Installer/);
+ assert.ok(html.indexOf('src="download-maintenance.js?')<html.indexOf('src="download.js?'));
+ assert.match(fs.readFileSync('download.css','utf8'),/\.game-download-button:disabled\s*\{\s*cursor:not-allowed/);
 });

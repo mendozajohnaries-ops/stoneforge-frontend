@@ -66,7 +66,7 @@
    finally{profileBusy=false;el('profile-save').disabled=false;}
   });
   function renderButtons(){
-   const allowed=sameOwner()&&complete()&&!walletLoading&&wallet?.test_checkout_available===true;
+   const allowed=sameOwner()&&complete()&&!walletLoading&&wallet?.test_checkout_available===true&&wallet.requires_profile_completion!==true;
    document.querySelectorAll('[data-forge-pack]').forEach(button=>{
     button.disabled=!allowed||checkoutBusy;
     button.textContent=checkoutBusy?'Preparing…':walletLoading?'Loading…':allowed?'Buy FM':!complete()?'Complete profile':'Unavailable';
@@ -104,7 +104,7 @@
    return event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom;
   }
   function selectPack(packId,button){
-   if(!storeDialog.open||!sameOwner()||checkoutBusy||walletLoading||!complete()||!wallet?.test_checkout_available)return;
+   if(!storeDialog.open||!sameOwner()||checkoutBusy||walletLoading||!complete()||!wallet?.test_checkout_available||wallet.requires_profile_completion===true)return;
    const pack=catalog?.packs.find(item=>item.id===packId);if(!pack)return;
    selectedPack=pack;selectedButton=button;
    el('forge-confirm-pack').textContent=pack.name+' · '+pack.medals.toLocaleString()+' FM';
@@ -116,16 +116,16 @@
   function syncStoreWallet(){
    el('store-wallet-balance').textContent=el('wallet-balance').textContent;
    el('store-test-row').hidden=el('wallet-test-row').hidden;el('store-test-balance').textContent=el('wallet-test-balance').textContent;
-   const eligible=wallet?.test_checkout_available===true;
+   const eligible=wallet?.test_checkout_available===true&&wallet.requires_profile_completion!==true;
    el('forge-store-mode').textContent=walletLoading?'Loading':eligible?'Sandbox demo':'Store unavailable';
    el('forge-store-availability').textContent=walletLoading?'Checking your wallet and checkout access…':
     !complete()?'Complete your profile before buying Forge Medals.':!wallet?walletFailure||'Refresh your wallet to check checkout access.':eligible?
     (wallet.test_checkout_scope==='all_authenticated'?
-     'Sandbox checkout is open to all signed-in accounts with a complete profile. Full Game ownership is not required. No real money is charged; FM uses a separate sandbox wallet.':
+     'StoneForge is free to play. Sandbox checkout is open to all signed-in accounts with a complete profile. No real money is charged; FM uses the same sandbox balance in your game.':
      'Sandbox checkout is available for this account. No real money is charged; FM uses a separate sandbox wallet.'):
     wallet.checkout_unavailable_reason==='profile_required'?'Complete your profile before buying Forge Medals.':
     wallet.checkout_unavailable_reason==='store_disabled'?'Sandbox checkout is temporarily disabled. No real-money purchases are enabled.':
-     'Checkout is not enabled for this account. Refresh to check again. Your existing balance and game ownership are unchanged.';
+     'Store availability could not be verified. Refresh to check again. Your confirmed balance is unchanged.';
   }
   function renderPacks(){
    const grid=el('forge-pack-grid');grid.replaceChildren();
@@ -160,33 +160,29 @@
     'Unlock in the game for 750 FM, including Level 1. Your four original characters stay free.':'Explorer is unavailable on this backend version.';
    explorer.append(text);
   }
-  function validateWallet(data){
-   const safe=n=>Number.isSafeInteger(n)&&n>=0;
-   if(data.owner!==owner||data.environment!=='live'||!safe(data.balance))throw new Error('Wallet could not be verified.');
-   const demo=data.test_wallet_available===true||data.test_checkout_available===true;
-   if(demo&&!safe(data.test_balance))throw new Error('Wallet could not be verified.');
-   const value=demo?data.test_balance:data.balance;
-   if(data.display_environment!==undefined&&(data.display_environment!==(demo?'test':'live')||data.display_balance!==value))throw new Error('Wallet mode mismatch.');
-   return value;
-  }
+  const readBalance=async()=>StoneForgeWallet.canonical(await api('wallet/current',{headers:{'x-playfab-id':owner}}),owner);
   async function loadWallet(){
    if(!sameOwner())return;
    const attempt=++generation;
    walletLoading=true;walletFailure='';syncStoreWallet();renderButtons();
    try{
-    let data=await api('wallet');validateWallet(data);if(attempt!==generation)return;
+    const [funds,access]=await Promise.allSettled([readBalance(),api('wallet')]);
+    if(!sameOwner()||attempt!==generation)return;
+    if(funds.status!=='fulfilled')throw funds.reason;
+    let data=funds.value,availability=null;
+    if(access.status==='fulfilled'){try{availability=StoneForgeWallet.availability(access.value,owner);}catch{/* fail closed for checkout, retain independently confirmed funds */}}
     let pendingRewards=false;
-    if(data.perk_rewards_available===true){
+    if(availability?.perk_rewards_available===true){
      try{const result=await api('wallet/reconcile',{method:'POST',headers:{'Content-Type':'application/json','x-playfab-id':owner},body:'{}'});
       if(result.owner!==owner||result.environment!=='test')throw new Error('Reward owner mismatch.');
      }catch{pendingRewards=true;}
      if(!sameOwner()||attempt!==generation)return;
-     data=await api('wallet');validateWallet(data);
+     data=await readBalance();
     }
     if(attempt!==generation)return;
-    wallet=data;
-    el('wallet-balance').textContent=validateWallet(data).toLocaleString();
-    notice('wallet-state',pendingRewards?'Balance confirmed. Reward sync is pending; refresh to retry.':data.test_wallet_available||data.test_checkout_available?'Balance synced with your game.':'Live purchases and gameplay rewards are not active.');
+    wallet={...data,...availability,test_checkout_available:availability?.test_checkout_available===true};
+    el('wallet-balance').textContent=data.balance.toLocaleString();
+    notice('wallet-state',pendingRewards?'Balance confirmed. Reward sync is pending; refresh to retry.':availability?'Balance confirmed by the server. Shared with your game.':'Balance confirmed. Store availability is unavailable; refresh to retry.');
     el('wallet-test-row').hidden=true;el('wallet-test-balance').textContent='';
     syncStoreWallet();renderButtons();
     if(typeof onWalletRefresh==='function')onWalletRefresh();
@@ -202,7 +198,7 @@
    }
   }
   async function checkout(packId){
-   if(checkoutBusy||walletLoading||!storeDialog.open||selectedPack?.id!==packId||!complete()||!wallet?.test_checkout_available||!sameOwner())return;
+   if(checkoutBusy||walletLoading||!storeDialog.open||selectedPack?.id!==packId||!complete()||!wallet?.test_checkout_available||wallet.requires_profile_completion===true||!sameOwner())return;
    const attempt=checkoutVersion;
    checkoutBusy=true;renderButtons();notice('store-state','Preparing sandbox checkout. No real money will be charged.');
    try{

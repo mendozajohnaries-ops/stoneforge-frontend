@@ -75,6 +75,7 @@ const patchArrow  = patchToggle?.querySelector('.patch-toggle');
 patchToggle?.addEventListener('click', () => {
   const isOpen = patchBody.classList.contains('open');
   patchBody.classList.toggle('open');
+  patchToggle.setAttribute('aria-expanded', String(!isOpen));
   if (patchArrow) {
     patchArrow.style.transform = isOpen ? '' : 'rotate(180deg)';
   }

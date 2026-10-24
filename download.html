@@ -11,34 +11,8 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="nav.css">
-  <link rel="stylesheet" href="download.css">
+  <link rel="stylesheet" href="download.css?v=20261024-b3">
   <link rel="stylesheet" href="index.css">
-  <style>
-    .payment-banner {
-      border-radius: 10px; padding: 0.85rem 1.25rem;
-      font-family: var(--font-ui); font-size: 0.88rem;
-      display: none; margin-bottom: 1.5rem;
-    }
-    .payment-banner--success { background: rgba(95,143,71,0.1); border: 1px solid var(--clr-green); color: var(--clr-green-light); }
-    .payment-banner--cancelled { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
-
-    .dl-btn--green { background: var(--clr-green) !important; opacity: 1 !important; }
-    .dl-btn--green:hover { opacity: 0.85 !important; }
-    .dl-btn--orange { background: var(--clr-orange) !important; color: #fff !important; }
-    .dl-btn--orange:hover { opacity: 0.85 !important; }
-    .dl-btn--loading { opacity: 0.7 !important; cursor: not-allowed !important; }
-    .dl-btn-link {
-      display: block; width: 100%; padding: 0.85rem 1.5rem;
-      background: var(--clr-green); color: #fff; text-align: center;
-      border-radius: 10px; font-family: var(--font-ui); font-size: 0.95rem;
-      font-weight: 700; text-decoration: none; letter-spacing: 0.02em;
-      transition: opacity 0.15s ease; border: none; cursor: pointer; box-sizing: border-box;
-    }
-    .dl-btn-link:hover { opacity: 0.85; }
-    .dl-btn-link--orange { background: var(--clr-orange); }
-
-
-  </style>
 </head>
 <body>
 
@@ -71,173 +45,89 @@
   </header>
 
   <main class="dl-page">
-    <!-- HERO -->
     <div class="dl-hero animate-up">
-      <span class="badge badge--green">🎮 Prototype Build</span>
+      <span class="badge badge--green">Free to Play</span>
       <h1 class="dl-hero__title">Download StoneForge</h1>
+      <p class="dl-intro">One game, from your first discovery to the next invention.</p>
       <div class="dl-hero__meta">
-        <span class="badge badge--orange">Full Game v1.4.4</span>
-        <span class="badge badge--green">🪟 Windows PC</span>
-        <span class="badge" style="background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border); color: var(--clr-text-muted);">🎮 Unity Engine</span>
+        <span class="badge badge--orange">Unified Build in Preparation</span>
+        <span class="badge badge--green">Windows 10/11 · x64</span>
+        <span class="badge badge--green">Unity Engine</span>
       </div>
     </div>
-
     <div class="dl-page__inner">
-
-      <!-- Payment banners -->
-      <div class="payment-banner payment-banner--success" id="banner-success">
-        Returned from checkout. Confirming payment with the server...
-      </div>
-      <div class="payment-banner payment-banner--cancelled" id="banner-cancelled">
-        Checkout was cancelled. Game ownership has not been confirmed by this return.
-      </div>
-
+      <p id="legacy-payment-note" class="dl-maintenance-notice" role="status" hidden></p>
       <div class="dl-maintenance-notice" id="download-maintenance-notice" role="status">
-        <strong>Under Maintenance — Will unlock next week</strong>
-        <p>Demo and Full Game downloads are temporarily paused while we fix issues found during testing. Thank you for your patience!</p>
+        <strong>Under Maintenance · Preparing the Unified Installer</strong>
+        <p>StoneForge downloads are temporarily paused while we prepare and test the unified build.</p>
       </div>
 
-      <!-- FREE TRIAL CARD -->
-      <div class="dl-card animate-up delay-1">
+      <section class="dl-card animate-up delay-1" aria-labelledby="game-download-heading">
         <div class="dl-card__left">
-          <div class="dl-card__platform-icon">🪟</div>
+          <div class="dl-card__platform-icon" aria-hidden="true">🪟</div>
           <div>
-            <h2 class="dl-card__name">StoneForge Free Trial</h2>
+            <h2 class="dl-card__name" id="game-download-heading">StoneForge for Windows</h2>
             <div class="dl-card__details">
-              <span class="dl-detail">📦 Installer: <strong>103.4 MB (~98.6 MiB)</strong></span>
-              <span class="dl-detail">📅 Build: <strong>Tutorial v0.1.0 · 19 Oct 2026</strong></span>
-              <span class="dl-detail">🎮 Engine: <strong>Unity</strong></span>
-              <span class="dl-detail">🖥 OS: <strong>Windows 10/11</strong></span>
-              <span class="dl-detail">✅ Includes: <strong>Tutorial &amp; Basic Crafting</strong></span>
+              <span class="dl-detail">Installer: <strong>StoneForgeSetup.exe</strong></span>
+              <span class="dl-detail">Price: <strong>Free to play</strong></span>
             </div>
+            <p class="dl-summary">The planned unified installer brings Tutorial, Story Mode, and Multiplayer into the same app. Downloads open after the combined build passes testing.</p>
           </div>
         </div>
         <div class="dl-card__btn-wrap">
-
-          <button type="button" id="tutorial-download" class="dl-btn-link" aria-describedby="tutorial-note" disabled>
-            Under Maintenance
-          </button>
-
-          <span class="dl-btn-note" id="tutorial-note" role="status" aria-live="polite">Will unlock next week. Downloads are temporarily paused.</span>
-          <noscript>Demo and Full Game downloads are under maintenance and will unlock next week.</noscript>
+          <div id="game-action"><button type="button" class="game-download-button" aria-describedby="game-note" disabled>Under Maintenance</button></div>
+          <span class="dl-btn-note" id="game-note" role="status" aria-live="polite">Preparing and testing the unified build.</span>
+          <noscript>JavaScript is required to request a fresh installer link. Downloads are currently paused.</noscript>
         </div>
-      </div>
+      </section>
 
-      <!-- FULL GAME CARD -->
-      <div class="dl-card animate-up delay-2">
-        <div class="dl-card__left">
-          <div class="dl-card__platform-icon">⚔️</div>
-          <div>
-            <h2 class="dl-card__name">StoneForge Full Game</h2>
-            <div class="dl-card__details">
-              <span class="dl-detail">📦 Installer: <strong>147 MB (~140 MiB)</strong></span>
-              <span class="dl-detail">📅 Build: <strong>Beta v1.4.4</strong></span>
-              <span class="dl-detail">🎮 Engine: <strong>Unity</strong></span>
-              <span class="dl-detail">🖥 OS: <strong>Windows 10/11</strong></span>
-              <span class="dl-detail">✅ Includes: <strong>Everything</strong></span>
-            </div>
-          </div>
-        </div>
-        <div class="dl-card__btn-wrap">
-          <div id="full-action">
-            <button type="button" disabled style="display:block;width:100%;padding:0.85rem 1.5rem;background:var(--clr-orange);color:#fff;text-align:center;border-radius:10px;font-family:var(--font-ui);font-size:0.95rem;font-weight:700;letter-spacing:0.02em;border:none;cursor:not-allowed;opacity:0.55;box-sizing:border-box;">Under Maintenance</button>
-          </div>
-          <span class="dl-btn-note" id="full-note" role="status" aria-live="polite">Will unlock next week. Existing purchases are unchanged.</span>
-        </div>
-      </div>
-
-      <!-- TUTORIAL INSTALLATION: separate installer and no purchase gate -->
-      <div class="dl-section animate-up delay-3">
-        <h2 class="dl-section-title">📋 How to Install the Free Tutorial</h2>
+      <section class="dl-section animate-up delay-2" aria-labelledby="install-heading">
+        <h2 class="dl-section-title" id="install-heading">How to Install</h2>
         <div class="steps">
-          <div class="step-item">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <strong>Download the Tutorial installer</strong>
-              <span>Download Free Trial saves StoneForgeTutorialSetup.exe. No account or Full Game purchase is required.</span>
-            </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <strong>Run StoneForgeTutorialSetup.exe</strong>
-              <span>Follow the setup wizard. Default folder: %LOCALAPPDATA%\Programs\StoneForgeTutorial. Tutorial and Full Game use separate application folders; players do not need Inno Setup installed.</span>
-            </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <strong>Launch StoneForge Tutorial</strong>
-              <span>Use its Start Menu shortcut or opt in to Launch on the Finish page. Uninstall through Windows Installed apps; the installer does not delete existing saves. This beta installer is unsigned—do not disable security software.</span>
-            </div>
-          </div>
+          <div class="step-item"><div class="step-num">1</div><div class="step-content">
+            <strong>Download when the build is released</strong>
+            <span>Select Download StoneForge to request the free Windows installer. No game purchase, activation key, or account is needed to download.</span>
+          </div></div>
+          <div class="step-item"><div class="step-num">2</div><div class="step-content">
+            <strong>Run StoneForgeSetup.exe</strong>
+            <span>Follow the installer instructions. The version and final download size will be published with the tested release.</span>
+          </div></div>
+          <div class="step-item"><div class="step-num">3</div><div class="step-content">
+            <strong>Start your adventure</strong>
+            <span>Tutorial, Story Mode, and Multiplayer will share the same app. Online features require internet and a valid StoneForge account verified through your browser.</span>
+          </div></div>
         </div>
-      </div>
+      </section>
 
-      <!-- FULL GAME INSTALLATION STEPS -->
-      <div class="dl-section animate-up delay-3">
-        <h2 class="dl-section-title">📋 How to Install the Full Game</h2>
-        <div class="steps">
-          <div class="step-item">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <strong>Sign in, purchase, then download</strong>
-              <span>Once the server confirms ownership, Download Full Game saves StoneForgeSetup.exe (147 MB). The Free Trial download remains separate.</span>
-            </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <strong>Run StoneForgeSetup.exe</strong>
-              <span>Follow the setup wizard. The default install folder is %LOCALAPPDATA%\Programs\StoneForge. Inno Setup does not need to be installed by players.</span>
-            </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <strong>Launch StoneForge Full Game</strong>
-              <span>Use the Start Menu shortcut or choose Launch at the end of setup. Story Mode works offline; verify your purchasing account through the browser when using online features.</span>
-            </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">4</div>
-            <div class="step-content">
-              <strong>Uninstall through Windows Settings</strong>
-              <span>Use Installed apps to remove StoneForge Full Game. The installer does not delete your existing Story saves. This beta installer is unsigned, so Windows may show a publisher warning; do not disable your security software.</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <section class="dl-section animate-up delay-3" aria-labelledby="account-heading">
+        <h2 class="dl-section-title" id="account-heading">Your Account and Forge Medals</h2>
+        <p class="dl-summary">StoneForge no longer requires a one-time game purchase. Use the same account on the website and in the game for your Forge Medal balance, character unlocks, and perk upgrades.</p>
+        <p class="dl-summary">Forge Medal purchases are optional and currently use sandbox checkout. No real money is charged. Existing account and transaction records are preserved.</p>
+        <a class="btn btn--ghost" href="login-page.html?redirect=dashboard.html">Sign In to Your Account</a>
+      </section>
 
-      <!-- PATCH NOTES -->
-      <div class="dl-section animate-up delay-4">
-        <h2 class="dl-section-title">📝 Patch Notes</h2>
+      <section class="dl-section animate-up delay-4" aria-labelledby="release-heading">
+        <h2 class="dl-section-title" id="release-heading">Release Preparation</h2>
         <div class="patch-notes">
-          <div class="patch-head" id="patch-toggle">
-            <div class="patch-head-left">
-              <span class="patch-ver">Full Game v1.4.4</span>
-              <span class="patch-date">Windows installer beta</span>
-            </div>
-            <span class="patch-toggle">▼</span>
-          </div>
+          <button type="button" class="patch-head" id="patch-toggle" aria-expanded="false" aria-controls="patch-body">
+            <span class="patch-head-left"><span class="patch-ver">Unified Build</span><span class="patch-date">In preparation</span></span>
+            <span class="patch-toggle" aria-hidden="true">▼</span>
+          </button>
           <div class="patch-body" id="patch-body">
-            <p class="patch-sub">What's in this build</p>
+            <p class="patch-sub">Before downloads open</p>
             <ul class="patch-list">
-              <li>Full Game packaged as a Windows x64 setup installer</li>
-              <li>Offline Story Mode with local save progress</li>
-              <li>Browser-based account verification for online features</li>
-              <li>Multiplayer lobby through Photon</li>
+              <li>Combine and test Tutorial and FullGame in one Windows application.</li>
+              <li>Validate free-account verification and shared FM balance in the matching game client.</li>
+              <li>Test installation, Story progress, and Multiplayer on separate devices.</li>
             </ul>
-            <p class="patch-sub">Known Issues</p>
+            <p class="patch-sub">Current availability</p>
             <ul class="patch-list issues">
-              <li>Unsigned beta installer may show a Windows publisher warning</li>
-              <li>Multiplayer requires internet, a verified eligible account, and at least two players to start</li>
-              <li>Checkout is currently used for test-payment demonstrations, not proof of a real-money purchase</li>
+              <li>Downloads remain paused until the combined installer is approved for release.</li>
+              <li>FM checkout is sandbox only; live purchases are not enabled.</li>
             </ul>
           </div>
         </div>
-      </div>
-
+      </section>
     </div>
   </main>
 
@@ -276,8 +166,7 @@
   </footer>
 
   <script src="StoneForge.js"></script>
-  <script src="download-maintenance.js?v=20261020"></script>
-  <script src="tutorial-download.js?v=20261020-maintenance"></script>
-  <script src="download.js?v=20261020-maintenance"></script>
+  <script src="download-maintenance.js?v=20261024-b3"></script>
+  <script src="download.js?v=20261024-b3"></script>
 </body>
 </html>

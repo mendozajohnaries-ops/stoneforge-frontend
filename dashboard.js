@@ -33,15 +33,6 @@ function renderProfile(user, details) {
     document.getElementById('account-last-login').textContent = formatDateTime(lastLogin);
 }
 
-function renderOwnerBadge(ownsGame) {
-    const badgeEl = document.getElementById('owner-badge-container');
-    if (ownsGame) {
-        badgeEl.innerHTML = '<div class="owner-badge">⚔️ Full Game Owner</div>';
-    } else {
-        badgeEl.innerHTML = '';
-    }
-}
-
 let achievementBrowser = null;
 let storeBrowser = null;
 let transactionBrowser = null;
@@ -248,25 +239,21 @@ async function initDashboard() {
     document.getElementById('dashboard').style.display      = 'block';
 
     renderProfile(cachedUser, null);
-    renderOwnerBadge(false);
     achievementBrowser = StoneForgeAchievements.mount({ document, apiBase: API_BASE,
         owner: cachedUser.playfab_id, currentOwner: () => cachedUser?.playfab_id });
 
     initReportModal();
 
-    const [detailsRes, ownershipRes, profileRes] = await Promise.allSettled([
+    const [detailsRes, profileRes] = await Promise.allSettled([
         apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
-        apiGet(`check-ownership?playfab_id=${cachedUser.playfab_id}`),
         apiGet('profile'),
     ]);
     if (!cachedUser) return;
 
     const details  = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
-    const ownsGame = cachedUser.owns_game === true;
     const profile  = (profileRes.status === 'fulfilled' && profileRes.value.ok) ? profileRes.value.data : null;
 
     renderProfile(cachedUser, details);
-    renderOwnerBadge(ownsGame);
     transactionBrowser = StoneForgeTransactions.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
         currentOwner: () => cachedUser?.playfab_id });
     storeBrowser = StoneForgeStore.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
