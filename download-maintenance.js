@@ -4,7 +4,7 @@
   const policy = Object.freeze({
     enabled: true,
     label: 'Under Maintenance',
-    message: 'Demo and Full Game downloads are under maintenance and will unlock next week. We are fixing issues found during testing. Thank you for your patience!'
+    message: 'StoneForge downloads are temporarily paused while we prepare and test the unified build.'
   });
   if (typeof module !== 'undefined' && module.exports) module.exports = policy;
   else root.StoneForgeDownloadMaintenance = policy;

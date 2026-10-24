@@ -2,6 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const fields=require('./profile-fields');global.StoneForgeProfile=fields;
 global.StoneForgeSchools=require('./school-selector');
+global.StoneForgeWallet=require('./wallet-client');
 const schoolCatalog=require('./test-fixtures/school-catalog.json');
 const store=require('./profile-store');
 
@@ -54,7 +55,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'captain',costs:[45,95,155,230]},{id:'engineer',costs:[65,125,190,270]},
  {id:'attendant',costs:[30,70,120,180]},{id:'explorer',costs:[80,140,205,300]}]}};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
-function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,rewardReply,failCatalog=false}={}){
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -65,6 +66,7 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
  Object.values(nodes).forEach(node=>{node.ownerDocument=document;});
  global.sessionStorage={getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)};
  global.location={assign:value=>navigation.push(value)};
+ let availabilityData;
  const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>accountOwner,initialProfile:{...current},
   fetch:async(url,options)=>{
    calls.push({url,options});
@@ -74,9 +76,15 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
    if(url.endsWith('/store/catalog')){if(typeof failCatalog==='function'?failCatalog():failCatalog)throw new Error('Catalog timeout');return{ok:true,json:async()=>catalog};}
    if(url.endsWith('/store/checkout'))return checkoutReply?checkoutReply():{ok:true,json:async()=>({environment:'test',checkout_url:'https://checkout.paymongo.com/cs_fixture'})};
    if(url.endsWith('/wallet/reconcile')&&rewardReply)return rewardReply();
-   if(url.endsWith('/wallet')&&walletReply)return{ok:true,json:async()=>walletReply()};
    const failed=typeof failWallet==='function'?failWallet():failWallet;
-   return{ok:!failed,status:failed?failStatus:200,json:async()=>({owner:wrongOwner?'bob':'alice',balance:0,environment:'live',test_checkout_available:eligible,test_balance:testBalance})};
+   if(url.endsWith('/wallet/current')){
+    availabilityData=Promise.resolve(walletReply?walletReply():{owner:wrongOwner?'bob':'alice',balance:0,environment:'live',test_checkout_available:eligible,test_balance:testBalance});
+    return{ok:!failed,status:failed?failStatus:200,json:async()=>{const legacy=await availabilityData;return canonicalReply?canonicalReply():
+     {version:2,owner:legacy.owner,currency:'FM',environment:'test',balance:Object.hasOwn(legacy,'test_balance')?legacy.test_balance:legacy.balance,live_purchases_enabled:false,rewards_active:false};}};
+   }
+   if(url.endsWith('/wallet'))return availabilityReply?availabilityReply():{ok:!failed,status:failed?failStatus:200,json:async()=>({
+    test_checkout_available:false,perk_rewards_available:false,requires_profile_completion:!type,live_purchases_enabled:false,access_model:'free_to_play',...await availabilityData})};
+   return{ok:true,json:async()=>({owner:'alice',environment:'test',credited:[]})};
   }});
  return{nodes,calls,controller,navigation,all,document,setOwner(value){accountOwner=value;}};
 }
@@ -106,7 +114,7 @@ test('all-account sandbox response enables Buy FM without an ownership or tester
   try{await settled();f.controller.open();
    assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>!n.disabled&&n.textContent==='Buy FM'));
    assert.match(f.nodes['forge-store-availability'].textContent,/all signed-in accounts/);
-   assert.match(f.nodes['forge-store-availability'].textContent,/Full Game ownership is not required/);
+   assert.match(f.nodes['forge-store-availability'].textContent,/StoneForge is free to play/);
    assert.match(f.nodes['forge-store-availability'].textContent,/No real money/);
    assert.equal(f.nodes['wallet-balance'].textContent,'200');
    assert.equal(f.calls.some(c=>c.url.endsWith('/wallet/reconcile')),false);
@@ -153,9 +161,49 @@ test('reward outage never fabricates money; wallet mode mismatch fails closed',a
  const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_wallet_available:true,test_balance:155,display_environment:'test',display_balance:155,perk_rewards_available:true}),
   rewardReply:()=>({ok:false,json:async()=>({error:'unavailable'})})});
  try{await settled();assert.equal(f.nodes['wallet-balance'].textContent,'155');assert.match(f.nodes['wallet-state'].textContent,/sync is pending/);}finally{f.controller.stop();}
- const bad=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_wallet_available:true,test_balance:155,display_environment:'live',display_balance:0})});
+ const bad=fixture({canonicalReply:()=>({version:2,owner:'alice',currency:'FM',environment:'live',balance:155,live_purchases_enabled:false,rewards_active:false})});
  try{await settled();assert.equal(bad.nodes['wallet-balance'].textContent,'Unavailable');}finally{bad.controller.stop();}
 });
+test('canonical funds ignore historical balance fields and reads carry the expected account',async()=>{
+ const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:99999,test_balance:88888,test_checkout_available:true}),
+  canonicalReply:()=>({version:2,owner:'alice',currency:'FM',environment:'test',balance:175,live_purchases_enabled:false,rewards_active:false})});
+ try{await settled();assert.equal(f.nodes['wallet-balance'].textContent,'175');assert.equal(f.nodes['store-wallet-balance'].textContent,'175');
+  const call=f.calls.find(call=>call.url.endsWith('/wallet/current'));assert.equal(call.options.headers['x-playfab-id'],'alice');assert.equal(call.options.credentials,'include');
+ }finally{f.controller.stop();}
+});
+
+test('unavailable or malformed Store permissions retain canonical funds and prevent checkout',async()=>{
+ for(const availabilityReply of [()=>({ok:false,status:503,json:async()=>({error:'down'})}),
+  ()=>({ok:true,json:async()=>({owner:'bob',access_model:'free_to_play',test_checkout_available:true})}),
+  ()=>({ok:true,json:async()=>({owner:'alice',access_model:'free_to_play',test_checkout_available:'true'})})]){
+  const f=fixture({testBalance:200,eligible:true,availabilityReply});
+  try{await settled();f.controller.open();assert.equal(f.nodes['wallet-balance'].textContent,'200');assert.match(f.nodes['wallet-state'].textContent,/Store availability is unavailable/);
+   assert.ok(f.all().filter(node=>node.dataset.forgePack).every(node=>node.disabled));assert.equal(f.calls.some(call=>call.url.endsWith('/store/checkout')),false);
+  }finally{f.controller.stop();}
+ }
+});
+
+test('server profile requirement prevents checkout despite a stale complete local profile',async()=>{
+ const f=fixture({testBalance:100,availabilityReply:()=>({ok:true,json:async()=>({owner:'alice',access_model:'free_to_play',live_purchases_enabled:false,
+  test_checkout_available:true,perk_rewards_available:false,requires_profile_completion:true,checkout_unavailable_reason:'profile_required'})})});
+ try{await settled();f.controller.open();assert.match(f.nodes['forge-store-availability'].textContent,/Complete your profile/);
+  assert.ok(f.all().filter(node=>node.dataset.forgePack).every(node=>node.disabled));assert.equal(f.nodes['wallet-balance'].textContent,'100');
+ }finally{f.controller.stop();}
+});
+
+test('account changes discard pending canonical reads and stop clears funds without logout',async()=>{
+ let release;const f=fixture({canonicalReply:()=>new Promise(resolve=>{release=()=>resolve({version:2,owner:'alice',currency:'FM',environment:'test',balance:100,live_purchases_enabled:false,rewards_active:false});})});
+ await settled();f.setOwner('bob');release();await settled();assert.notEqual(f.nodes['wallet-balance'].textContent,'100');
+ f.controller.stop();assert.equal(f.nodes['wallet-balance'].textContent,'—');assert.equal(f.calls.some(call=>call.url.endsWith('/logout')),false);
+});
+
+test('profile removes the historical purchase gate and loads the canonical wallet contract',()=>{
+ const source=fs.readFileSync('dashboard.js','utf8'),html=fs.readFileSync('dashboard.html','utf8');
+ assert.doesNotMatch(source,/check-ownership|owns_game|Full Game Owner|renderOwnerBadge/);assert.doesNotMatch(html,/id="owner-badge-container"/);
+ assert.ok(html.indexOf('src="wallet-client.js?')<html.indexOf('src="profile-store.js"'));
+ assert.match(fs.readFileSync('index.html','utf8'),/Free to Play/);assert.match(fs.readFileSync('admin.html','utf8'),/Historical Sandbox Game Orders/);
+});
+
 test('existing untyped user gets a non-dismissible completion prompt; save preserves identity header',async()=>{
  const f=fixture({type:null});try{
   await settled();assert.equal(f.nodes['profile-completion-dialog'].open,true);assert.equal(f.nodes['profile-cancel'].hidden,true);

@@ -1,6 +1,6 @@
 # Wallet, transaction history and perk rewards
 
-The dashboard now presents the authenticated server-selected game wallet as its main `Balance`. For eligible demo users this is the separate sandbox wallet, including persisted upgrades/unlocks and server-confirmed perk reward credits; live and test funds are never merged. No local balance increment or invented credit occurs. Checkout permission stays separate from perk/reward eligibility.
+The dashboard presents the authenticated server-selected sandbox wallet from `/api/wallet/current` as its main `Balance`, including persisted upgrades/unlocks and server-confirmed perk reward credits. Live and test funds are never merged. `/api/wallet` supplies availability flags only; its historical balance fields are not displayed. No local balance increment or invented credit occurs. Checkout permission stays separate from reading confirmed funds.
 
 The Store reads current perk cost matrices and Explorer's 750 FM in-game unlock from the backend catalog. Scientist has no paid upgrades. Explorer remains an in-game purchase, not a new website debit endpoint. Chroma promotion/price/card is removed pending its implementation; no assets or historical IDs are deleted. Normal FM labels are used, with a clear sandbox/no-real-charge notice on checkout. Live checkout remains off.
 
@@ -10,7 +10,7 @@ Catalog v2 keeps 71 stable achievement IDs, enables six server-only perk milesto
 
 On verified wallet refresh, eligible accounts first POST an empty object to the protected reconciliation endpoint, then re-read their authoritative wallet. Achievements refresh after that read. Transaction history now loads only on page initialization/reload and its own Refresh or manual Filter/Load more actions; wallet updates and tab visibility do not refresh it. Old backend purchase receipts can earn their missed milestone once; local saves/screenshots/synced gameplay are not proofs. A reconciliation outage does not fake success or reset the balance: confirmed funds remain visible with a retry notice.
 
-Deploy backend first (see its PERK_REWARDS_HISTORY_SETUP.md), then this frontend, then use the updated matching Unity player. Keep existing TEST flags and the exact **perk** allowlist; the FM Store now admits all active signed-in complete-profile accounts without ownership or a Store tester list (see PROFILE_STORE_PREVIEW.md). There are no new Render variables. Do not enable live keys, merge environments or remove public-download maintenance. Existing browser sessions should hard-refresh after deployment. No production deployment or personal account reconciliation is performed by this PR.
+Deploy backend Batch 2 first, then this frontend, then use the updated matching Unity player. Global TEST flags and complete profiles control purchases/reconciliation for all active accounts; historical ownership and tester allowlists no longer grant access. See README.md for current policy. Do not enable live keys, merge environments or open downloads before the unified build is tested. Existing browser sessions should hard-refresh after deployment. No production deployment or personal account reconciliation is performed by this PR.
 
 Validation command:
 

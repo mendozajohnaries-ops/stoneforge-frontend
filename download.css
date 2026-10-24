@@ -111,10 +111,14 @@
   font-family: var(--font-ui);
 }
 
-#tutorial-download { border:0; cursor:pointer; }
-#tutorial-download:disabled { cursor:not-allowed; opacity:.6; }
-#tutorial-download[aria-busy="true"] { cursor:wait; }
-#tutorial-download:focus-visible { outline:3px solid var(--clr-green-light); outline-offset:4px; }
+.game-download-button { display:block; width:100%; padding:.85rem 1.5rem; border:0; border-radius:10px; background:var(--clr-green); color:#fff; font-family:var(--font-ui); font-size:.95rem; font-weight:700; cursor:pointer; }
+.game-download-button:disabled { cursor:not-allowed; opacity:.6; }
+.game-download-button[aria-busy="true"] { cursor:wait; }
+.game-download-button:focus-visible, .patch-head:focus-visible { outline:3px solid var(--clr-green-light); outline-offset:4px; }
+.dl-intro, .dl-summary { color:var(--clr-text-muted); font-family:var(--font-ui); line-height:1.7; }
+.dl-summary { margin:.8rem 0; max-width:65ch; }
+.dl-card__btn-wrap { max-width:300px; width:100%; }
+#game-action { width:100%; }
 #tutorial-note { max-width:230px; text-align:center; line-height:1.5; }
 
 .dl-maintenance-notice {
@@ -281,6 +285,7 @@
 }
 
 .patch-head {
+  width:100%; border:0; background:transparent; color:inherit; text-align:left;
   display: flex;
   align-items: center;
   justify-content: space-between;

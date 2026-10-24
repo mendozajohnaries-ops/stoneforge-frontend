@@ -26,7 +26,7 @@
   // Missing policy fails closed, including a partially cached/script-error page.
   const paused=maintenance?.enabled!==false;
   function showMaintenance(){button.disabled=true;button.textContent='Under Maintenance';button.setAttribute('aria-busy','false');
-   note.textContent='Will unlock next week. Demo downloads are temporarily paused while we fix issues found during testing.';}
+   note.textContent='StoneForge downloads are temporarily paused while we prepare and test the unified build.';}
   function ready(){if(paused){showMaintenance();return;}button.disabled=false;button.textContent='⬇ Download Free Trial';button.setAttribute('aria-busy','false');}
   async function download(){
    if(paused){showMaintenance();return;}

@@ -1,5 +1,9 @@
 # Full Game installer download page
 
+> Historical paid-installer guide. Backend Batch 2 and frontend Batch 3 retire
+> game purchases and replace this page with guarded unified-download preparation.
+> Follow [README.md](README.md) for current policy; do not re-enable this checkout.
+
 For the separate free Tutorial installer, see TUTORIAL_DOWNLOAD_SETUP.md. Tutorial credentials/object do not replace any Full Game setting below.
 
 Branch: `codex/feature-private-installer-download`.
