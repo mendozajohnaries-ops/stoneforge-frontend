@@ -16,18 +16,25 @@ class Node{
  scrollIntoView(){}
 }
 async function settle(){for(let i=0;i<4;i++)await new Promise(resolve=>setImmediate(resolve));}
-function fixture({response=catalog,fail=false,pending=false}={}){
+function fixture({response=catalog,fail=false,pending=false,eager=true}={}){
  const input=new Node('input');input.id='school';const type=new Node('select');type.value='student';
  const group=new Node(),label=new Node();
  const nodes=Object.fromEntries(['options','status','toggle','retry'].map(suffix=>{const node=new Node();node.id='school-'+suffix;return[node.id,node];}));
  const document={activeElement:null,getElementById:id=>nodes[id],createElement:tag=>new Node(tag)};input.document=document;
  fields.bind(type,group,input,label);let failNow=fail,resolvePending;const calls=[];
- const controller=picker.mount({document,input,type,apiBase:'https://api.example/api',fetch:async(url,options)=>{
+ const controller=picker.mount({document,input,type,apiBase:'https://api.example/api',eager,fetch:async(url,options)=>{
   calls.push({url,options});if(pending)await new Promise(resolve=>{resolvePending=resolve;});
   return{ok:!failNow,json:async()=>response};
  }});
  return{input,type,group,label,nodes,calls,document,controller,recover(){failNow=false;},resolve(){resolvePending?.();}};
 }
+test('lazy profile picker defers directory traffic until focus and avoids duplicate focus requests',async()=>{
+ const f=fixture({eager:false,pending:true});try{
+  await settle();assert.equal(f.calls.length,0);f.input.focus();f.input.focus();f.nodes['school-toggle'].fire('click');assert.equal(f.calls.length,1);f.resolve();await settle();
+  assert.equal(f.calls[0].options.credentials,'omit');
+ }finally{f.controller.stop();}
+});
+
 test('catalog rejects malformed/duplicate/unsupported records instead of inventing choices',()=>{
  assert.equal(picker.validateCatalog(catalog).length,3);
  for(const value of [null,{}, {...catalog,version:2},{...catalog,schools:[]},

@@ -8,15 +8,14 @@ let playerStatuses = {}; // { playfab_id: { status, suspension_end } }
 let reportCounts   = {}; // { playfab_id: count }
 let currentTab     = 'all';
 let signingOut = false;
+let sessionAccess = null, adminEpoch = 0;
 
 async function signOut() {
     if (signingOut) return;
     signingOut = true;
     try {
         if (!await StoneForgeSignOut.confirm()) return;
-        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
-        sessionStorage.removeItem('sf_user');
-        window.location.href = 'login-page.html';
+        await sessionAccess.logout();
     } finally { signingOut = false; }
 }
 
@@ -199,7 +198,7 @@ async function openReportsModal(playfabId, name) {
 
     const cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
     try {
-        const res  = await fetch(`${API_BASE}/admin/reports/${playfabId}`, {
+        const res  = await sessionAccess.request(`${API_BASE}/admin/reports/${playfabId}`, {
             credentials: 'include',
             headers: { 'x-playfab-id': cachedUser.playfab_id },
         });
@@ -247,7 +246,7 @@ function switchTab(tab) {
 // ============================================
 async function adminAction(endpoint, body) {
     const cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
-    const res = await fetch(`${API_BASE}/admin/${endpoint}`, {
+    const res = await sessionAccess.request(`${API_BASE}/admin/${endpoint}`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-playfab-id': cachedUser.playfab_id },
@@ -411,28 +410,24 @@ function renderPurchases(purchases) {
 // ============================================
 // Main init
 // ============================================
-async function initAdmin() {
-    const cachedUser = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
-    if (!cachedUser) { window.location.href = 'login-page.html'; return; }
-    if (!cachedUser.is_admin) { window.location.href = 'dashboard.html'; return; }
+async function initAdmin(cachedUser) {
+    const epoch = ++adminEpoch;
 
     let res;
     try {
-        res = await fetch(`${API_BASE}/admin/players`, {
+        res = await sessionAccess.request(`${API_BASE}/admin/players`, {
             credentials: 'include',
             headers: { 'x-playfab-id': cachedUser.playfab_id },
         });
-    } catch {
-        document.getElementById('loading-screen').innerHTML = '<p style="color:#fca5a5;font-family:var(--font-ui);">Could not connect to server.</p>';
-        return;
-    }
+    } catch { throw new Error('Could not load admin account.'); }
 
-    if (res.status === 403) { window.location.href = 'dashboard.html'; return; }
+    if (epoch !== adminEpoch) return;
+    if (res.status === 403) { window.location.replace('dashboard.html'); return; }
 
     const data = await res.json();
+    if (epoch !== adminEpoch) return;
     if (!data.success) {
-        document.getElementById('loading-screen').innerHTML = `<p style="color:#fca5a5;font-family:var(--font-ui);">${data.error || 'Failed to load.'}</p>`;
-        return;
+        throw new Error('Could not load admin account.');
     }
 
     allPlayers = data.players || [];
@@ -450,7 +445,7 @@ async function initAdmin() {
     renderPlayers(getFilteredPlayers());
 
     // Fetch report counts in parallel (non-blocking — renders fine without them)
-    fetch(`${API_BASE}/admin/report-counts`, {
+    sessionAccess.request(`${API_BASE}/admin/report-counts`, {
         credentials: 'include',
         headers: { 'x-playfab-id': cachedUser.playfab_id },
     }).then(r => r.json()).then(d => {
@@ -461,16 +456,29 @@ async function initAdmin() {
     }).catch(() => {});
 
     // Load purchases
-    try {
-        const purchRes  = await fetch(`${API_BASE}/admin/purchases`, {
+    sessionAccess.request(`${API_BASE}/admin/purchases`, {
             credentials: 'include',
             headers: { 'x-playfab-id': cachedUser.playfab_id },
-        });
-        const purchData = await purchRes.json();
-        if (purchData.success) renderPurchases(purchData.purchases);
-    } catch { renderPurchases([]); }
+        }).then(response => response.json()).then(data => {
+            if (epoch === adminEpoch && data.success) renderPurchases(data.purchases);
+        }).catch(() => {});
 
+    document.getElementById('logout-btn').removeEventListener('click', signOut);
     document.getElementById('logout-btn').addEventListener('click', signOut);
 }
 
-initAdmin();
+function suspendAdmin() {
+    adminEpoch++;allPlayers = [];playerStatuses = {};reportCounts = {};
+    for (const id of ['players-body','purchases-body','reports-body']) document.getElementById(id).replaceChildren();
+    for (const id of ['suspend-modal','ban-modal','reports-modal']) document.getElementById(id).style.display = 'none';
+    document.getElementById('reports-modal-body').replaceChildren();
+    document.getElementById('reports-modal-title').textContent = 'Player Reports';
+    document.getElementById('reports-modal-sub').textContent = '';
+    for (const kind of ['suspend','ban']) {
+        document.getElementById(kind+'-player-name').textContent = '';
+        document.getElementById(kind+'-reason').value = '';
+        const button = document.getElementById(kind+'-confirm-btn');delete button.dataset.id;delete button.dataset.name;
+    }
+}
+sessionAccess = StoneForgeSession.protect({apiBase:API_BASE,role:'admin',rootId:'admin-content',onReady:initAdmin,onSuspend:suspendAdmin});
+sessionAccess.check();

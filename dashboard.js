@@ -4,9 +4,10 @@
 
 const API_BASE  = 'https://stoneforge-backend.onrender.com/api';
 let cachedUser  = null;
+let sessionAccess = null, dashboardEpoch = 0, reportUiBound = false;
 
 async function apiGet(endpoint, headers = {}) {
-    const res  = await fetch(`${API_BASE}/${endpoint}`, { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15000), headers });
+    const res  = await sessionAccess.request(`${API_BASE}/${endpoint}`, { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15000), headers });
     const data = await res.json();
     return { ok: res.ok, data };
 }
@@ -42,10 +43,7 @@ async function signOut() {
     signingOut = true;
     try {
         if (!await StoneForgeSignOut.confirm()) return;
-        achievementBrowser?.stop(); storeBrowser?.stop(); transactionBrowser?.stop(); cachedUser = null;
-        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
-        sessionStorage.removeItem('sf_user');
-        window.location.href = 'login-page.html';
+        await sessionAccess.logout();
     } finally { signingOut = false; }
 }
 
@@ -72,6 +70,9 @@ function openReportModal() {
 
 function closeReportModal() {
     document.getElementById('report-modal').style.display = 'none';
+    document.getElementById('rmodal-search').value = '';document.getElementById('rmodal-note').value = '';
+    document.getElementById('rmodal-results').replaceChildren();
+    for (const id of ['rmodal-sel-name','rmodal-sel-id']) document.getElementById(id).textContent = '';
 }
 
 function setReportStep(step) {
@@ -166,7 +167,7 @@ async function submitReport() {
     submitBtn.textContent = 'Submitting...';
 
     try {
-        const res  = await fetch(`${API_BASE}/report-player`, {
+        const res  = await sessionAccess.request(`${API_BASE}/report-player`, {
             method:      'POST',
             credentials: 'include',
             headers:     { 'Content-Type': 'application/json', 'x-playfab-id': cachedUser.playfab_id },
@@ -225,42 +226,27 @@ function initReportModal() {
 // ============================================
 // Main init
 // ============================================
-async function initDashboard() {
-    let session;
-    try { session = await apiGet('me'); }
-    catch { document.getElementById('loading-screen').textContent = 'Cannot reach the server. Please reload to retry.'; return; }
-    if (!session.ok) { window.location.href = 'login-page.html?redirect=dashboard.html'; return; }
-    cachedUser = session.data;
-    sessionStorage.setItem('sf_user', JSON.stringify(cachedUser));
-    if (cachedUser.is_admin) { window.location.href = 'admin.html'; return; }
+function initDashboard(user) {
+    cachedUser = user;
+    const epoch = ++dashboardEpoch, owner = user.playfab_id;
+    document.getElementById('logout-btn').removeEventListener('click', signOut);
     document.getElementById('logout-btn').addEventListener('click', signOut);
 
-    document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('dashboard').style.display      = 'block';
 
     renderProfile(cachedUser, null);
     achievementBrowser = StoneForgeAchievements.mount({ document, apiBase: API_BASE,
-        owner: cachedUser.playfab_id, currentOwner: () => cachedUser?.playfab_id });
+        owner, currentOwner: () => cachedUser?.playfab_id, fetch: sessionAccess.request });
 
-    initReportModal();
-
-    const [detailsRes, profileRes] = await Promise.allSettled([
-        apiGet(`get-player-details?playfab_id=${cachedUser.playfab_id}`),
-        apiGet('profile'),
-    ]);
-    if (!cachedUser) return;
-
-    const details  = (detailsRes.status === 'fulfilled'   && detailsRes.value.ok)   ? detailsRes.value.data   : null;
-    const profile  = (profileRes.status === 'fulfilled' && profileRes.value.ok) ? profileRes.value.data : null;
-
-    renderProfile(cachedUser, details);
+    if (!reportUiBound) { initReportModal(); reportUiBound = true; }
     transactionBrowser = StoneForgeTransactions.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
-        currentOwner: () => cachedUser?.playfab_id });
+        currentOwner: () => cachedUser?.playfab_id, fetch: sessionAccess.request });
     storeBrowser = StoneForgeStore.mount({ document, apiBase: API_BASE, owner: cachedUser.playfab_id,
-        currentOwner: () => cachedUser?.playfab_id, initialProfile: profile, onSignOut: signOut,
+        currentOwner: () => cachedUser?.playfab_id, onSignOut: signOut, fetch: sessionAccess.request,
         onWalletRefresh: () => { achievementBrowser?.refresh(); } });
-
-
+    apiGet(`get-player-details?playfab_id=${owner}`).then(result => {
+        if (epoch === dashboardEpoch && cachedUser?.playfab_id === owner && result.ok) renderProfile(cachedUser, result.data);
+    }).catch(() => {});
 
     // Auto-open modals from game intent — check both URL and sessionStorage
     const dashParams    = new URLSearchParams(window.location.search);
@@ -279,4 +265,13 @@ async function initDashboard() {
     }
 }
 
-initDashboard();
+function suspendDashboard() {
+    dashboardEpoch++;cachedUser = null;
+    achievementBrowser?.stop();storeBrowser?.stop();transactionBrowser?.stop();
+    achievementBrowser = storeBrowser = transactionBrowser = null;
+    clearTimeout(searchDebounce);reportTarget = null;reportedTargets.clear();
+    closeReportModal();
+    for (const id of ['display-name','playfab-id','avatar-initials','account-created','account-last-login']) document.getElementById(id).textContent = '—';
+}
+sessionAccess = StoneForgeSession.protect({apiBase:API_BASE,rootId:'dashboard',onReady:initDashboard,onSuspend:suspendDashboard});
+sessionAccess.check();

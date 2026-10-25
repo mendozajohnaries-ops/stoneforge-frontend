@@ -56,6 +56,7 @@ async function apiPost(endpoint, body) {
 }
 
 function saveUserAndRedirect(data, username) {
+    window.StoneForgeSession?.notify('signed-in');
     sessionStorage.setItem('sf_user', JSON.stringify({
         playfab_id:   data.playfab_id,
         username:     data.username || username,

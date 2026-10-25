@@ -1,0 +1,4 @@
+#dashboard[hidden],#admin-content[hidden] { display:none !important; }
+.session-retry,.session-secondary { border:1px solid #685433; border-radius:9px; padding:.8rem 1.3rem; font:600 .9rem var(--font-ui); cursor:pointer; background:#dfb259; color:#211608; }
+.session-secondary { background:#22291e; color:#e7e7da; }
+.loading-screen>p { max-width:40ch; line-height:1.7; text-align:center; padding:0 1rem; }

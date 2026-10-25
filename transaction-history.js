@@ -43,7 +43,7 @@
     if(after&&data.next_cursor===after)throw new Error('Repeated cursor rejected.');
     if(!response.ok||append&&mode!==data.environment)throw new Error('History unavailable.');
     mode=data.environment;render(data.items);cursor=data.next_cursor;more.hidden=!cursor;
-    status.textContent=(mode==='test'?'Sandbox wallet activity. ':'')+(seen.size?'Latest transactions first.':'No transactions yet.')+' Use Refresh to update.';
+    status.textContent=(seen.size?'Latest transactions first.':'No transactions yet.')+' Use Refresh to update.';
    }catch{if(!same()){clear();status.textContent='';}else if(attempt===generation){if(!append)clear();status.textContent='Transaction history unavailable. Your balance and records have not been reset. Retry to refresh.';}}
    finally{if(attempt===generation){busy=false;refresh.disabled=false;more.disabled=false;}}
   }
