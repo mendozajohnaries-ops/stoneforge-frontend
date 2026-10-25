@@ -2,7 +2,8 @@
    STONEFORGE — GLOBAL BASE STYLES
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Darumadrop+One&family=Montserrat:wght@400;500;600;700;900&family=Roboto+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+[hidden] { display:none !important; }
 
 *, *::before, *::after {
   margin: 0;

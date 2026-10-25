@@ -31,6 +31,7 @@ class Node{
  removeEventListener(name){delete this.listeners[name];}
  showModal(){this.open=true;}close(){this.open=false;}focus(){if(this.ownerDocument)this.ownerDocument.activeElement=this;}scrollIntoView(){this.scrolled=true;}
  getBoundingClientRect(){return{left:0,top:0,right:100,bottom:100};}
+ getClientRects(){return this.hidden?[]:[{}];}
  async fire(name,event={}){event.target??=this;event.currentTarget=this;if(!event.preventDefault)event.preventDefault=function(){this.prevented=true;};return this.listeners[name]?.(event);}
 }
 test('conditional school field is required only for Student, and omitted for Regular User',()=>{
@@ -55,7 +56,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'captain',costs:[45,95,155,230]},{id:'engineer',costs:[65,125,190,270]},
  {id:'attendant',costs:[30,70,120,180]},{id:'explorer',costs:[80,140,205,300]}]}};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
-function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false}={}){
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,initial=true}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -64,16 +65,19 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
  const document={hidden:false,documentElement:new Node('html'),getElementById:id=>nodes[id],createElement:tag=>{const node=new Node(tag);node.ownerDocument=document;return node;},querySelectorAll:()=>all().filter(node=>node.dataset.forgePack),
   addEventListener(){},removeEventListener(){}};
  Object.values(nodes).forEach(node=>{node.ownerDocument=document;});
+ const summary=new Node('summary');summary.ownerDocument=document;
+ nodes['forge-store'].querySelectorAll=()=>[nodes['forge-store-retry'],nodes['forge-store-close'],...(nodes['forge-confirmation'].hidden?
+  [...all().filter(node=>node.dataset.forgePack),summary]:[nodes['forge-confirm-back'],nodes['forge-confirm-continue']])];
  global.sessionStorage={getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)};
  global.location={assign:value=>navigation.push(value)};
  let availabilityData;
- const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>accountOwner,initialProfile:{...current},
+ const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>accountOwner,initialProfile:initial?{...current}:null,
   fetch:async(url,options)=>{
    calls.push({url,options});
    if(url.endsWith('/schools'))return{ok:true,json:async()=>schoolCatalog};
    if(url.endsWith('/profile')&&options.method==='PUT'){const body=JSON.parse(options.body);Object.assign(current,body,{requires_profile_completion:false});return{ok:true,json:async()=>({...current})};}
-   if(url.endsWith('/profile'))return{ok:true,json:async()=>({...current})};
-   if(url.endsWith('/store/catalog')){if(typeof failCatalog==='function'?failCatalog():failCatalog)throw new Error('Catalog timeout');return{ok:true,json:async()=>catalog};}
+   if(url.endsWith('/profile'))return profileReply?profileReply():{ok:true,json:async()=>({...current})};
+   if(url.endsWith('/store/catalog')){if(catalogReply)return catalogReply();if(typeof failCatalog==='function'?failCatalog():failCatalog)throw new Error('Catalog timeout');return{ok:true,json:async()=>catalog};}
    if(url.endsWith('/store/checkout'))return checkoutReply?checkoutReply():{ok:true,json:async()=>({environment:'test',checkout_url:'https://checkout.paymongo.com/cs_fixture'})};
    if(url.endsWith('/wallet/reconcile')&&rewardReply)return rewardReply();
    const failed=typeof failWallet==='function'?failWallet():failWallet;
@@ -86,7 +90,7 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
     test_checkout_available:false,perk_rewards_available:false,requires_profile_completion:!type,live_purchases_enabled:false,access_model:'free_to_play',...await availabilityData})};
    return{ok:true,json:async()=>({owner:'alice',environment:'test',credited:[]})};
   }});
- return{nodes,calls,controller,navigation,all,document,setOwner(value){accountOwner=value;}};
+ return{nodes,calls,controller,navigation,all,document,summary,setOwner(value){accountOwner=value;}};
 }
 
 test('verified display wallet matches the game; reward reconciliation precedes the final balance read',async()=>{
@@ -96,6 +100,27 @@ test('verified display wallet matches the game; reward reconciliation precedes t
  try{await settled();assert.equal(reconciles,1);assert.equal(f.nodes['wallet-balance'].textContent,'175');assert.equal(f.nodes['store-wallet-balance'].textContent,'175');
   const call=f.calls.find(c=>c.url.endsWith('/wallet/reconcile'));assert.equal(call.options.body,'{}');assert.equal(call.options.headers['x-playfab-id'],'alice');
   assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>n.disabled),'perk testers without checkout permission cannot pay');
+ }finally{f.controller.stop();}
+});
+
+test('first confirmed FM renders while profile, catalog and availability are still pending',async()=>{
+ let profileDone,catalogDone,accessDone;
+ const profileWait=new Promise(resolve=>{profileDone=resolve;}),catalogWait=new Promise(resolve=>{catalogDone=resolve;}),accessWait=new Promise(resolve=>{accessDone=resolve;});
+ const f=fixture({initial:false,testBalance:450,profileReply:()=>profileWait,catalogReply:()=>catalogWait,availabilityReply:()=>accessWait});
+ try{await settled();assert.equal(f.nodes['wallet-balance'].textContent,'450');assert.equal(f.nodes['store-wallet-balance'].textContent,'450');
+  assert.equal(f.nodes['forge-pack-grid'].children.length,0);assert.equal(f.calls.some(call=>call.url.endsWith('/schools')),false);
+  profileDone({ok:true,json:async()=>({owner:'alice',user_type:'regular',requires_profile_completion:false})});catalogDone({ok:true,json:async()=>catalog});
+  accessDone({ok:true,json:async()=>({owner:'alice',access_model:'free_to_play',live_purchases_enabled:false,test_checkout_available:true,perk_rewards_available:false,requires_profile_completion:false})});
+  await settled();assert.equal(f.nodes['forge-pack-grid'].children.length,4);assert.ok(f.all().filter(node=>node.dataset.forgePack).every(node=>!node.disabled));
+  assert.match(f.nodes['forge-store-availability'].textContent,/balance is shared with StoneForge/);
+ }finally{f.controller.stop();}
+});
+
+test('confirmed funds appear before a slow reward reconciliation without fabricated credit',async()=>{
+ let done;const pending=new Promise(resolve=>{done=resolve;});let balance=155;
+ const f=fixture({walletReply:()=>({owner:'alice',balance:0,test_balance:balance,perk_rewards_available:true}),rewardReply:()=>pending});
+ try{await settled();assert.equal(f.nodes['wallet-balance'].textContent,'155');assert.ok(f.all().filter(node=>node.dataset.forgePack).every(node=>node.disabled));
+  balance=175;done({ok:true,json:async()=>({owner:'alice',environment:'test'})});await settled();assert.equal(f.nodes['wallet-balance'].textContent,'175');
  }finally{f.controller.stop();}
 });
 
@@ -112,10 +137,9 @@ test('all-account sandbox response enables Buy FM without an ownership or tester
    test_checkout_scope:'all_authenticated',checkout_unavailable_reason:null,test_wallet_available:true,test_balance:200,
    display_environment:'test',display_balance:200,perk_rewards_available:false})});
   try{await settled();f.controller.open();
-   assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>!n.disabled&&n.textContent==='Buy FM'));
-   assert.match(f.nodes['forge-store-availability'].textContent,/all signed-in accounts/);
-   assert.match(f.nodes['forge-store-availability'].textContent,/StoneForge is free to play/);
-   assert.match(f.nodes['forge-store-availability'].textContent,/No real money/);
+   assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>!n.disabled&&n.textContent==='Select package'));
+   assert.match(f.nodes['forge-store-availability'].textContent,/balance is shared with StoneForge/);
+   assert.doesNotMatch(f.nodes['forge-store-availability'].textContent,/Sandbox|test.only/i);
    assert.equal(f.nodes['wallet-balance'].textContent,'200');
    assert.equal(f.calls.some(c=>c.url.endsWith('/wallet/reconcile')),false);
    await f.all().find(n=>n.dataset.forgePack==='fm_handful').fire('click');
@@ -141,9 +165,9 @@ test('availability distinguishes session expiry, restricted access and disabled 
   }finally{f.controller.stop();}
  }
  const f=fixture({walletReply:()=>({owner:'alice',environment:'live',balance:0,test_checkout_available:false,checkout_unavailable_reason:'store_disabled'})});
- try{await settled();assert.match(f.nodes['forge-store-availability'].textContent,/temporarily disabled/);}finally{f.controller.stop();}
+ try{await settled();assert.match(f.nodes['forge-store-availability'].textContent,/temporarily unavailable/);}finally{f.controller.stop();}
 });
-test('loading wallet disables checkout and late refresh cannot overwrite the newer balance',async()=>{
+test('in-flight refreshes coalesce and the next completed refresh reads the newer balance',async()=>{
  let reads=0,release;
  const f=fixture({walletReply:()=>{
   const data={owner:'alice',environment:'live',balance:0,test_checkout_available:true,test_balance:++reads===1?200:450};
@@ -152,9 +176,10 @@ test('loading wallet disables checkout and late refresh cannot overwrite the new
  }});
  try{await settled();f.controller.open();const slow=f.controller.refresh();await settled();
   assert.equal(f.nodes['forge-store-retry'].disabled,true);assert.ok(f.all().filter(n=>n.dataset.forgePack).every(n=>n.disabled));
-  assert.match(f.nodes['forge-store-availability'].textContent,/Checking your wallet/);
-  await f.controller.refresh();assert.equal(f.nodes['wallet-balance'].textContent,'450');
-  release();await slow;assert.equal(f.nodes['wallet-balance'].textContent,'450');assert.equal(f.nodes['forge-store-retry'].disabled,false);
+  assert.match(f.nodes['forge-store-availability'].textContent,/Loading your balance/);
+  const joined=f.controller.refresh();assert.equal(joined,slow);assert.equal(reads,2);
+  release();await Promise.all([slow,joined]);assert.equal(f.nodes['wallet-balance'].textContent,'200');
+  await f.controller.refresh();assert.equal(f.nodes['wallet-balance'].textContent,'450');assert.equal(reads,3);assert.equal(f.nodes['forge-store-retry'].disabled,false);
  }finally{if(release)release();f.controller.stop();}
 });
 test('reward outage never fabricates money; wallet mode mismatch fails closed',async()=>{
@@ -194,7 +219,8 @@ test('server profile requirement prevents checkout despite a stale complete loca
 test('account changes discard pending canonical reads and stop clears funds without logout',async()=>{
  let release;const f=fixture({canonicalReply:()=>new Promise(resolve=>{release=()=>resolve({version:2,owner:'alice',currency:'FM',environment:'test',balance:100,live_purchases_enabled:false,rewards_active:false});})});
  await settled();f.setOwner('bob');release();await settled();assert.notEqual(f.nodes['wallet-balance'].textContent,'100');
- f.controller.stop();assert.equal(f.nodes['wallet-balance'].textContent,'—');assert.equal(f.calls.some(call=>call.url.endsWith('/logout')),false);
+ f.nodes['profile-save'].disabled=true;f.controller.stop();assert.equal(f.nodes['profile-save'].disabled,false);
+ assert.equal(f.nodes['wallet-balance'].textContent,'—');assert.equal(f.calls.some(call=>call.url.endsWith('/logout')),false);
 });
 
 test('profile removes the historical purchase gate and loads the canonical wallet contract',()=>{
@@ -220,7 +246,7 @@ test('Store uses four imported images, fixed prices and disabled preview actions
   await settled();assert.equal(f.nodes['forge-pack-grid'].children.length,4);assert.equal(f.nodes['wallet-balance'].textContent,'0');
   const buttons=f.all().filter(node=>node.dataset.forgePack);assert.equal(buttons.length,4);assert.ok(buttons.every(button=>button.disabled));
   await buttons[0].fire('click');assert.equal(f.calls.some(call=>call.url.endsWith('/store/checkout')),false);
-  const images=f.all().filter(node=>node.tag==='img');assert.equal(images.length,4);assert.ok(images.every(node=>node.src.startsWith('Assets/store/fm-')));
+  const images=f.all().filter(node=>node.tag==='img');assert.equal(images.length,4);assert.ok(images.every(node=>node.src.startsWith('Assets/store/web/fm-')&&node.src.endsWith('.webp')));
  }finally{f.controller.stop();}
 });
 test('wallet outage or wrong server owner never displays a fabricated zero balance',async()=>{
@@ -274,12 +300,11 @@ test('backdrop only closes after an outside press; inner content and drag-out cl
 test('Tab and Shift+Tab wrap between visible enabled Store controls, including preview-only mode',async()=>{
  for(const eligible of [false,true]){
   const f=fixture({eligible});try{
-   await settled();f.controller.open();const buttons=f.all().filter(node=>node.dataset.forgePack&&!node.disabled);
-   const last=buttons.at(-1)||f.nodes['forge-store-retry'];
+   await settled();f.controller.open();f.nodes['forge-store-retry'].focus();const last=f.summary;
    const backwards={key:'Tab',shiftKey:true};await f.nodes['forge-store'].fire('keydown',backwards);
    assert.equal(backwards.prevented,true);assert.equal(f.document.activeElement,last);
    const forwards={key:'Tab',shiftKey:false};await f.nodes['forge-store'].fire('keydown',forwards);
-   assert.equal(forwards.prevented,true);assert.equal(f.document.activeElement,f.nodes['forge-store-close']);
+   assert.equal(forwards.prevented,true);assert.equal(f.document.activeElement,f.nodes['forge-store-retry']);
   }finally{f.controller.stop();}
  }
 });
@@ -297,7 +322,7 @@ test('back/reopen cancels package selection without creating an order; test wall
  const f=fixture({eligible:true,testBalance:450});try{
   await settled();f.controller.open();const button=f.all().find(node=>node.dataset.forgePack==='fm_pouch');await button.fire('click');
   assert.equal(f.nodes['store-wallet-balance'].textContent,'450');assert.equal(f.nodes['wallet-balance'].textContent,'450');
-  assert.equal(f.nodes['store-test-row'].hidden,true);assert.equal(f.nodes['forge-store-mode'].textContent,'Sandbox demo');
+  assert.equal(f.nodes['store-test-row'].hidden,true);assert.equal(f.nodes['forge-store-mode'].textContent,'Available');
   await f.nodes['forge-confirm-back'].fire('click');assert.equal(f.nodes['forge-confirmation'].hidden,true);assert.equal(f.document.activeElement,button);
   await button.fire('click');await f.nodes['forge-store-close'].fire('click');f.controller.open();
   assert.equal(f.nodes['forge-confirmation'].hidden,true);assert.equal(f.nodes['forge-confirm-continue'].disabled,true);
@@ -338,7 +363,7 @@ test('Store markup is a labelled native dialog outside profile cards with respon
 
 test('actual dashboard shop/payment return opens Store UI without fulfillment or scrolling, report intent takes precedence',()=>{
  const vm=require('node:vm'),source=fs.readFileSync('dashboard.js','utf8').replace(/\r\n/g,'\n');
- const block=source.slice(source.indexOf('    // Auto-open modals from game intent'),source.lastIndexOf('\n}\n\ninitDashboard();'));
+ const block=source.slice(source.indexOf('    // Auto-open modals from game intent'),source.indexOf('\n}\n\nfunction suspendDashboard'));
  for(const query of ['?shop=true','?shop=true&payment=test','?shop=true&payment=cancelled','?shop=true&report=true']){
   const actions=[];vm.runInNewContext(block,{URLSearchParams,window:{location:{search:query},history:{replaceState(){actions.push('history');}}},
    sessionStorage:{getItem:()=>null,removeItem(){}},storeBrowser:{open(){actions.push('store');}},openReportModal(){actions.push('report');}});
@@ -351,8 +376,8 @@ test('signup and dashboard load modules in order, preserve sandbox disclosure an
  assert.ok(signup.indexOf('src="profile-fields.js"')<signup.indexOf('src="auth.js"'));
  assert.ok(dash.indexOf('src="profile-store.js"')<dash.indexOf('src="dashboard.js"'));
  assert.match(auth,/apiPost\('send-otp', \{ username, email, password, \.\.\.fields \}\)/);
- assert.match(dash,/Checking your wallet and checkout access/);assert.match(dash,/id="forge-store-retry"/);
- assert.match(dash,/No real money will be charged/);assert.doesNotMatch(signup,/Coyns|LRN|student-number|student_id/i);
+ assert.match(dash,/Loading your balance/);assert.match(dash,/id="forge-store-retry"/);
+ assert.match(dash,/No real payment will be collected/);assert.doesNotMatch(signup,/Coyns|LRN|student-number|student_id/i);
  assert.doesNotMatch(fs.readFileSync('profile-store.js','utf8'),/balance\s*\+=|wallet\/credit|discount/i);
 });
 

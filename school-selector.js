@@ -20,11 +20,11 @@
   return schools.filter(school=>{const text=normalize([school.name,school.campus,school.city,school.sector,...school.aliases].join(' '));return words.every(word=>text.includes(word));})
    .sort((a,b)=>a.name.localeCompare(b.name)||a.city.localeCompare(b.city)||a.id.localeCompare(b.id));
  }
- function mount({document,input,type,apiBase,fetch:request=root.fetch.bind(root)}){
+ function mount({document,input,type,apiBase,eager=true,fetch:request=root.fetch.bind(root)}){
   const get=suffix=>document.getElementById(input.id+suffix);
   const list=get('-options'),status=get('-status'),toggle=get('-toggle'),retry=get('-retry');
   if(!list||!status||!toggle||!retry)throw new Error('School picker is missing its controls.');
-  let schools=[],selected=null,original=null,results=[],active=-1,stopped=false,controller,generation=0,loaded=false,loading=false,blurTimer;
+  let schools=[],selected=null,original=null,results=[],active=-1,stopped=false,controller,generation=0,loaded=false,loading=false,attempted=false,blurTimer;
   const listeners=[];
   const listen=(node,event,fn)=>{node.addEventListener(event,fn);listeners.push(()=>node.removeEventListener(event,fn));};
   const text=(tag,value,className)=>{const node=document.createElement(tag);node.textContent=value;if(className)node.className=className;return node;};
@@ -32,7 +32,7 @@
   function currentSelection(){return selected&&input.value===selected.name?selected:null;}
   function describe(){
    if(loading){status.textContent='Loading Cavite school choices…';return;}
-   if(!loaded){status.textContent='School directory unavailable. Retry to choose a school. Existing saved schools can still be kept unchanged.';return;}
+   if(!loaded){status.textContent=attempted?'School directory unavailable. Retry to choose a school. Existing saved schools can still be kept unchanged.':'School choices load when you use this field.';return;}
    const choice=currentSelection();
    if(choice){
     const record=schools.find(school=>school.id===choice.id);
@@ -66,6 +66,7 @@
    status.textContent=results.length?results.length+' matching school'+(results.length===1?'':'s')+'. Arrow keys to browse; Enter to select.':'No matching campus in the documented list yet. Try its official name or city; do not select a different school.';
   }
   async function load(){
+   if(stopped||loading)return;attempted=true;
    const attempt=++generation;controller?.abort();const pending=new AbortController();controller=pending;loading=true;retry.hidden=true;describe();
    const timeout=setTimeout(()=>pending.abort(),15000);
    try{
@@ -78,7 +79,7 @@
     if(loaded&&document.activeElement===input&&!input.disabled)render();else describe();}}
   }
   listen(input,'input',()=>{selected=null;render();});
-  listen(input,'focus',()=>{clearTimeout(blurTimer);if(loaded)render();else describe();});
+  listen(input,'focus',()=>{clearTimeout(blurTimer);if(loaded)render();else if(!loading)load();else describe();});
   listen(input,'keydown',event=>{
    if(event.key==='ArrowDown'||event.key==='ArrowUp'){
     event.preventDefault();if(list.hidden)render();
@@ -92,7 +93,7 @@
   listen(type,'change',()=>{toggle.disabled=input.disabled;close();describe();});
   listen(retry,'click',load);
   input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-controls',list.id);input.setAttribute('aria-expanded','false');
-  toggle.disabled=input.disabled;load();
+  toggle.disabled=input.disabled;retry.hidden=true;if(eager)load();
   return{values(){const school=currentSelection();return{school:input.value,school_id:school?.id||null};},
    reset(profile={}){original={school:profile.school||'',school_id:profile.school_id||null,school_selection:profile.school_selection};input.value=original.school;
     selected=original.school_id?{id:original.school_id,name:original.school}:null;close();describe();},

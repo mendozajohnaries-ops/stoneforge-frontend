@@ -34,7 +34,7 @@ function actualHandler(file,approval){
  const source=fs.readFileSync(file,'utf8'),handler=source.match(/async function signOut\(\) \{[\s\S]*?\n\}/)?.[0];assert.ok(handler);
  const calls={confirm:0,stops:0,posts:0,removes:0},window={location:{href:'unchanged'}};
  const context={window,API_BASE:'https://api.example/api',StoneForgeSignOut:{confirm:()=>{calls.confirm++;return approval();}},
-  fetch:async(url,options)=>{assert.equal(url,'https://api.example/api/logout');assert.equal(options.credentials,'include');assert.equal(options.method,'POST');calls.posts++;},
+  sessionAccess:{logout:async()=>{calls.posts++;}},
   sessionStorage:{removeItem:key=>{assert.equal(key,'sf_user');calls.removes++;}},
   achievementBrowser:{stop(){calls.stops++;}},storeBrowser:{stop(){calls.stops++;}},transactionBrowser:{stop(){calls.stops++;}}};
  vm.runInNewContext('let signingOut=false;let cachedUser={playfab_id:"alice"};\n'+handler+'\nglobalThis.run=signOut;globalThis.owner=()=>cachedUser;',context);
@@ -46,8 +46,8 @@ test('actual Profile/Admin handlers perform no logout or cleanup until confirmed
   assert.equal(cancel.calls.stops,0);assert.ok(cancel.context.owner());assert.equal(cancel.window.location.href,'unchanged');
   let release;const pending=new Promise(resolve=>{release=resolve;}),f=actualHandler(file,()=>pending);
   const first=f.context.run();await f.context.run();assert.equal(f.calls.confirm,1);assert.equal(f.calls.posts,0);assert.equal(f.calls.stops,0);
-  release(true);await first;assert.equal(f.calls.posts,1);assert.equal(f.calls.removes,1);assert.equal(f.window.location.href,'login-page.html');
-  assert.equal(f.calls.stops,file==='dashboard.js'?3:0);
+  release(true);await first;assert.equal(f.calls.posts,1);assert.equal(f.calls.removes,0);assert.equal(f.window.location.href,'unchanged');
+  assert.equal(f.calls.stops,0); // Verified cleanup/navigation belongs to the shared guard, tested separately.
  }
 });
 test('both pages load the confirmation module before their logout handlers; required-profile sign-out shares the same guard',()=>{

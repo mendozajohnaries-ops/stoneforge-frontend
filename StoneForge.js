@@ -104,14 +104,26 @@ confirmInput?.addEventListener('input', checkPasswordMatch);
 
 // ---- NAV: Show Dashboard if logged in, Sign In if not ----
 const authItem = document.getElementById('nav-auth-item');
-if (authItem) {
-  const user = JSON.parse(sessionStorage.getItem('sf_user') || 'null');
-  if (user) {
-    const label = user.is_admin ? 'Dashboard' : 'Profile';
-    const page  = user.is_admin ? 'admin.html' : 'dashboard.html';
-    authItem.innerHTML = `<a href="${page}" class="nav__link">${label}</a>`;
+function refreshAccountNavigation() {
+  if (!authItem) return;
+  let user = null;try { user = JSON.parse(sessionStorage.getItem('sf_user') || 'null'); } catch {}
+  const link = document.createElement('a');link.className = 'nav__link';
+  link.href = user ? user.is_admin ? 'admin.html' : 'dashboard.html' : 'login-page.html';
+  link.textContent = user ? user.is_admin ? 'Dashboard' : 'Profile' : 'Sign In';
+  authItem.replaceChildren(link);
+  if (!user) {
+    const form = document.getElementById('review-form');if (form) form.hidden = true;
+    const signin = document.getElementById('review-signin');if (signin) signin.style.display = '';
+    const draft = document.getElementById('review-text');if (draft) draft.value = '';
   }
 }
+refreshAccountNavigation();
+window.addEventListener('pageshow', refreshAccountNavigation);
+window.addEventListener('storage', event => {
+  if (event.key !== 'sf.auth-event') return;
+  try { if (JSON.parse(event.newValue)?.kind === 'signed-out') sessionStorage.removeItem('sf_user'); } catch {}
+  refreshAccountNavigation();
+});
 
 // ============================================
 // Reviews & Ratings

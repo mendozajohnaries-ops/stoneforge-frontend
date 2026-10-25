@@ -1,6 +1,7 @@
 # StoneForge website
 
 Current frontend policy: **Batch 3**, paired with backend Batch 2 (PR #12).
+Website A builds on that contract: see [UI, session and performance notes](WEBSITE_A_UI_SESSION_PERFORMANCE.md).
 StoneForge is free to play; optional Forge Medal checkout remains sandbox only.
 This repository is plain HTML/CSS/browser JavaScript with Node's built-in tests.
 

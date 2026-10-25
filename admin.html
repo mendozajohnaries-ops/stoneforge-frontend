@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — StoneForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darumadrop+One&amp;family=Montserrat:wght@400;500;600;700;900&amp;family=Roboto+Mono:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap">
 <link rel="icon" href="favicon.ico?v=20261022" sizes="16x16 32x32 48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?v=20261022">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png?v=20261022">
@@ -128,6 +131,7 @@
     @media (max-width: 900px) { .overview-grid { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 600px) { .overview-grid { grid-template-columns: 1fr; } }
   </style>
+  <link rel="stylesheet" href="session-guard.css?v=20261025-a">
 </head>
 <body>
 
@@ -161,7 +165,7 @@
     </nav>
   </header>
 
-  <div class="admin" id="admin-content" style="display:none;">
+  <div class="admin" id="admin-content" style="display:none;" hidden>
     <div style="margin-bottom:0.5rem;font-size:0.75rem;color:var(--clr-text-dim);font-family:var(--font-body);letter-spacing:0.1em;text-transform:uppercase;">Admin</div>
     <div style="font-size:0.82rem;color:var(--clr-text-dim);font-family:var(--font-ui);margin-top:0.4rem;letter-spacing:0.15em;text-transform:uppercase;">StoneForge Management Console</div>
 
@@ -319,6 +323,7 @@
     </div>
   </div>
 
+  <script src="session-guard.js?v=20261025-a"></script>
   <script src="StoneForge.js"></script>
   <script src="sign-out.js"></script>
   <script src="admin.js"></script>

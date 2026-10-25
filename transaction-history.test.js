@@ -24,7 +24,7 @@ test('history loads owner-scoped GET, signs FM, shows pending rather than credit
   assert.equal(cards[2].children[1].textContent,'Not credited');assert.match(cards[2].children[0].children[1].textContent,/Date unknown.*Pending/);
   assert.match(cards[2].children[0].children[0].textContent,/<img/);assert.equal(cards[2].children[0].children[0].innerHTML,undefined);
   assert.equal(f.calls[0].options.credentials,'include');assert.equal(f.calls[0].options.cache,'no-store');assert.equal(f.calls[0].options.method,undefined);
-  assert.match(f.nodes['history-status'].textContent,/Sandbox/);
+  assert.match(f.nodes['history-status'].textContent,/Latest transactions first/);assert.doesNotMatch(f.nodes['history-status'].textContent,/Sandbox/);
  }finally{f.controller.stop();}
 });
 test('pagination de-duplicates across pages; filters reset rather than mix histories',async()=>{

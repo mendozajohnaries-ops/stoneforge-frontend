@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile — StoneForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darumadrop+One&amp;family=Montserrat:wght@400;500;600;700;900&amp;family=Roboto+Mono:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap">
 <link rel="icon" href="favicon.ico?v=20261022" sizes="16x16 32x32 48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?v=20261022">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png?v=20261022">
@@ -167,6 +170,7 @@
   </style>
   <link rel="stylesheet" href="profile-store.css">
   <link rel="stylesheet" href="school-selector.css">
+  <link rel="stylesheet" href="session-guard.css?v=20261025-a">
 </head>
 <body>
 
@@ -199,7 +203,7 @@
     </nav>
   </header>
 
-  <div class="dashboard" id="dashboard" style="display:none;">
+  <div class="dashboard" id="dashboard" style="display:none;" hidden>
 
     <div class="profile-header">
       <div class="profile-header__left">
@@ -240,7 +244,7 @@
 
       <section class="card wallet-card" aria-labelledby="wallet-heading">
         <div><div class="card__title">Your wallet</div><div class="wallet-heading">
-          <img class="wallet-coin" src="Assets/store/fm-handful.png" alt="" width="65" height="65">
+          <img class="wallet-coin" src="Assets/store/web/fm-handful.webp" alt="" width="65" height="65">
           <div><h2 class="forge-heading" id="wallet-heading">Forge Medals</h2><p><span id="wallet-balance" class="wallet-amount">—</span><span class="wallet-unit">FM</span></p></div>
         </div>
         <p class="wallet-copy wallet-notice" id="wallet-state" role="status">Loading your account wallet…</p>
@@ -279,33 +283,33 @@
 
   <dialog id="forge-store" class="forge-dialog" aria-labelledby="forge-store-heading" aria-describedby="forge-store-description">
     <header class="forge-dialog__header">
-      <div><p class="forge-kicker">Build your next adventure</p><h2 class="forge-heading" id="forge-store-heading">Forge Store</h2></div>
+      <div><p class="forge-kicker">StoneForge</p><h2 class="forge-heading" id="forge-store-heading">Forge Store</h2></div>
       <div class="forge-dialog__tools">
-        <div class="forge-dialog__wallet" aria-label="Your Forge Medal balance"><img src="Assets/store/fm-handful.png" alt="" width="32" height="32"><span><span id="store-wallet-balance">—</span> FM</span></div>
+        <div class="forge-dialog__wallet" aria-label="Your Forge Medal balance"><img src="Assets/store/web/fm-handful.webp" alt="" width="32" height="32"><span><span id="store-wallet-balance">—</span> FM</span></div>
+        <button type="button" class="forge-dialog__refresh" id="forge-store-retry" aria-label="Refresh your FM balance" title="Refresh balance">↻</button>
         <button type="button" class="forge-dialog__close" id="forge-store-close" aria-label="Close Forge Store" autofocus>✕</button>
       </div>
     </header>
     <div class="forge-dialog__body" id="forge-store-body">
-      <p class="forge-muted" id="forge-store-description">Forge Medals are StoneForge’s in-game currency. Upgrade character perks and unlock Explorer in the game.</p>
+      <p class="forge-store-intro" id="forge-store-description">Your next discovery starts here.</p>
       <p class="forge-muted" id="store-test-row" hidden><span id="store-test-balance"></span></p>
-      <div class="forge-availability" id="forge-store-availability" role="status" aria-live="polite">Checking your wallet and checkout access…</div>
-      <button type="button" class="forge-secondary" id="forge-store-retry">Refresh wallet / Retry</button>
+      <div class="forge-availability" id="forge-store-availability" role="status" aria-live="polite">Loading your balance…</div>
       <div id="forge-store-browse">
-        <div class="forge-panel-head"><h3 class="forge-pack-heading">Choose your Forge Medals</h3><span class="forge-tag" id="forge-store-mode">Store preview</span></div>
+        <div class="forge-panel-head"><div><h3 class="forge-pack-heading">Choose your Forge Medals</h3><p class="forge-pack-subtitle">Select a package. Review the details before checkout.</p></div><span class="forge-tag" id="forge-store-mode">Checking availability</span></div>
         <div id="forge-pack-grid" class="forge-grid" aria-label="Forge Medal packages"></div>
-        <div class="forge-future" aria-label="In-game spending options">
+        <details class="forge-spending"><summary>Where can I use Forge Medals?</summary><div class="forge-future" aria-label="In-game spending options">
           <article id="forge-perk-preview"><h3>Character perks</h3><p class="forge-muted">Loading current in-game upgrade prices…</p></article>
           <article id="forge-character-preview"><h3>Explorer</h3><p class="forge-muted">Loading character availability…</p></article>
-        </div>
+        </div></details>
       </div>
       <section class="forge-confirmation" id="forge-confirmation" aria-labelledby="forge-confirmation-heading" hidden>
         <h3 id="forge-confirmation-heading" tabindex="-1">Review your FM purchase</h3>
         <p class="forge-muted" id="forge-confirm-pack"></p>
         <p class="forge-confirmation__price" id="forge-confirm-price"></p>
-        <p class="forge-muted">This is a sandbox demonstration using PayMongo’s test checkout. No real money will be charged; the FM stays in your separate demo wallet.</p>
-        <div class="forge-confirmation__actions"><button type="button" class="forge-secondary" id="forge-confirm-back">Back to packages</button><button type="button" class="forge-primary" id="forge-confirm-continue" disabled>Continue to test checkout</button></div>
+        <p class="forge-checkout-note">No real payment will be collected for this transaction.</p>
+        <div class="forge-confirmation__actions"><button type="button" class="forge-secondary" id="forge-confirm-back">Back to packages</button><button type="button" class="forge-primary" id="forge-confirm-continue" disabled>Continue to checkout</button></div>
       </section>
-      <p id="store-state" class="forge-muted" role="status" aria-live="polite">Same prices for Regular Users, Students, and Teachers / Instructors.</p>
+      <p id="store-state" class="forge-muted" role="status" aria-live="polite">Choose a package to review before checkout.</p>
     </div>
   </dialog>
 
@@ -391,6 +395,7 @@
     </div>
   </div>
 
+  <script src="session-guard.js?v=20261025-a"></script>
   <script src="StoneForge.js"></script>
   <script src="achievements.js"></script>
   <script src="transaction-history.js"></script>
