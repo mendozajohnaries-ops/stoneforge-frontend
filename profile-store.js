@@ -141,6 +141,21 @@
   }
   function renderPerks(){
    const section=el('forge-perk-preview'),explorer=el('forge-character-preview'),perks=catalog?.perk_upgrades;
+   const fixed=catalog?.fixed_roles;
+   if(section&&explorer&&fixed){
+    const names={scientist:'Scientist',captain:'Captain',engineer:'Engineer',attendant:'Attendant',explorer:'Explorer'};
+    const definitions=fixed.roles,seen=new Set();
+    if(fixed.id!=='multiplayer-fixed-roles'||fixed.version!==1||fixed.upgrade_levels!==false||!Array.isArray(definitions)||definitions.length!==5)return;
+    for(const role of definitions){
+     if(!role||!Object.hasOwn(names,role.id)||seen.has(role.id)||!Number.isSafeInteger(role.price)||role.price<0||role.price>1000000||role.id==='scientist'&&role.price!==0||role.id!=='scientist'&&role.price===0)return;
+     seen.add(role.id);
+    }
+    section.replaceChildren();const heading=document.createElement('h3');heading.textContent='Team roles';section.append(heading);
+    const intro=document.createElement('p');intro.className='forge-muted';intro.textContent='Scientist is free. Unlock additional roles in the game. Roles have fixed specialties, with no upgrade levels.';section.append(intro);
+    for(const role of definitions){const row=document.createElement('p');row.className='forge-muted';row.textContent=names[role.id]+': '+(role.price===0?'Free':role.price.toLocaleString()+' FM');section.append(row);}
+    explorer.replaceChildren();const title=document.createElement('h3');title.textContent='Item skins';explorer.append(title);
+    const note=document.createElement('p');note.className='forge-muted';note.textContent='Personalize supported items using the available in-game skins. Skins change appearance while retaining normal item stats and functionality.';explorer.append(note);return;
+   }
    if(!section||!explorer||!perks)return;
    if(perks.id!=='multiplayer-perks'||![1,2].includes(perks.version)||!Array.isArray(perks.characters))return;
    const names={captain:'Captain',engineer:'Engineer',attendant:'Attendant',explorer:'Explorer'};

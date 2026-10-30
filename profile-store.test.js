@@ -103,6 +103,17 @@ test('verified display wallet matches the game; reward reconciliation precedes t
  }finally{f.controller.stop();}
 });
 
+test('fixed-role catalog shows Scientist free and paid unlocks without legacy upgrade levels or checkout changes',async()=>{
+ const data={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:
+  ['scientist','captain','engineer','attendant','explorer'].map(id=>({id,price:id==='scientist'?0:750}))}};
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>data})});
+ try{await settled();const text=f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|');
+  assert.match(text,/Scientist: Free/);assert.match(text,/Captain: 750 FM/);assert.match(text,/Explorer: 750 FM/);assert.doesNotMatch(text,/Levels 2|Lv\. 5|four original/);
+  assert.equal(f.nodes['forge-character-preview'].children[0].textContent,'Item skins');assert.equal(f.nodes['forge-pack-grid'].children.length,4);
+  assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+ }finally{f.controller.stop();}
+});
+
 test('first confirmed FM renders while profile, catalog and availability are still pending',async()=>{
  let profileDone,catalogDone,accessDone;
  const profileWait=new Promise(resolve=>{profileDone=resolve;}),catalogWait=new Promise(resolve=>{catalogDone=resolve;}),accessWait=new Promise(resolve=>{accessDone=resolve;});
