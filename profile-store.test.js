@@ -4,6 +4,7 @@ const fields=require('./profile-fields');global.StoneForgeProfile=fields;
 global.StoneForgeSchools=require('./school-selector');
 global.StoneForgeWallet=require('./wallet-client');
 global.StoneForgeStoreHandoff=require('./store-handoff-client');
+global.StoneForgeSkins=require('./skin-client');
 const schoolCatalog=require('./test-fixtures/school-catalog.json');
 const store=require('./profile-store');
 
@@ -59,7 +60,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
 const sharedShop=(owner='alice')=>({version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,
  wallet:{balance:1800,credits:4800,spent:3000,revision:4,generation:0},roles:['scientist','captain','engineer','attendant','explorer'].map((id,i)=>({id,price:i?750:0,owned:true})),skins:{status:'preview',owned:[],equipped:{}}});
-function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true,hash='',handoffReply}={}){
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true,hash='',handoffReply,skinReply}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -77,6 +78,7 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
  const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>accountOwner,initialProfile:initial?{...current}:null,
   fetch:async(url,options)=>{
    calls.push({url,options});
+   if(url.endsWith('/skins'))return skinReply?skinReply():{ok:false,status:404,json:async()=>({error:'Skin service not deployed'})};
    if(url.includes('/store/handoff?')){
     if(handoffReply)return handoffReply(url);
     const q=new URL(url).searchParams,pack=catalog.packs.find(p=>p.id===q.get('package_id'));
@@ -483,4 +485,18 @@ test('website repeat top-up renews only completed/expired key and resumes pendin
    const sent=f.calls.find(c=>c.url.endsWith('/store/checkout'));if(status==='processing')assert.equal(sent,undefined);else{assert(sent);assert.equal(JSON.parse(sent.options.body).request_key===old,status==='pending');}
   }finally{f.controller.stop();}
  }
+});
+
+const skinSnapshot=(owner='alice',owned=false)=>({version:1,catalog_id:'stoneforge-tool-skins',catalog_version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,balance:1800,revision:0,wallet_generation:0,equip_revision:owned?1:0,can_purchase:false,requires_profile_completion:false,
+ skins:['stone_axe','iron_axe','iron_pickaxe','wooden_shovel','stone_spear','chisel','hoe','torch','wooden_fire_starter','small_resin_bucket'].map(tool=>({id:tool+'.basic',tool_id:tool,price:300,asset_revision:1,available:false})),owned:owned?['stone_axe.basic']:[],equipped:owned?[{toolId:'stone_axe',skinId:'stone_axe.basic'}]:[]});
+const skinRolesCatalog={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:['scientist','captain','engineer','attendant','explorer'].map(id=>({id,price:id==='scientist'?0:750}))}};
+test('website displays ten draft skin previews without checkout or fake ownership',async()=>{
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot()})});try{await settled();const text=f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|');assert.equal((text.match(/Skin: Preview/g)||[]).length,10);assert.doesNotMatch(text,/Skin: Owned|Skin: Equipped/);assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);}finally{f.controller.stop();}
+});
+test('skin Owned/Equipped is derived from the verified account and cleared on stop',async()=>{
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('alice',true)})});try{await settled();assert.match(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Stone Axe Skin: Equipped/);f.controller.stop();assert.doesNotMatch(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);}finally{f.controller.stop();}
+});
+test('foreign or late skin response cannot populate a different account',async()=>{
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('bob',true)})});try{await settled();assert.doesNotMatch(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);}finally{f.controller.stop();}
+ let finish;const waiting=new Promise(r=>finish=r),g=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>waiting});await settled();g.setOwner('bob');g.controller.stop();finish({ok:true,json:async()=>skinSnapshot('alice',true)});await settled();assert.doesNotMatch(g.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);
 });
