@@ -9,6 +9,7 @@
   let walletLoading=false,availabilityLoading=false,reconciling=false,walletTask=null,walletFailure='';
   let storeRequested=false,selectedPack=null,selectedButton=null,backdropPressed=false,checkoutVersion=0;
   let shopSnapshot=null,shopTask=null,shopFresh=false,ownershipState='Checking…';
+  let skinSnapshot=null,skinTask=null,skinFresh=false;
   let handoffId=null,handoff=null,handoffError='',handoffTask=null,handoffSelected=false;
   try{handoffId=root.StoneForgeStoreHandoff?.fromHash(root.location?.hash);}catch(error){handoffError=error.message;}
   if(handoffId||handoffError)storeRequested=true;
@@ -191,7 +192,8 @@
      const status=role.id==='scientist'?'Free — Included':owned?(owned.owned?'Owned':owned.price.toLocaleString()+' FM · Unlock in game'):ownershipState;
      row.textContent=names[role.id]+': '+status;section.append(row);}
     explorer.replaceChildren();const title=document.createElement('h3');title.textContent='Item skins';explorer.append(title);
-    const note=document.createElement('p');note.className='forge-muted';note.textContent='Personalize supported items using the available in-game skins. Skins change appearance while retaining normal item stats and functionality.';explorer.append(note);return;
+    const note=document.createElement('p');note.className='forge-muted';note.textContent=skinFresh?(skinSnapshot.skins.some(entry=>entry.available)?'Unlock and equip available skins in the game. Item stats and functionality stay unchanged.':'10 tool-skin previews. Final artwork is pending; unfinished skins cannot be purchased.'):'Skin ownership unavailable · Refresh to check. Final artwork is pending.';explorer.append(note);
+    if(skinFresh)for(const entry of skinSnapshot.skins){const row=document.createElement('p');row.className='forge-muted';const equipped=skinSnapshot.equipped.some(slot=>slot.skinId===entry.id);row.textContent=entry.tool_id.split('_').map(word=>word[0].toUpperCase()+word.slice(1)).join(' ')+' Skin: '+(equipped?'Equipped':skinSnapshot.owned.includes(entry.id)?'Owned':entry.available?entry.price.toLocaleString()+' FM · Unlock in game':'Preview');explorer.append(row);}return;
    }
    if(!section||!explorer||!perks)return;
    if(perks.id!=='multiplayer-perks'||![1,2].includes(perks.version)||!Array.isArray(perks.characters))return;
@@ -222,13 +224,19 @@
     }catch{if(sameOwner()){ownershipState='Ownership unavailable · Refresh';renderPerks();}return null;}
    })();shopTask=pending;pending.finally(()=>{if(shopTask===pending)shopTask=null;});return pending;
   }
+  function readSkins(){
+   if(!sameOwner()||typeof root.StoneForgeSkins?.state!=='function')return Promise.resolve(null);if(skinTask)return skinTask;
+   skinFresh=false;renderPerks();
+   const pending=(async()=>{try{const data=root.StoneForgeSkins.state(await api('skins',{headers:{'x-playfab-id':owner}}),owner,skinSnapshot);if(!sameOwner())return null;skinSnapshot=data;skinFresh=true;renderPerks();return data;}
+    catch{if(sameOwner()){skinFresh=false;renderPerks();}return null;}})();skinTask=pending;pending.finally(()=>{if(skinTask===pending)skinTask=null;});return pending;
+  }
   const readBalance=async()=>StoneForgeWallet.canonical(await api('wallet/current',{headers:{'x-playfab-id':owner}}),owner);
   function loadWallet(){
    if(!sameOwner())return Promise.resolve();
    if(walletTask)return walletTask;
    void readHandoff();
    const attempt=++generation;
-   void readShop();
+   void readShop();void readSkins();
    walletLoading=true;availabilityLoading=true;walletFailure='';syncStoreWallet();renderButtons();
    const task=readWallet(attempt);walletTask=task;
    task.finally(()=>{if(walletTask===task)walletTask=null;});return task;
@@ -344,7 +352,7 @@
   return{open:openStore,refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);schoolPicker.stop();document.removeEventListener('visibilitychange',onVisible);root.removeEventListener?.('focus',onVisible);
    storeListeners.forEach(remove=>remove());closeStore();
    if(dialog.open)dialog.close();el('wallet-balance').textContent='—';el('wallet-test-row').hidden=true;
-   el('wallet-test-balance').textContent='';wallet=null;profile=null;handoff=null;handoffError='';shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';renderPerks();walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
+   el('wallet-test-balance').textContent='';wallet=null;profile=null;skinSnapshot=null;skinFresh=false;handoff=null;handoffError='';shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';renderPerks();walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
    type.value='';school.value='';el('profile-save').disabled=false;for(const id of ['user-type-value','profile-user-type-badge','school-value','profile-state-status','profile-save-status'])el(id).textContent='';
    syncStoreWallet();renderButtons();}};
  }
