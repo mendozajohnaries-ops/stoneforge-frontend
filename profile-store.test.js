@@ -56,7 +56,9 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'captain',costs:[45,95,155,230]},{id:'engineer',costs:[65,125,190,270]},
  {id:'attendant',costs:[30,70,120,180]},{id:'explorer',costs:[80,140,205,300]}]}};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
-function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,initial=true}={}){
+const sharedShop=(owner='alice')=>({version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,
+ wallet:{balance:1800,credits:4800,spent:3000,revision:4,generation:0},roles:['scientist','captain','engineer','attendant','explorer'].map((id,i)=>({id,price:i?750:0,owned:true})),skins:{status:'preview',owned:[],equipped:{}}});
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -74,6 +76,7 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
  const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>accountOwner,initialProfile:initial?{...current}:null,
   fetch:async(url,options)=>{
    calls.push({url,options});
+   if(url.endsWith('/shop/account'))return shopReply?shopReply():{ok:false,status:404,json:async()=>({})};
    if(url.endsWith('/schools'))return{ok:true,json:async()=>schoolCatalog};
    if(url.endsWith('/profile')&&options.method==='PUT'){const body=JSON.parse(options.body);Object.assign(current,body,{requires_profile_completion:false});return{ok:true,json:async()=>({...current})};}
    if(url.endsWith('/profile'))return profileReply?profileReply():{ok:true,json:async()=>({...current})};
@@ -106,12 +109,27 @@ test('verified display wallet matches the game; reward reconciliation precedes t
 test('fixed-role catalog shows Scientist free and paid unlocks without legacy upgrade levels or checkout changes',async()=>{
  const data={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:
   ['scientist','captain','engineer','attendant','explorer'].map(id=>({id,price:id==='scientist'?0:750}))}};
- const f=fixture({catalogReply:()=>({ok:true,json:async()=>data})});
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>data}),shopReply:()=>({ok:true,json:async()=>({version:1,owner:'alice',currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,wallet:{balance:0,credits:0,spent:0,revision:0,generation:0},roles:data.fixed_roles.roles.map(role=>({...role,owned:role.id==='scientist'})),skins:{status:'preview',owned:[],equipped:{}}})})});
  try{await settled();const text=f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|');
   assert.match(text,/Scientist: Free/);assert.match(text,/Captain: 750 FM/);assert.match(text,/Explorer: 750 FM/);assert.doesNotMatch(text,/Levels 2|Lv\. 5|four original/);
   assert.equal(f.nodes['forge-character-preview'].children[0].textContent,'Item skins');assert.equal(f.nodes['forge-pack-grid'].children.length,4);
   assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
  }finally{f.controller.stop();}
+});
+
+test('owned roles and wallet use one verified account snapshot; logout removes private badges',async()=>{
+ const data={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:sharedShop().roles}};
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>data}),shopReply:()=>({ok:true,json:async()=>sharedShop()}),testBalance:0});
+ try{await settled();const text=f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|');assert.match(text,/Captain: Owned/);assert.match(text,/Explorer: Owned/);
+  assert.equal(f.nodes['wallet-balance'].textContent,'1,800');assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+  f.controller.stop();assert.doesNotMatch(f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|'),/: Owned/);
+ }finally{f.controller.stop();}
+});
+test('late ownership response cannot populate a different or stopped account',async()=>{
+ let finish;const wait=new Promise(resolve=>{finish=resolve;});
+ const f=fixture({shopReply:()=>wait});await settled();f.setOwner('bob');f.controller.stop();
+ finish({ok:true,json:async()=>sharedShop()});await settled();
+ assert.equal(f.nodes['wallet-balance'].textContent,'—');assert.doesNotMatch(f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|'),/: Owned/);
 });
 
 test('first confirmed FM renders while profile, catalog and availability are still pending',async()=>{
@@ -237,7 +255,7 @@ test('account changes discard pending canonical reads and stop clears funds with
 test('profile removes the historical purchase gate and loads the canonical wallet contract',()=>{
  const source=fs.readFileSync('dashboard.js','utf8'),html=fs.readFileSync('dashboard.html','utf8');
  assert.doesNotMatch(source,/check-ownership|owns_game|Full Game Owner|renderOwnerBadge/);assert.doesNotMatch(html,/id="owner-badge-container"/);
- assert.ok(html.indexOf('src="wallet-client.js?')<html.indexOf('src="profile-store.js"'));
+ assert.ok(html.indexOf('src="wallet-client.js?')>=0&&html.indexOf('src="wallet-client.js?')<html.indexOf('src="profile-store.js?'));
  assert.match(fs.readFileSync('index.html','utf8'),/Free to Play/);assert.match(fs.readFileSync('admin.html','utf8'),/Historical Sandbox Game Orders/);
 });
 
@@ -385,7 +403,7 @@ test('signup and dashboard load modules in order, preserve sandbox disclosure an
  const signup=fs.readFileSync('signup-page.html','utf8'),dash=fs.readFileSync('dashboard.html','utf8'),auth=fs.readFileSync('auth.js','utf8');
  assert.match(signup,/id="user-type"[^>]*required/);assert.match(signup,/<option value="" selected disabled>/);
  assert.ok(signup.indexOf('src="profile-fields.js"')<signup.indexOf('src="auth.js"'));
- assert.ok(dash.indexOf('src="profile-store.js"')<dash.indexOf('src="dashboard.js"'));
+ assert.ok(dash.indexOf('src="profile-store.js')>=0&&dash.indexOf('src="profile-store.js')<dash.indexOf('src="dashboard.js"'));
  assert.match(auth,/apiPost\('send-otp', \{ username, email, password, \.\.\.fields \}\)/);
  assert.match(dash,/Loading your balance/);assert.match(dash,/id="forge-store-retry"/);
  assert.match(dash,/No real payment will be collected/);assert.doesNotMatch(signup,/Coyns|LRN|student-number|student_id/i);
