@@ -3,6 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const fields=require('./profile-fields');global.StoneForgeProfile=fields;
 global.StoneForgeSchools=require('./school-selector');
 global.StoneForgeWallet=require('./wallet-client');
+global.StoneForgeStoreHandoff=require('./store-handoff-client');
 const schoolCatalog=require('./test-fixtures/school-catalog.json');
 const store=require('./profile-store');
 
@@ -58,7 +59,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
 const sharedShop=(owner='alice')=>({version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,
  wallet:{balance:1800,credits:4800,spent:3000,revision:4,generation:0},roles:['scientist','captain','engineer','attendant','explorer'].map((id,i)=>({id,price:i?750:0,owned:true})),skins:{status:'preview',owned:[],equipped:{}}});
-function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true}={}){
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true,hash='',handoffReply}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -71,11 +72,17 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
  nodes['forge-store'].querySelectorAll=()=>[nodes['forge-store-retry'],nodes['forge-store-close'],...(nodes['forge-confirmation'].hidden?
   [...all().filter(node=>node.dataset.forgePack),summary]:[nodes['forge-confirm-back'],nodes['forge-confirm-continue']])];
  global.sessionStorage={getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)};
- global.location={assign:value=>navigation.push(value)};
+ global.location={assign:value=>navigation.push(value),hash};
  let availabilityData;
  const controller=store.mount({document,apiBase:'https://api.example/api',owner:'alice',currentOwner:()=>accountOwner,initialProfile:initial?{...current}:null,
   fetch:async(url,options)=>{
    calls.push({url,options});
+   if(url.includes('/store/handoff?')){
+    if(handoffReply)return handoffReply(url);
+    const q=new URL(url).searchParams,pack=catalog.packs.find(p=>p.id===q.get('package_id'));
+    if(pack)return{ok:true,json:async()=>({version:1,owner:'alice',environment:'test',live_purchases_enabled:false,handoff_id:null,package_id:pack.id,medals:pack.medals,price_centavos:pack.price_centavos,status:'review',credited:false,checkout_url:null,request_key:q.get('request_key')})};
+    return{ok:false,status:404,json:async()=>({error:'Wrong game account'})};
+   }
    if(url.endsWith('/shop/account'))return shopReply?shopReply():{ok:false,status:404,json:async()=>({})};
    if(url.endsWith('/schools'))return{ok:true,json:async()=>schoolCatalog};
    if(url.endsWith('/profile')&&options.method==='PUT'){const body=JSON.parse(options.body);Object.assign(current,body,{requires_profile_completion:false});return{ok:true,json:async()=>({...current})};}
@@ -430,4 +437,50 @@ test('actual signup handler refuses missing User Type/student school before OTP 
  await nodes['signup-school-options'].children[0].fire('click');await nodes['signup-form'].fire('submit');
  assert.equal(calls.length,1);assert.equal(calls[0].endpoint,'send-otp');assert.equal(calls[0].body.user_type,'student');
  assert.equal(calls[0].body.school,'National College of Science and Technology');assert.equal(calls[0].body.school_id,'ncst-dasmarinas');
+});
+const handoffId='11111111-2222-4333-8444-555555555555';
+const gameHandoff=(extra={})=>({version:1,owner:'alice',environment:'test',live_purchases_enabled:false,handoff_id:handoffId,package_id:'fm_pouch',medals:450,price_centavos:9900,status:'review',credited:false,checkout_url:null,request_key:'native_game_request_key_123',...extra});
+test('game handoff preselects exact package after verified loading, no checkout until explicit Confirm',async()=>{
+ const f=fixture({eligible:true,hash:'#forge-handoff='+handoffId,handoffReply:()=>({ok:true,json:async()=>gameHandoff()})});
+ try{await settled();assert(f.nodes['forge-store'].open);assert.equal(f.nodes['forge-confirmation'].hidden,false);assert.match(f.nodes['forge-confirm-pack'].textContent,/450 FM/);
+  assert.equal(f.calls.filter(c=>c.url.endsWith('/store/checkout')).length,0);assert.equal(f.nodes['forge-confirm-continue'].disabled,false);
+  await f.nodes['forge-confirm-continue'].fire('click');const call=f.calls.find(c=>c.url.endsWith('/store/checkout'));
+  assert.deepEqual(JSON.parse(call.options.body),{package_id:'fm_pouch',request_key:'native_game_request_key_123',handoff_id:handoffId});assert.equal(call.options.headers['x-playfab-id'],'alice');
+  assert.deepEqual(f.navigation,['https://checkout.paymongo.com/cs_fixture']);
+ }finally{f.controller.stop();}
+});
+test('wrong account, malformed game response and catalog mismatch never create checkout',async()=>{
+ for(const response of [{ok:false,status:404,json:async()=>({error:'Different game account'})},{ok:true,json:async()=>gameHandoff({owner:'bob'})},{ok:true,json:async()=>gameHandoff({price_centavos:1})}]){
+  const f=fixture({eligible:true,hash:'#forge-handoff='+handoffId,handoffReply:()=>response});try{await settled();assert.equal(f.nodes['forge-confirm-continue'].disabled,true);
+   await f.nodes['forge-confirm-continue'].fire('click');assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+  }finally{f.controller.stop();}
+ }
+});
+test('pending game payment reuses original request; completed/processing returns cannot invent FM',async()=>{
+ for(const status of ['pending','completed','processing']){
+  const f=fixture({eligible:true,testBalance:450,hash:'#forge-handoff='+handoffId,handoffReply:()=>({ok:true,json:async()=>gameHandoff({status,credited:status==='completed',checkout_url:status==='pending'?'https://checkout.paymongo.com/cs_old':null})})});
+  try{await settled();assert.equal(f.nodes['wallet-balance'].textContent,'450');assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+   assert.equal(f.nodes['forge-confirm-continue'].disabled,status!=='pending');await f.nodes['forge-confirm-continue'].fire('click');
+   if(status==='pending')assert.equal(JSON.parse(f.calls.find(c=>c.url.endsWith('/store/checkout')).options.body).request_key,'native_game_request_key_123');
+   else assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+  }finally{f.controller.stop();}
+ }
+});
+test('late handoff cannot populate stopped or switched account',async()=>{
+ let finish;const pending=new Promise(r=>{finish=r;});const f=fixture({eligible:true,hash:'#forge-handoff='+handoffId,handoffReply:()=>pending});await settled();f.setOwner('bob');f.controller.stop();finish({ok:true,json:async()=>gameHandoff()});await settled();
+ assert.equal(f.nodes['forge-store'].open,false);assert.equal(f.nodes['forge-confirm-pack'].textContent,'');assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+});
+test('completed game checkout can explicitly return to normal browsing without another automatic payment',async()=>{
+ const f=fixture({eligible:true,hash:'#forge-handoff='+handoffId,handoffReply:()=>({ok:true,json:async()=>gameHandoff({status:'completed',credited:true})})});
+ try{await settled();assert.equal(f.nodes['forge-confirm-continue'].disabled,true);await f.nodes['forge-confirm-back'].fire('click');
+  assert(f.all().filter(n=>n.dataset.forgePack).every(n=>!n.disabled));assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
+ }finally{f.controller.stop();}
+});
+test('website repeat top-up renews only completed/expired key and resumes pending key',async()=>{
+ for(const status of ['completed','expired','pending','processing']){
+  const old='old_website_request_123',f=fixture({eligible:true,handoffReply:url=>{const q=new URL(url).searchParams;return{ok:true,json:async()=>gameHandoff({handoff_id:null,package_id:'fm_handful',medals:200,price_centavos:4900,request_key:q.get('request_key'),status,credited:status==='completed',checkout_url:null})};}});
+  try{await settled();global.sessionStorage.setItem('sf_forge_test_alice_fm_handful',old);f.controller.open();const button=f.all().find(n=>n.dataset.forgePack==='fm_handful');await button.fire('click');await f.nodes['forge-confirm-continue'].fire('click');
+   const sent=f.calls.find(c=>c.url.endsWith('/store/checkout'));if(status==='processing')assert.equal(sent,undefined);else{assert(sent);assert.equal(JSON.parse(sent.options.body).request_key===old,status==='pending');}
+  }finally{f.controller.stop();}
+ }
 });
