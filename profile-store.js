@@ -8,6 +8,7 @@
   let profile=null,wallet=null,catalog=null,stopped=false,profileBusy=false,checkoutBusy=false,generation=0;
   let walletLoading=false,availabilityLoading=false,reconciling=false,walletTask=null,walletFailure='';
   let storeRequested=false,selectedPack=null,selectedButton=null,backdropPressed=false,checkoutVersion=0;
+  let shopSnapshot=null,shopTask=null,shopFresh=false,ownershipState='Checking…';
   const storeListeners=[];
   function listen(node,name,handler){node.addEventListener(name,handler);storeListeners.push(()=>node.removeEventListener(name,handler));}
   const type=el('profile-user-type'),school=el('profile-school');
@@ -85,7 +86,7 @@
   function showRequestedStore(){
    if(!storeRequested||!sameOwner()||!complete()||dialog.open||storeDialog.open)return false;
    storeDialog.showModal();document.documentElement.classList.add('forge-store-open');
-   storeButton.setAttribute('aria-expanded','true');el('forge-store-body').scrollTop=0;storeClose.focus({preventScroll:true});return true;
+   storeButton.setAttribute('aria-expanded','true');el('forge-store-body').scrollTop=0;storeClose.focus({preventScroll:true});void readShop();return true;
   }
   function openStore(){
    if(!sameOwner())return false;
@@ -152,7 +153,10 @@
     }
     section.replaceChildren();const heading=document.createElement('h3');heading.textContent='Team roles';section.append(heading);
     const intro=document.createElement('p');intro.className='forge-muted';intro.textContent='Scientist is free. Unlock additional roles in the game. Roles have fixed specialties, with no upgrade levels.';section.append(intro);
-    for(const role of definitions){const row=document.createElement('p');row.className='forge-muted';row.textContent=names[role.id]+': '+(role.price===0?'Free':role.price.toLocaleString()+' FM');section.append(row);}
+    for(const role of definitions){const row=document.createElement('p');row.className='forge-muted';
+     const owned=shopFresh?shopSnapshot?.roles.find(item=>item.id===role.id):null;
+     const status=role.id==='scientist'?'Free — Included':owned?(owned.owned?'Owned':owned.price.toLocaleString()+' FM · Unlock in game'):ownershipState;
+     row.textContent=names[role.id]+': '+status;section.append(row);}
     explorer.replaceChildren();const title=document.createElement('h3');title.textContent='Item skins';explorer.append(title);
     const note=document.createElement('p');note.className='forge-muted';note.textContent='Personalize supported items using the available in-game skins. Skins change appearance while retaining normal item stats and functionality.';explorer.append(note);return;
    }
@@ -173,11 +177,24 @@
     'Unlock in the game for 750 FM, including Level 1. Your four original characters stay free.':'Explorer is unavailable on this backend version.';
    explorer.append(text);
   }
+  function readShop(){
+   if(!sameOwner()||typeof StoneForgeWallet.shopState!=='function')return Promise.resolve(null);
+   if(shopTask)return shopTask;
+   shopFresh=false;ownershipState='Checking…';renderPerks();
+   const pending=(async()=>{
+    try{const data=StoneForgeWallet.shopState(await api('shop/account',{headers:{'x-playfab-id':owner}}),owner,shopSnapshot);
+     if(!sameOwner())return null;shopSnapshot=data;shopFresh=true;ownershipState='';renderPerks();
+     if(wallet){wallet={...wallet,balance:data.wallet.balance};el('wallet-balance').textContent=data.wallet.balance.toLocaleString();syncStoreWallet();}
+     return data;
+    }catch{if(sameOwner()){ownershipState='Ownership unavailable · Refresh';renderPerks();}return null;}
+   })();shopTask=pending;pending.finally(()=>{if(shopTask===pending)shopTask=null;});return pending;
+  }
   const readBalance=async()=>StoneForgeWallet.canonical(await api('wallet/current',{headers:{'x-playfab-id':owner}}),owner);
   function loadWallet(){
    if(!sameOwner())return Promise.resolve();
    if(walletTask)return walletTask;
    const attempt=++generation;
+   void readShop();
    walletLoading=true;availabilityLoading=true;walletFailure='';syncStoreWallet();renderButtons();
    const task=readWallet(attempt);walletTask=task;
    task.finally(()=>{if(walletTask===task)walletTask=null;});return task;
@@ -185,6 +202,7 @@
   async function readWallet(attempt){
    const current=()=>sameOwner()&&attempt===generation;
    function show(data,availability){
+    if(shopFresh&&shopSnapshot)data={...data,balance:shopSnapshot.wallet.balance};
     wallet={...data,...availability,test_checkout_available:availability?.test_checkout_available===true};
     el('wallet-balance').textContent=data.balance.toLocaleString();
     el('wallet-test-row').hidden=true;el('wallet-test-balance').textContent='';syncStoreWallet();renderButtons();
@@ -272,12 +290,13 @@
   }
   const onVisible=()=>{if(!document.hidden&&sameOwner())loadWallet();};
   document.addEventListener('visibilitychange',onVisible);
+  root.addEventListener?.('focus',onVisible);
   const timer=setInterval(onVisible,60000);
   initialize();
-  return{open:openStore,refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);schoolPicker.stop();document.removeEventListener('visibilitychange',onVisible);
+  return{open:openStore,refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);schoolPicker.stop();document.removeEventListener('visibilitychange',onVisible);root.removeEventListener?.('focus',onVisible);
    storeListeners.forEach(remove=>remove());closeStore();
    if(dialog.open)dialog.close();el('wallet-balance').textContent='—';el('wallet-test-row').hidden=true;
-   el('wallet-test-balance').textContent='';wallet=null;profile=null;walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
+   el('wallet-test-balance').textContent='';wallet=null;profile=null;shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';renderPerks();walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
    type.value='';school.value='';el('profile-save').disabled=false;for(const id of ['user-type-value','profile-user-type-badge','school-value','profile-state-status','profile-save-status'])el(id).textContent='';
    syncStoreWallet();renderButtons();}};
  }

@@ -116,7 +116,7 @@ test('Escape closes only the picker before the enclosing modal; Tab does not sel
 });
 test('signup and profile load the shared school module before consumers and include labeled listbox controls',()=>{
  for(const [file,id,consumer]of [['signup-page.html','signup-school','auth.js'],['dashboard.html','profile-school','profile-store.js']]){
-  const html=fs.readFileSync(file,'utf8');assert.ok(html.indexOf('src="school-selector.js"')<html.indexOf('src="'+consumer+'"'));
+  const html=fs.readFileSync(file,'utf8');assert.ok(html.indexOf('src="school-selector.js"')>=0&&html.indexOf('src="'+consumer)>=0&&html.indexOf('src="school-selector.js"')<html.indexOf('src="'+consumer));
   assert.match(html,new RegExp('id="'+id+'-options"[^>]*role="listbox"'));
   assert.match(html,new RegExp('id="'+id+'-status"[^>]*role="status"'));
   assert.match(html,/href="school-selector.css"/);
