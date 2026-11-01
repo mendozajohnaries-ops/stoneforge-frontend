@@ -9,6 +9,9 @@
   let walletLoading=false,availabilityLoading=false,reconciling=false,walletTask=null,walletFailure='';
   let storeRequested=false,selectedPack=null,selectedButton=null,backdropPressed=false,checkoutVersion=0;
   let shopSnapshot=null,shopTask=null,shopFresh=false,ownershipState='Checking…';
+  let handoffId=null,handoff=null,handoffError='',handoffTask=null,handoffSelected=false;
+  try{handoffId=root.StoneForgeStoreHandoff?.fromHash(root.location?.hash);}catch(error){handoffError=error.message;}
+  if(handoffId||handoffError)storeRequested=true;
   const storeListeners=[];
   function listen(node,name,handler){node.addEventListener(name,handler);storeListeners.push(()=>node.removeEventListener(name,handler));}
   const type=el('profile-user-type'),school=el('profile-school');
@@ -66,15 +69,16 @@
    }catch(error){if(sameOwner())notice('profile-save-status',error.message,true);}
    finally{profileBusy=false;if(sameOwner())el('profile-save').disabled=false;}
   });
+  function handoffAllowed(){return !handoffId&&!handoffError||!!handoff&&!handoffError&&['review','pending'].includes(handoff.status);}
   function renderButtons(){
    const allowed=sameOwner()&&complete()&&!walletLoading&&!availabilityLoading&&!reconciling&&wallet?.test_checkout_available===true&&wallet.requires_profile_completion!==true;
    document.querySelectorAll('[data-forge-pack]').forEach(button=>{
-    button.disabled=!allowed||checkoutBusy;
+    button.disabled=!allowed||checkoutBusy||!handoffAllowed()||!!handoff&&button.dataset.forgePack!==handoff.package_id;
     button.textContent=checkoutBusy?'Preparing…':walletLoading||availabilityLoading?'Checking…':allowed?'Select package':!complete()?'Complete profile':'Unavailable';
    });
-   el('forge-confirm-continue').disabled=!allowed||!selectedPack||checkoutBusy;
+   el('forge-confirm-continue').disabled=!allowed||!selectedPack||checkoutBusy||!handoffAllowed();
    el('forge-confirm-back').disabled=checkoutBusy;
-   el('forge-confirm-continue').textContent=checkoutBusy?'Preparing…':'Continue to checkout';
+   el('forge-confirm-continue').textContent=checkoutBusy?'Preparing…':handoff?.status==='completed'?'Payment confirmed':handoff?.status==='pending'?'Resume checkout':handoff?.status==='processing'?'Checking payment':'Continue to checkout';
    el('forge-store-retry').disabled=walletLoading||availabilityLoading||reconciling||checkoutBusy;
   }
   function resetSelection(restoreFocus=false){
@@ -86,7 +90,7 @@
   function showRequestedStore(){
    if(!storeRequested||!sameOwner()||!complete()||dialog.open||storeDialog.open)return false;
    storeDialog.showModal();document.documentElement.classList.add('forge-store-open');
-   storeButton.setAttribute('aria-expanded','true');el('forge-store-body').scrollTop=0;storeClose.focus({preventScroll:true});void readShop();return true;
+   storeButton.setAttribute('aria-expanded','true');el('forge-store-body').scrollTop=0;storeClose.focus({preventScroll:true});void readShop();tryHandoffSelection();return true;
   }
   function openStore(){
    if(!sameOwner())return false;
@@ -105,6 +109,7 @@
    return event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom;
   }
   function selectPack(packId,button){
+   if(!handoffAllowed()||handoff&&packId!==handoff.package_id)return;
    if(!storeDialog.open||!sameOwner()||checkoutBusy||walletLoading||availabilityLoading||reconciling||!complete()||!wallet?.test_checkout_available||wallet.requires_profile_completion===true)return;
    const pack=catalog?.packs.find(item=>item.id===packId);if(!pack)return;
    selectedPack=pack;selectedButton=button;
@@ -113,6 +118,34 @@
    el('forge-store-browse').hidden=true;el('forge-confirmation').hidden=false;
    notice('store-state','Review the package before continuing. No payment request has been created.');renderButtons();
    el('forge-confirmation-heading').focus({preventScroll:true});el('forge-store-body').scrollTop=0;
+  }
+  function tryHandoffSelection(){
+   if(!sameOwner())return;
+   if(!storeDialog.open||!handoffId&&!handoffError)return;
+   if(handoffError){notice('store-state',handoffError,true);renderButtons();return;}
+   if(!handoff){notice('store-state','Checking the Store request from your game…');return;}
+   const pack=catalog?.packs.find(item=>item.id===handoff.package_id);
+   if(!pack)return;
+   if(pack.medals!==handoff.medals||pack.price_centavos!==handoff.price_centavos){handoffError='Package details changed. Review the package again in the game.';notice('store-state',handoffError,true);renderButtons();return;}
+   if(!walletLoading&&!availabilityLoading&&!reconciling&&wallet?.test_checkout_available&&complete()&&!handoffSelected){
+    if(['review','pending'].includes(handoff.status))selectPack(pack.id,Array.from(document.querySelectorAll('[data-forge-pack]')).find(b=>b.dataset.forgePack===pack.id)||null);
+    else{selectedPack=pack;el('forge-confirm-pack').textContent=pack.name+' · '+pack.medals.toLocaleString()+' FM';el('forge-confirm-price').textContent=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(pack.price_centavos/100);el('forge-store-browse').hidden=true;el('forge-confirmation').hidden=false;}
+    handoffSelected=true;
+   }
+   notice('store-state',handoff.status==='completed'?'Payment confirmed by the server. Return to StoneForge and press Refresh to update your balance.':
+    handoff.status==='processing'?'Your checkout is still being verified. Refresh to check again; do not create another payment.':
+    handoff.status==='expired'?'This payment request has expired. Open the package again from the game.':
+    handoff.status==='pending'?'Continue the existing checkout for the package selected in your game.':
+    'Package selected in your game. Review the details, then continue to checkout.');renderButtons();
+  }
+  function readHandoff(){
+   if(!handoffId||!sameOwner())return Promise.resolve(null);if(handoffTask)return handoffTask;
+   handoffError='';handoffSelected=false;
+   const pending=(async()=>{
+    try{handoff=root.StoneForgeStoreHandoff.state(await api('store/handoff?handoff_id='+encodeURIComponent(handoffId),{headers:{'x-playfab-id':owner}}),owner,handoffId);if(!sameOwner())return null;}
+    catch(error){if(sameOwner()){handoff=null;handoffError=error.status===404?'This purchase belongs to a different or expired game session. Sign in with the same account as your game, then reopen the package.':error.message;}}
+    tryHandoffSelection();return handoff;
+   })();handoffTask=pending;pending.finally(()=>{if(handoffTask===pending)handoffTask=null;});return pending;
   }
   function syncStoreWallet(){
    el('store-wallet-balance').textContent=el('wallet-balance').textContent;
@@ -193,6 +226,7 @@
   function loadWallet(){
    if(!sameOwner())return Promise.resolve();
    if(walletTask)return walletTask;
+   void readHandoff();
    const attempt=++generation;
    void readShop();
    walletLoading=true;availabilityLoading=true;walletFailure='';syncStoreWallet();renderButtons();
@@ -234,19 +268,25 @@
      'Wallet unavailable. Check your connection and retry. Your balance has not been reset.';
     notice('wallet-state',walletFailure,true);
    }finally{
-    if(current()){walletLoading=false;availabilityLoading=false;reconciling=false;syncStoreWallet();renderButtons();}
+    if(current()){walletLoading=false;availabilityLoading=false;reconciling=false;syncStoreWallet();renderButtons();tryHandoffSelection();}
    }
   }
   async function checkout(packId){
-   if(checkoutBusy||walletLoading||availabilityLoading||reconciling||!storeDialog.open||selectedPack?.id!==packId||!complete()||!wallet?.test_checkout_available||wallet.requires_profile_completion===true||!sameOwner())return;
+   if(!handoffAllowed()||handoff&&packId!==handoff.package_id||checkoutBusy||walletLoading||availabilityLoading||reconciling||!storeDialog.open||selectedPack?.id!==packId||!complete()||!wallet?.test_checkout_available||wallet.requires_profile_completion===true||!sameOwner())return;
    const attempt=checkoutVersion;
    checkoutBusy=true;renderButtons();notice('store-state','Preparing your checkout…');
    try{
     const keyName='sf_forge_test_'+owner+'_'+packId;
-    let key=root.sessionStorage.getItem(keyName);
+    let key=handoff?.request_key||root.sessionStorage.getItem(keyName);
+    if(key&&!handoff){
+     const previous=root.StoneForgeStoreHandoff.orderState(await api('store/handoff?package_id='+encodeURIComponent(packId)+'&request_key='+encodeURIComponent(key),{headers:{'x-playfab-id':owner}}),owner,packId,key);
+     if(attempt!==checkoutVersion||!storeDialog.open)return;
+     if(previous.status==='processing')throw Error('Your previous checkout is still being verified. Refresh before trying again.');
+     if(['completed','expired'].includes(previous.status)){key=root.crypto.randomUUID();root.sessionStorage.setItem(keyName,key);}
+    }
     if(!key){key=root.crypto.randomUUID();root.sessionStorage.setItem(keyName,key);}
     const result=await api('store/checkout',{method:'POST',headers:{'Content-Type':'application/json','x-playfab-id':owner},
-      body:JSON.stringify({package_id:packId,request_key:key})});
+      body:JSON.stringify({package_id:packId,request_key:key,...(handoff?{handoff_id:handoffId}:{})})});
     if(attempt!==checkoutVersion||!storeDialog.open)return;
     const url=new URL(result.checkout_url);
     if(result.environment!=='test'||url.protocol!=='https:'||url.hostname!=='checkout.paymongo.com'||url.username||url.password)throw new Error('Unsafe checkout response rejected.');
@@ -272,7 +312,14 @@
   listen(storeDialog,'pointerdown',event=>{backdropPressed=event.target===storeDialog&&outsideStore(event);});
   listen(storeDialog,'click',event=>{const dismiss=backdropPressed&&event.target===storeDialog&&outsideStore(event);backdropPressed=false;if(dismiss)closeStore();});
   listen(dialog,'close',showRequestedStore);
-  listen(el('forge-confirm-back'),'click',()=>{if(checkoutBusy)return;resetSelection(true);notice('store-state','Choose a package to review before checkout.');});
+  listen(el('forge-confirm-back'),'click',()=>{
+   if(checkoutBusy)return;
+   if(handoff&&['completed','expired'].includes(handoff.status)){
+    handoffId=null;handoff=null;handoffError='';handoffSelected=false;
+    try{const url=new URL(root.location.href);url.hash='';url.searchParams.delete('payment');root.history.replaceState(null,'',url.href);}catch{}
+   }
+   resetSelection(true);notice('store-state','Choose a package to review before checkout.');
+  });
   listen(el('forge-confirm-continue'),'click',()=>checkout(selectedPack?.id));
   async function loadCatalog(){
    try{
@@ -281,12 +328,13 @@
       data.packs.some(pack=>!/^fm_(handful|pouch|crate|chest)$/.test(pack.id)||!Number.isSafeInteger(pack.medals)||pack.medals<1||
        !Number.isSafeInteger(pack.price_centavos)||pack.price_centavos<1||!/^Assets\/store\/fm-[a-z]+\.png$/.test(pack.image)))
      throw new Error('Store catalog unavailable.');
-    catalog=data;renderPacks();renderPerks();notice('store-state','Choose a package to review before checkout.');
+    catalog=data;renderPacks();renderPerks();notice('store-state','Choose a package to review before checkout.');tryHandoffSelection();
    }catch{if(sameOwner())notice('store-state','Store unavailable. Please refresh the page to retry.',true);}
   }
   function initialize(){
    loadWallet();loadCatalog();
    if(initialProfile){try{displayProfile(initialProfile);}catch{loadProfile();}}else loadProfile();
+   if(handoffId||handoffError)openStore();
   }
   const onVisible=()=>{if(!document.hidden&&sameOwner())loadWallet();};
   document.addEventListener('visibilitychange',onVisible);
@@ -296,7 +344,7 @@
   return{open:openStore,refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);schoolPicker.stop();document.removeEventListener('visibilitychange',onVisible);root.removeEventListener?.('focus',onVisible);
    storeListeners.forEach(remove=>remove());closeStore();
    if(dialog.open)dialog.close();el('wallet-balance').textContent='—';el('wallet-test-row').hidden=true;
-   el('wallet-test-balance').textContent='';wallet=null;profile=null;shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';renderPerks();walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
+   el('wallet-test-balance').textContent='';wallet=null;profile=null;handoff=null;handoffError='';shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';renderPerks();walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
    type.value='';school.value='';el('profile-save').disabled=false;for(const id of ['user-type-value','profile-user-type-badge','school-value','profile-state-status','profile-save-status'])el(id).textContent='';
    syncStoreWallet();renderButtons();}};
  }

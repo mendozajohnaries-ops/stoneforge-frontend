@@ -106,3 +106,10 @@ test('both protected pages mask their root in HTML and load the shared guard bef
   assert.match(fs.readFileSync(script,'utf8'),/sessionAccess\.logout\(\)/);assert.doesNotMatch(fs.readFileSync(script,'utf8'),/logout[^\n]*\.catch\(\(\) => \{\}\)/);
  }
 });
+test('initial login preserves valid game Store context while explicit logout clears navigation',async()=>{
+ const id='11111111-2222-4333-8444-555555555555',f=fixture({responses:[reply({},401)]});f.window.location.href='https://site.example/dashboard.html?shop=true#forge-handoff='+id;
+ try{await f.guard.check();assert.deepEqual(f.destinations,['login-page.html?redirect='+encodeURIComponent('dashboard.html?shop=true#forge-handoff='+id)]);}finally{f.guard.stop();}
+ const g=fixture({responses:[reply(),reply({success:true})]});g.window.location.href='https://site.example/dashboard.html#forge-handoff='+id;
+ try{await g.guard.check();await g.guard.logout();assert.deepEqual(g.destinations,['login-page.html']);}finally{g.guard.stop();}
+ const h=fixture({responses:[reply({},401)]});h.window.location.href='https://site.example/dashboard.html#forge-handoff=bad';try{await h.guard.check();assert.deepEqual(h.destinations,['login-page.html']);}finally{h.guard.stop();}
+});

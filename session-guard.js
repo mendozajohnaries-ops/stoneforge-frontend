@@ -27,7 +27,13 @@
   }
   function signedOut(){
    attempt++;verification?.abort();checking=null;suspend();clearHints();mask('You have signed out.');
-   window.location.replace('login-page.html');
+   let destination='login-page.html';
+   if(!loggingOut&&role==='player')try{
+    const url=new URL(window.location.href),id=new URLSearchParams(url.hash.slice(1));
+    if(url.pathname.endsWith('/dashboard.html')&&[...id.keys()].length===1&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id.get('forge-handoff')||''))
+     destination+='?redirect='+encodeURIComponent('dashboard.html?shop=true#forge-handoff='+id.get('forge-handoff'));
+   }catch{}
+   window.location.replace(destination);
   }
   async function responseJson(response){try{return await response.json();}catch{return null;}}
   async function check(){
