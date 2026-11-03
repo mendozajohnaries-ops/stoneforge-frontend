@@ -23,7 +23,7 @@ test('invalid callback rejected before network', async () => {
 test('unauthenticated browser offers login/signup with intact handoff', async () => {
   const result = await run(valid, [{ status: 401, body: { error: 'Login needed' } }]);
   assert.equal(result.elements.get('approve').hidden, true); assert.equal(result.elements.get('signup').hidden, false);
-  assert.equal(new URL(result.elements.get('login').href, 'https://site.example/').searchParams.get('redirect'), 'game-verify.html?' + valid);
+  assert.equal(new URL(result.elements.get('login').href, 'https://site.example/').searchParams.get('redirect'), '/game-verify?' + valid);
 });
 test('valid free non-owner and historical owner can approve without a purchase', async () => {
  for(const owns_game of [false,true]){
@@ -82,11 +82,17 @@ test('login redirect allowlist rejects executable and foreign URLs', () => {
   const start = source.indexOf('function saveUserAndRedirect(');
   // The source uses a lower-case heading; stop before unrelated style helpers.
   const onlyFunction = source.slice(start, source.indexOf('// ---- Blocked', start) > start ? source.indexOf('// ---- Blocked', start) : source.indexOf('function injectBlockedModalStyles', start));
-  for (const target of ['javascript:alert(1)', '//evil.example/', 'https://evil.example/', 'game-verify.html?state=x']) {
+  for (const target of ['javascript:alert(1)', '//evil.example/', 'https://evil.example/', '/untrusted', 'https://user:pass@site.example/profile', 'game-verify.html?state=x', '/game-verify?state=x', 'dashboard.html?shop=true#forge-handoff=example', 'index.html#reviews']) {
     const storage = new Map();
     const context = { URL, URLSearchParams, sessionStorage: { setItem(k, v) { storage.set(k, v); }, getItem(k) { return storage.get(k); } },
-      window: { location: { href: 'https://site.example/repo/login-page.html', search: '?redirect=' + encodeURIComponent(target) } } };
+      window: { location: { href: 'https://site.example/login', origin: 'https://site.example', search: '?redirect=' + encodeURIComponent(target) } } };
     vm.createContext(context); vm.runInContext(onlyFunction, context); context.saveUserAndRedirect({ playfab_id: 'A' }, 'a');
-    assert.equal(context.window.location.href, target.startsWith('game-verify') ? 'https://site.example/repo/' + target : 'dashboard.html');
+    const expected = {
+      'game-verify.html?state=x': 'https://site.example/game-verify?state=x',
+      '/game-verify?state=x': 'https://site.example/game-verify?state=x',
+      'dashboard.html?shop=true#forge-handoff=example': 'https://site.example/profile?shop=true#forge-handoff=example',
+      'index.html#reviews': 'https://site.example/#reviews',
+    };
+    assert.equal(context.window.location.href, expected[target] || '/profile');
   }
 });

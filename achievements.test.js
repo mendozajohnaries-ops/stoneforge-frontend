@@ -126,6 +126,6 @@ test('catalog strings are text, not HTML; logout/account changes ignore stale re
 test('dashboard removes placeholder/get-stats and loads achievement module before dashboard', () => {
     const js=fs.readFileSync('dashboard.js','utf8'), html=fs.readFileSync('dashboard.html','utf8');
     assert.doesNotMatch(js,/ACHIEVEMENT_DEFS|renderAchievements|get-stats|Diamond Miner|First Steps/);
-    assert.ok(html.indexOf('src="achievements.js"')<html.indexOf('src="dashboard.js"'));
+    assert.ok(html.indexOf('src="achievements.js"')<html.indexOf('src="dashboard.js?'));
     assert.match(js,/achievementBrowser\?\.stop\(\)/);
 });

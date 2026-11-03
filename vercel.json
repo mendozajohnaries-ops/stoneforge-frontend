@@ -1,0 +1,76 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/download.html",
+      "destination": "/download",
+      "permanent": true
+    },
+    {
+      "source": "/login-page.html",
+      "destination": "/login",
+      "permanent": true
+    },
+    {
+      "source": "/signup-page.html",
+      "destination": "/signup",
+      "permanent": true
+    },
+    {
+      "source": "/forgot-password.html",
+      "destination": "/forgot-password",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard.html",
+      "destination": "/profile",
+      "permanent": true
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/admin",
+      "permanent": true
+    },
+    {
+      "source": "/game-verify.html",
+      "destination": "/game-verify",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/download",
+      "destination": "/download.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login-page.html"
+    },
+    {
+      "source": "/signup",
+      "destination": "/signup-page.html"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/forgot-password.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/game-verify",
+      "destination": "/game-verify.html"
+    }
+  ]
+}

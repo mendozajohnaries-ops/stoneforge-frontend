@@ -52,7 +52,7 @@ test('actual Profile/Admin handlers perform no logout or cleanup until confirmed
 });
 test('both pages load the confirmation module before their logout handlers; required-profile sign-out shares the same guard',()=>{
  for(const [file,script] of [['dashboard.html','dashboard.js'],['admin.html','admin.js']]){
-  const html=fs.readFileSync(file,'utf8');assert.match(html,/href="sign-out.css"/);assert.ok(html.indexOf('src="sign-out.js"')<html.indexOf(`src="${script}"`));
+  const html=fs.readFileSync(file,'utf8');assert.match(html,/href="sign-out.css"/);assert.ok(html.indexOf('src="sign-out.js"')<html.indexOf(`src="${script}?`));
   assert.match(fs.readFileSync(script,'utf8'),/addEventListener\('click', signOut\)/);
  }
  assert.match(fs.readFileSync('dashboard.js','utf8'),/onSignOut: signOut/);

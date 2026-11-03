@@ -21,9 +21,9 @@
     || !/^[A-Za-z0-9_-]{43}$/.test(request.code_challenge || '') || !/^[A-Za-z0-9_-]{43}$/.test(request.state || '')) {
     status.textContent = 'Invalid verification request. Start again from the game.'; return;
   }
-  const returnPage = 'game-verify.html?' + params.toString();
-  login.href = 'login-page.html?redirect=' + encodeURIComponent(returnPage);
-  signup.href = 'signup-page.html?redirect=' + encodeURIComponent(returnPage);
+  const returnPage = '/game-verify?' + params.toString();
+  login.href = '/login?redirect=' + encodeURIComponent(returnPage);
+  signup.href = '/signup?redirect=' + encodeURIComponent(returnPage);
   async function fetchJson(path, options = {}) {
     const abort = new AbortController(), timer = setTimeout(() => abort.abort(), 30000);
     try {

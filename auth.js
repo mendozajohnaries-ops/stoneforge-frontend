@@ -16,7 +16,7 @@ const API_BASE = 'https://stoneforge-backend.onrender.com/api';
 // Preserve the game handoff when moving between website login and signup.
 const handoffReturn = urlParams.get('redirect');
 if (handoffReturn) {
-    for (const link of document.querySelectorAll('a[href="login-page.html"], a[href="signup-page.html"]')) {
+    for (const link of document.querySelectorAll('a[href="/login"], a[href="/signup"]')) {
         const destination = new URL(link.href);
         destination.searchParams.set('redirect', handoffReturn);
         link.href = destination.href;
@@ -69,23 +69,31 @@ function saveUserAndRedirect(data, username) {
     const redirect = new URLSearchParams(window.location.search).get('redirect');
     const shopIntent = sessionStorage.getItem('shop_intent');
 
-    // Return the user to the page that requested authentication.
-    // Only allow relative redirects to avoid open-redirect vulnerabilities.
+    // Accept only same-origin return pages. Normalize legacy links before navigating.
     if (redirect) {
         let target;
         try { target = new URL(redirect, window.location.href); } catch { target = null; }
-        const root = new URL('.', window.location.href);
-        if (target && target.origin === root.origin && ['game-verify.html', 'dashboard.html', 'download.html'].some(page => target.pathname === root.pathname + page)) {
-            window.location.href = target.href;
-            return;
+        if (target && target.origin === window.location.origin && !target.username && !target.password) {
+            const legacy = new Map([
+                ['/game-verify.html', '/game-verify'],
+                ['/dashboard.html', '/profile'],
+                ['/download.html', '/download'],
+                ['/index.html', '/'],
+            ]);
+            target.pathname = legacy.get(target.pathname) || target.pathname;
+            if (['/game-verify', '/profile', '/download'].includes(target.pathname) ||
+                (target.pathname === '/' && target.hash === '#reviews')) {
+                window.location.href = target.href;
+                return;
+            }
         }
     }
 
     if (shopIntent === 'true') {
         sessionStorage.removeItem('shop_intent');
-        window.location.href = data.is_admin ? 'admin.html' : 'dashboard.html?shop=true';
+        window.location.href = data.is_admin ? '/admin' : '/profile?shop=true';
     } else {
-        window.location.href = data.is_admin ? 'admin.html' : 'dashboard.html';
+        window.location.href = data.is_admin ? '/admin' : '/profile';
     }
 }
 
