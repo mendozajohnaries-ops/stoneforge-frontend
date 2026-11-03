@@ -48,6 +48,8 @@ const ids=['profile-signout','profile-completion-dialog','profile-completion-for
  'user-type-value','profile-user-type-badge','school-value','school-display-row','forge-pack-grid','wallet-balance','wallet-state',
  'wallet-test-row','wallet-test-balance','store-state','wallet-refresh','open-forge-store','forge-store','forge-store-close','forge-store-body',
  'store-wallet-balance','store-test-row','store-test-balance','forge-store-mode','forge-store-availability','forge-store-retry','forge-store-browse',
+ 'forge-store-categories','forge-medals-tab','forge-classes-tab','forge-classes','forge-class-state','forge-class-grid',
+ 'forge-class-review','forge-class-review-heading','forge-class-review-details','forge-class-cancel','forge-class-confirm',
  'forge-confirmation','forge-confirmation-heading','forge-confirm-pack','forge-confirm-price','forge-confirm-back','forge-confirm-continue','forge-perk-preview','forge-character-preview'];
 const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'fm_handful',name:'Handful',medals:200,price_centavos:4900,image:'Assets/store/fm-handful.png'},
@@ -60,7 +62,7 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
 const sharedShop=(owner='alice')=>({version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,
  wallet:{balance:1800,credits:4800,spent:3000,revision:4,generation:0},roles:['scientist','captain','engineer','attendant','explorer'].map((id,i)=>({id,price:i?750:0,owned:true})),skins:{status:'preview',owned:[],equipped:{}}});
-function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true,hash='',handoffReply,skinReply}={}){
+function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true,hash='',handoffReply,skinReply,classReply}={}){
  const nodes=Object.fromEntries(ids.map(id=>{const node=new Node();node.id=id;return[id,node];})),calls=[],navigation=[],storage=new Map();
  let accountOwner='alice';
  nodes['forge-confirmation'].hidden=true;
@@ -85,6 +87,7 @@ function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,
     if(pack)return{ok:true,json:async()=>({version:1,owner:'alice',environment:'test',live_purchases_enabled:false,handoff_id:null,package_id:pack.id,medals:pack.medals,price_centavos:pack.price_centavos,status:'review',credited:false,checkout_url:null,request_key:q.get('request_key')})};
     return{ok:false,status:404,json:async()=>({error:'Wrong game account'})};
    }
+   if(url.endsWith('/shop/classes/purchase'))return classReply(options);
    if(url.endsWith('/shop/account'))return shopReply?shopReply():{ok:false,status:404,json:async()=>({})};
    if(url.endsWith('/schools'))return{ok:true,json:async()=>schoolCatalog};
    if(url.endsWith('/profile')&&options.method==='PUT'){const body=JSON.parse(options.body);Object.assign(current,body,{requires_profile_completion:false});return{ok:true,json:async()=>({...current})};}
@@ -499,4 +502,26 @@ test('skin Owned/Equipped is derived from the verified account and cleared on st
 test('foreign or late skin response cannot populate a different account',async()=>{
  const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('bob',true)})});try{await settled();assert.doesNotMatch(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);}finally{f.controller.stop();}
  let finish;const waiting=new Promise(r=>finish=r),g=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>waiting});await settled();g.setOwner('bob');g.controller.stop();finish({ok:true,json:async()=>skinSnapshot('alice',true)});await settled();assert.doesNotMatch(g.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);
+});
+
+test('Classes show included and owned items, review price, and accept a verified unlock once',async()=>{
+ const state=sharedShop();state.class_purchases_available=true;state.roles.find(role=>role.id==='engineer').owned=false;
+ const f=fixture({shopReply:()=>({ok:true,json:async()=>structuredClone(state)}),classReply:options=>{
+  const request=JSON.parse(options.body);
+  assert.equal(options.headers['x-playfab-id'],'alice');assert.equal(request.role,'engineer');assert.equal(request.wallet_generation,0);
+  state.wallet.balance-=750;state.wallet.spent+=750;state.wallet.revision++;
+  state.roles.find(role=>role.id==='engineer').owned=true;
+  return {ok:true,json:async()=>({...state,request_key:request.request_key,receipt:{kind:'role_unlock',role:'engineer',cost:750}})};
+ }});
+ try{
+  await settled();f.controller.open();await f.nodes['forge-classes-tab'].fire('click');await settled();
+  const actions=()=>f.nodes['forge-class-grid'].children.map(card=>card.children.at(-1));
+  assert.deepEqual(actions().map(node=>node.textContent),['Included','Owned','Unlock · 750 FM','Owned','Owned']);
+  await actions()[2].fire('click');
+  assert.match(f.nodes['forge-class-review-details'].textContent,/1,800 FM.*1,050 FM/);
+  assert.equal(f.calls.filter(call=>call.url.endsWith('/classes/purchase')).length,0);
+  await Promise.all([f.nodes['forge-class-confirm'].fire('click'),f.nodes['forge-class-confirm'].fire('click')]);await settled();
+  assert.equal(f.calls.filter(call=>call.url.endsWith('/classes/purchase')).length,1);
+  assert.equal(actions()[2].textContent,'Owned');assert.equal(f.nodes['wallet-balance'].textContent,'1,050');
+ }finally{f.controller.stop();}
 });

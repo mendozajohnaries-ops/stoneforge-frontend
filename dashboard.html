@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile — StoneForge</title>
+  <title>Profile</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Darumadrop+One&amp;family=Montserrat:wght@400;500;600;700;900&amp;family=Roboto+Mono:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap">
@@ -294,6 +294,23 @@
       <p class="forge-store-intro" id="forge-store-description">Your next discovery starts here.</p>
       <p class="forge-muted" id="store-test-row" hidden><span id="store-test-balance"></span></p>
       <div class="forge-availability" id="forge-store-availability" role="status" aria-live="polite">Loading your balance…</div>
+      <div class="forge-confirmation__actions" id="forge-store-categories" aria-label="Store categories">
+        <button type="button" class="forge-secondary" id="forge-medals-tab" aria-pressed="true">Forge Medals</button>
+        <button type="button" class="forge-secondary" id="forge-classes-tab" aria-pressed="false">Classes</button>
+      </div>
+      <section id="forge-classes" aria-labelledby="forge-classes-heading" hidden>
+        <h3 id="forge-classes-heading" class="forge-pack-heading">Multiplayer Classes</h3>
+        <p class="forge-muted" id="forge-class-state" role="status"></p>
+        <div class="forge-grid" id="forge-class-grid"></div>
+        <section class="forge-confirmation" id="forge-class-review" aria-labelledby="forge-class-review-heading" hidden>
+          <h3 id="forge-class-review-heading" tabindex="-1"></h3>
+          <p class="forge-muted" id="forge-class-review-details"></p>
+          <div class="forge-confirmation__actions">
+            <button type="button" class="forge-secondary" id="forge-class-cancel">Back to classes</button>
+            <button type="button" class="forge-primary" id="forge-class-confirm">Confirm unlock</button>
+          </div>
+        </section>
+      </section>
       <div id="forge-store-browse">
         <div class="forge-panel-head"><div><h3 class="forge-pack-heading">Choose your Forge Medals</h3><p class="forge-pack-subtitle">Select a package. Review the details before checkout.</p></div><span class="forge-tag" id="forge-store-mode">Checking availability</span></div>
         <div id="forge-pack-grid" class="forge-grid" aria-label="Forge Medal packages"></div>
