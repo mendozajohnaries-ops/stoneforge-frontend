@@ -10,9 +10,9 @@ const store=require('./profile-store');
 
 test('Store uses catalog-driven prices and removes Chroma promotion',()=>{
  const html=fs.readFileSync('dashboard.html','utf8');
- assert.match(html,/id="forge-character-preview"/);
+ assert.match(html,/id="forge-skins-tab"/);
  assert.doesNotMatch(html,/Chroma skins|300 FM per chroma|Explorer is not available yet/);
- assert.match(fs.readFileSync('profile-store.js','utf8'),/catalog\?\.perk_upgrades/);
+ assert.doesNotMatch(html,/forge-perk-preview|forge-character-preview/);
 });
 test('frontend requires an explicit supported User Type and student school; no discount or privileges',()=>{
  for(const user_type of ['',null,'admin','instructor','toString'])assert.throws(()=>fields.validate({user_type}));
@@ -50,7 +50,7 @@ const ids=['profile-signout','profile-completion-dialog','profile-completion-for
  'store-wallet-balance','store-test-row','store-test-balance','forge-store-mode','forge-store-availability','forge-store-retry','forge-store-browse',
  'forge-store-categories','forge-medals-tab','forge-classes-tab','forge-classes','forge-class-state','forge-class-grid',
  'forge-class-review','forge-class-review-heading','forge-class-review-details','forge-class-cancel','forge-class-confirm',
- 'forge-confirmation','forge-confirmation-heading','forge-confirm-pack','forge-confirm-price','forge-confirm-back','forge-confirm-continue','forge-perk-preview','forge-character-preview'];
+ 'forge-confirmation','forge-confirmation-heading','forge-confirm-pack','forge-confirm-price','forge-confirm-back','forge-confirm-continue','forge-skins-tab','forge-skins','forge-skin-state','forge-skin-grid','forge-class-review-art','forge-pack-review-art'];
 const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'fm_handful',name:'Handful',medals:200,price_centavos:4900,image:'Assets/store/fm-handful.png'},
  {id:'fm_pouch',name:'Pouch',medals:450,price_centavos:9900,image:'Assets/store/fm-pouch.png'},
@@ -60,6 +60,13 @@ const catalog={version:1,live_purchases_enabled:false,packs:[
  {id:'captain',costs:[45,95,155,230]},{id:'engineer',costs:[65,125,190,270]},
  {id:'attendant',costs:[30,70,120,180]},{id:'explorer',costs:[80,140,205,300]}]}};
 async function settled(){for(let i=0;i<6;i++)await new Promise(resolve=>setImmediate(resolve));}
+const productLabels=(fixture,type)=>fixture.nodes['forge-'+type+'-grid'].children.map(card=>{
+ const content=card.children.at(-1);
+ return content.children[0].textContent+': '+content.children.at(-1).textContent;
+});
+async function openCategory(fixture,category){
+ await settled();fixture.controller.open();await fixture.nodes['forge-'+category+'-tab'].fire('click');await settled();
+}
 const sharedShop=(owner='alice')=>({version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,
  wallet:{balance:1800,credits:4800,spent:3000,revision:4,generation:0},roles:['scientist','captain','engineer','attendant','explorer'].map((id,i)=>({id,price:i?750:0,owned:true})),skins:{status:'preview',owned:[],equipped:{}}});
 function fixture({type='regular',eligible=false,failWallet=false,failStatus=503,wrongOwner=false,testBalance=0,checkoutReply,walletReply,canonicalReply,availabilityReply,rewardReply,failCatalog=false,profileReply,catalogReply,shopReply,initial=true,hash='',handoffReply,skinReply,classReply}={}){
@@ -122,9 +129,9 @@ test('fixed-role catalog shows Scientist free and paid unlocks without legacy up
  const data={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:
   ['scientist','captain','engineer','attendant','explorer'].map(id=>({id,price:id==='scientist'?0:750}))}};
  const f=fixture({catalogReply:()=>({ok:true,json:async()=>data}),shopReply:()=>({ok:true,json:async()=>({version:1,owner:'alice',currency:'FM',environment:'test',live_purchases_enabled:false,purchases_enabled:false,wallet:{balance:0,credits:0,spent:0,revision:0,generation:0},roles:data.fixed_roles.roles.map(role=>({...role,owned:role.id==='scientist'})),skins:{status:'preview',owned:[],equipped:{}}})})});
- try{await settled();const text=f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|');
-  assert.match(text,/Scientist: Free/);assert.match(text,/Captain: 750 FM/);assert.match(text,/Explorer: 750 FM/);assert.doesNotMatch(text,/Levels 2|Lv\. 5|four original/);
-  assert.equal(f.nodes['forge-character-preview'].children[0].textContent,'Item skins');assert.equal(f.nodes['forge-pack-grid'].children.length,4);
+ try{await openCategory(f,'classes');const cards=productLabels(f,'class');
+  assert.match(cards[0],/Scientist: Included/);assert.match(cards[1],/Captain: Unavailable/);
+  assert.equal(cards.length,5);assert.equal(f.nodes['forge-pack-grid'].children.length,4);
   assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
  }finally{f.controller.stop();}
 });
@@ -132,16 +139,16 @@ test('fixed-role catalog shows Scientist free and paid unlocks without legacy up
 test('owned roles and wallet use one verified account snapshot; logout removes private badges',async()=>{
  const data={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:sharedShop().roles}};
  const f=fixture({catalogReply:()=>({ok:true,json:async()=>data}),shopReply:()=>({ok:true,json:async()=>sharedShop()}),testBalance:0});
- try{await settled();const text=f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|');assert.match(text,/Captain: Owned/);assert.match(text,/Explorer: Owned/);
+ try{await openCategory(f,'classes');const text=productLabels(f,'class').join('|');assert.match(text,/Captain: Owned/);assert.match(text,/Explorer: Owned/);
   assert.equal(f.nodes['wallet-balance'].textContent,'1,800');assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);
-  f.controller.stop();assert.doesNotMatch(f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|'),/: Owned/);
+  f.controller.stop();assert.doesNotMatch(productLabels(f,'class').join('|'),/: Owned/);
  }finally{f.controller.stop();}
 });
 test('late ownership response cannot populate a different or stopped account',async()=>{
  let finish;const wait=new Promise(resolve=>{finish=resolve;});
  const f=fixture({shopReply:()=>wait});await settled();f.setOwner('bob');f.controller.stop();
  finish({ok:true,json:async()=>sharedShop()});await settled();
- assert.equal(f.nodes['wallet-balance'].textContent,'—');assert.doesNotMatch(f.nodes['forge-perk-preview'].children.map(n=>n.textContent).join('|'),/: Owned/);
+ assert.equal(f.nodes['wallet-balance'].textContent,'—');assert.doesNotMatch(productLabels(f,'class').join('|'),/: Owned/);
 });
 
 test('first confirmed FM renders while profile, catalog and availability are still pending',async()=>{
@@ -165,10 +172,12 @@ test('confirmed funds appear before a slow reward reconciliation without fabrica
  }finally{f.controller.stop();}
 });
 
-test('catalog v2 renders all four perk price matrices and the real in-game Explorer unlock price',async()=>{
- const f=fixture();try{await settled();const text=f.all().map(n=>n.textContent).join(' ');
-  for(const value of ['45 / 95 / 155 / 230','65 / 125 / 190 / 270','30 / 70 / 120 / 180','80 / 140 / 205 / 300','750 FM'])assert.ok(text.includes(value));
-  assert.match(text,/Scientist has no paid upgrades/);assert.doesNotMatch(text,/Chroma|Coming soon|Explorer is not available/);
+test('legacy catalog still serves FM packs without advertising retired upgrade levels',async()=>{
+ const f=fixture();try{await openCategory(f,'classes');
+  const text=f.all().map(node=>node.textContent).join(' ');
+  assert.doesNotMatch(text,/45 \/ 95|65 \/ 125|paid upgrades|Chroma/);
+  assert.equal(f.nodes['forge-pack-grid'].children.length,4);
+  assert.equal(productLabels(f,'class').length,5);
  }finally{f.controller.stop();}
 });
 
@@ -494,14 +503,14 @@ const skinSnapshot=(owner='alice',owned=false)=>({version:1,catalog_id:'stonefor
  skins:['stone_axe','iron_axe','iron_pickaxe','wooden_shovel','stone_spear','chisel','hoe','torch','wooden_fire_starter','small_resin_bucket'].map(tool=>({id:tool+'.basic',tool_id:tool,price:300,asset_revision:1,available:false})),owned:owned?['stone_axe.basic']:[],equipped:owned?[{toolId:'stone_axe',skinId:'stone_axe.basic'}]:[]});
 const skinRolesCatalog={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:['scientist','captain','engineer','attendant','explorer'].map(id=>({id,price:id==='scientist'?0:750}))}};
 test('website displays ten draft skin previews without checkout or fake ownership',async()=>{
- const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot()})});try{await settled();const text=f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|');assert.equal((text.match(/Skin: Preview/g)||[]).length,10);assert.doesNotMatch(text,/Skin: Owned|Skin: Equipped/);assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);}finally{f.controller.stop();}
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot()})});try{await openCategory(f,'skins');const text=productLabels(f,'skin').join('|');assert.equal((text.match(/: Preview Only/g)||[]).length,10);assert.doesNotMatch(text,/: Owned|: Equipped/g);assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);}finally{f.controller.stop();}
 });
 test('skin Owned/Equipped is derived from the verified account and cleared on stop',async()=>{
- const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('alice',true)})});try{await settled();assert.match(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Stone Axe Skin: Equipped/);f.controller.stop();assert.doesNotMatch(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);}finally{f.controller.stop();}
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('alice',true)})});try{await openCategory(f,'skins');assert.match(productLabels(f,'skin').join('|'),/Stone Axe: Equipped/);f.controller.stop();assert.doesNotMatch(productLabels(f,'skin').join('|'),/: Equipped|: Owned/);}finally{f.controller.stop();}
 });
 test('foreign or late skin response cannot populate a different account',async()=>{
- const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('bob',true)})});try{await settled();assert.doesNotMatch(f.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);}finally{f.controller.stop();}
- let finish;const waiting=new Promise(r=>finish=r),g=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>waiting});await settled();g.setOwner('bob');g.controller.stop();finish({ok:true,json:async()=>skinSnapshot('alice',true)});await settled();assert.doesNotMatch(g.nodes['forge-character-preview'].children.map(n=>n.textContent).join('|'),/Skin: Equipped|Skin: Owned/);
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot('bob',true)})});try{await openCategory(f,'skins');assert.doesNotMatch(productLabels(f,'skin').join('|'),/: Equipped|: Owned/);}finally{f.controller.stop();}
+ let finish;const waiting=new Promise(r=>finish=r),g=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>waiting});await settled();g.setOwner('bob');g.controller.stop();finish({ok:true,json:async()=>skinSnapshot('alice',true)});await settled();assert.doesNotMatch(productLabels(g,'skin').join('|'),/: Equipped|: Owned/);
 });
 
 test('Classes show included and owned items, review price, and accept a verified unlock once',async()=>{
@@ -515,9 +524,10 @@ test('Classes show included and owned items, review price, and accept a verified
  }});
  try{
   await settled();f.controller.open();await f.nodes['forge-classes-tab'].fire('click');await settled();
-  const actions=()=>f.nodes['forge-class-grid'].children.map(card=>card.children.at(-1));
+  const actions=()=>f.nodes['forge-class-grid'].children.map(card=>card.children.at(-1).children.at(-1));
   assert.deepEqual(actions().map(node=>node.textContent),['Included','Owned','Unlock · 750 FM','Owned','Owned']);
   await actions()[2].fire('click');
+  assert.match(f.nodes['forge-class-review-art'].children[0].src,/engineer\.png$/);
   assert.match(f.nodes['forge-class-review-details'].textContent,/1,800 FM.*1,050 FM/);
   assert.equal(f.calls.filter(call=>call.url.endsWith('/classes/purchase')).length,0);
   await Promise.all([f.nodes['forge-class-confirm'].fire('click'),f.nodes['forge-class-confirm'].fire('click')]);await settled();

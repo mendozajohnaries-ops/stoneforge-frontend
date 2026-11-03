@@ -168,7 +168,7 @@
       .achievements-grid { grid-template-columns: 1fr; }
     }
   </style>
-  <link rel="stylesheet" href="profile-store.css">
+  <link rel="stylesheet" href="profile-store.css?v=20261103-store">
   <link rel="stylesheet" href="school-selector.css">
   <link rel="stylesheet" href="session-guard.css?v=20261025-a">
 </head>
@@ -290,19 +290,22 @@
         <button type="button" class="forge-dialog__close" id="forge-store-close" aria-label="Close Forge Store" autofocus>✕</button>
       </div>
     </header>
+      <nav class="forge-categories" id="forge-store-categories" aria-label="Store categories">
+        <button type="button" class="forge-secondary" id="forge-classes-tab" aria-pressed="false">Classes</button>
+        <button type="button" class="forge-secondary" id="forge-skins-tab" aria-pressed="false">Item Skins</button>
+        <button type="button" class="forge-secondary" id="forge-medals-tab" aria-pressed="true">Forge Medals</button>
+      </nav>
     <div class="forge-dialog__body" id="forge-store-body">
       <p class="forge-store-intro" id="forge-store-description">Your next discovery starts here.</p>
       <p class="forge-muted" id="store-test-row" hidden><span id="store-test-balance"></span></p>
       <div class="forge-availability" id="forge-store-availability" role="status" aria-live="polite">Loading your balance…</div>
-      <div class="forge-confirmation__actions" id="forge-store-categories" aria-label="Store categories">
-        <button type="button" class="forge-secondary" id="forge-medals-tab" aria-pressed="true">Forge Medals</button>
-        <button type="button" class="forge-secondary" id="forge-classes-tab" aria-pressed="false">Classes</button>
-      </div>
       <section id="forge-classes" aria-labelledby="forge-classes-heading" hidden>
         <h3 id="forge-classes-heading" class="forge-pack-heading">Multiplayer Classes</h3>
+        <p class="forge-pack-subtitle">Choose a specialty for your next co-op session.</p>
         <p class="forge-muted" id="forge-class-state" role="status"></p>
         <div class="forge-grid" id="forge-class-grid"></div>
         <section class="forge-confirmation" id="forge-class-review" aria-labelledby="forge-class-review-heading" hidden>
+          <div id="forge-class-review-art" class="forge-product-art"></div>
           <h3 id="forge-class-review-heading" tabindex="-1"></h3>
           <p class="forge-muted" id="forge-class-review-details"></p>
           <div class="forge-confirmation__actions">
@@ -311,15 +314,18 @@
           </div>
         </section>
       </section>
+      <section id="forge-skins" aria-labelledby="forge-skins-heading" hidden>
+        <h3 id="forge-skins-heading" class="forge-pack-heading">Item Skins</h3>
+        <p class="forge-pack-subtitle">Preview tool customization. Final skin artwork is pending.</p>
+        <p class="forge-muted" id="forge-skin-state" role="status"></p>
+        <div class="forge-grid" id="forge-skin-grid"></div>
+      </section>
       <div id="forge-store-browse">
         <div class="forge-panel-head"><div><h3 class="forge-pack-heading">Choose your Forge Medals</h3><p class="forge-pack-subtitle">Select a package. Review the details before checkout.</p></div><span class="forge-tag" id="forge-store-mode">Checking availability</span></div>
         <div id="forge-pack-grid" class="forge-grid" aria-label="Forge Medal packages"></div>
-        <details class="forge-spending"><summary>Where can I use Forge Medals?</summary><div class="forge-future" aria-label="In-game spending options">
-          <article id="forge-perk-preview"><h3>Team roles</h3><p class="forge-muted">Loading in-game role details…</p></article>
-          <article id="forge-character-preview"><h3>Item skins</h3><p class="forge-muted">View available customization in the game.</p></article>
-        </div></details>
       </div>
       <section class="forge-confirmation" id="forge-confirmation" aria-labelledby="forge-confirmation-heading" hidden>
+        <div id="forge-pack-review-art" class="forge-product-art"></div>
         <h3 id="forge-confirmation-heading" tabindex="-1">Review your FM purchase</h3>
         <p class="forge-muted" id="forge-confirm-pack"></p>
         <p class="forge-confirmation__price" id="forge-confirm-price"></p>
@@ -421,7 +427,7 @@
   <script src="wallet-client.js?v=20261101-shop-b1"></script>
   <script src="store-handoff-client.js?v=20261102-b3"></script>
   <script src="skin-client.js?v=20261102-b4"></script>
-  <script src="profile-store.js?v=20261102-shop-b4"></script>
+  <script src="profile-store.js?v=20261103-store"></script>
   <script src="sign-out.js"></script>
   <script src="dashboard.js"></script>
   <!-- Catalog/progress are authenticated server data, not editable browser unlocks. -->
