@@ -41,14 +41,13 @@ document.addEventListener('keydown', (e) => {
 const allNavLinks = document.querySelectorAll('.nav__link');
 
 // Set active based on current page on load
-const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+const currentPage = window.location.pathname;
 allNavLinks.forEach(link => {
-  const href = link.getAttribute('href');
-  // Match exact page or hash links on same page
-  const isCurrentPage = href === currentPage ||
-    (href?.includes('#') && (currentPage === 'index.html' || currentPage === ''));
-  if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+  const target = new URL(link.href, window.location.href);
+  if (target.pathname === currentPage && target.hash === window.location.hash) {
     link.classList.add('nav__link--active');
+  } else {
+    link.classList.remove('nav__link--active');
   }
 });
 
@@ -108,7 +107,7 @@ function refreshAccountNavigation() {
   if (!authItem) return;
   let user = null;try { user = JSON.parse(sessionStorage.getItem('sf_user') || 'null'); } catch {}
   const link = document.createElement('a');link.className = 'nav__link';
-  link.href = user ? user.is_admin ? 'admin.html' : 'dashboard.html' : 'login-page.html';
+  link.href = user ? user.is_admin ? '/admin' : '/profile' : '/login';
   link.textContent = user ? user.is_admin ? 'Dashboard' : 'Profile' : 'Sign In';
   authItem.replaceChildren(link);
   if (!user) {

@@ -415,7 +415,12 @@ test('actual dashboard shop/payment return opens Store UI without fulfillment or
  const vm=require('node:vm'),source=fs.readFileSync('dashboard.js','utf8').replace(/\r\n/g,'\n');
  const block=source.slice(source.indexOf('    // Auto-open modals from game intent'),source.indexOf('\n}\n\nfunction suspendDashboard'));
  for(const query of ['?shop=true','?shop=true&payment=test','?shop=true&payment=cancelled','?shop=true&report=true']){
-  const actions=[];vm.runInNewContext(block,{URLSearchParams,window:{location:{search:query},history:{replaceState(){actions.push('history');}}},
+  const actions=[],hash='#forge-handoff=example',location=new URL('https://site.example/profile'+query+hash);
+  vm.runInNewContext(block,{URL,URLSearchParams,window:{location,history:{replaceState(_state,_title,url){actions.push('history');
+   assert.equal(url.pathname,'/profile');assert.equal(url.hash,hash);
+   assert.equal(url.searchParams.get('payment'),location.searchParams.get('payment'));
+   assert.equal(url.searchParams.has(query.includes('report=true')?'report':'shop'),false);
+  }}},
    sessionStorage:{getItem:()=>null,removeItem(){}},storeBrowser:{open(){actions.push('store');}},openReportModal(){actions.push('report');}});
   assert.deepEqual(actions,['history',query.includes('report=true')?'report':'store']);
  }
@@ -423,8 +428,8 @@ test('actual dashboard shop/payment return opens Store UI without fulfillment or
 test('signup and dashboard load modules in order, preserve sandbox disclosure and do not collect student IDs',()=>{
  const signup=fs.readFileSync('signup-page.html','utf8'),dash=fs.readFileSync('dashboard.html','utf8'),auth=fs.readFileSync('auth.js','utf8');
  assert.match(signup,/id="user-type"[^>]*required/);assert.match(signup,/<option value="" selected disabled>/);
- assert.ok(signup.indexOf('src="profile-fields.js"')<signup.indexOf('src="auth.js"'));
- assert.ok(dash.indexOf('src="profile-store.js')>=0&&dash.indexOf('src="profile-store.js')<dash.indexOf('src="dashboard.js"'));
+ assert.ok(signup.indexOf('src="profile-fields.js"')<signup.indexOf('src="auth.js?'));
+ assert.ok(dash.indexOf('src="profile-store.js')>=0&&dash.indexOf('src="profile-store.js')<dash.indexOf('src="dashboard.js?'));
  assert.match(auth,/apiPost\('send-otp', \{ username, email, password, \.\.\.fields \}\)/);
  assert.match(dash,/Loading your balance/);assert.match(dash,/id="forge-store-retry"/);
  assert.match(dash,/No real payment will be collected/);assert.doesNotMatch(signup,/Coyns|LRN|student-number|student_id/i);

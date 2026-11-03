@@ -254,13 +254,20 @@ function initDashboard(user) {
     const reportFromSS  = sessionStorage.getItem('report_intent') === 'true';
     const shopFromUrl   = dashParams.get('shop') === 'true';
 
+    function clearIntent(intent) {
+        const current = new URL(window.location.href);
+        current.pathname = '/profile';
+        current.searchParams.delete(intent);
+        window.history.replaceState({}, '', current);
+    }
+
     if (reportFromUrl || reportFromSS) {
         sessionStorage.removeItem('report_intent');
-        window.history.replaceState({}, '', 'dashboard.html');
+        clearIntent('report');
         openReportModal();
     }
     else if (shopFromUrl) {
-        window.history.replaceState({}, '', 'dashboard.html');
+        clearIntent('shop');
         storeBrowser.open();
     }
 }

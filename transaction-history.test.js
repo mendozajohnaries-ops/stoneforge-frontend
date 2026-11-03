@@ -65,7 +65,7 @@ test('account switch discards late history and logout clears DOM',async()=>{
 });
 test('history sits below Achievements and mobile CSS stacks the row without altering reward authority',()=>{
  const html=fs.readFileSync('dashboard.html','utf8');assert.ok(html.indexOf('id="transaction-history"')>html.indexOf('id="achievements-card"'));
- assert.ok(html.indexOf('src="transaction-history.js"')<html.indexOf('src="dashboard.js"'));
+ assert.ok(html.indexOf('src="transaction-history.js"')<html.indexOf('src="dashboard.js?'));
  assert.match(fs.readFileSync('profile-store.css','utf8'),/@media\(max-width:480px\).*forge-transaction/);
  assert.doesNotMatch(fs.readFileSync('transaction-history.js','utf8'),/method:\s*['"]POST|innerHTML\s*=/);
 });

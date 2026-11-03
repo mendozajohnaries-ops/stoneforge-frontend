@@ -422,7 +422,7 @@ async function initAdmin(cachedUser) {
     } catch { throw new Error('Could not load admin account.'); }
 
     if (epoch !== adminEpoch) return;
-    if (res.status === 403) { window.location.replace('dashboard.html'); return; }
+    if (res.status === 403) { window.location.replace('/profile'); return; }
 
     const data = await res.json();
     if (epoch !== adminEpoch) return;

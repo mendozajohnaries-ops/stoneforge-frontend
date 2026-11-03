@@ -26,7 +26,7 @@ test('private content starts hidden; verified server identity reveals it once wi
 test('expired, restricted and forged identity replies never reveal cached content',async()=>{
  for(const response of [reply({},401),reply({},403),reply({}),reply({...alice,playfab_id:'<bad>'}),reply({...alice,success:false})]){
   const f=fixture({responses:[response]});try{await f.guard.check();assert.equal(f.readyCalls,0);assert.equal(f.nodes.content.hidden,true);
-   if([401,403].includes(response.status))assert.deepEqual(f.destinations,['login-page.html']);else assert.equal(f.destinations.length,0);
+   if([401,403].includes(response.status))assert.deepEqual(f.destinations,['/login']);else assert.equal(f.destinations.length,0);
   }finally{f.guard.stop();}
  }
 });
@@ -39,7 +39,7 @@ test('network failure retains a masked retryable page instead of redirecting as 
 test('pagehide masks and clears private data before history snapshots; pageshow must reverify',async()=>{
  const f=fixture({responses:[reply(),reply({},401)]});try{
   await f.guard.check();const count=f.suspends;f.window.emit('pagehide',{persisted:true});assert.equal(f.nodes.content.hidden,true);assert.equal(f.guard.owner,null);assert.ok(f.suspends>count);
-  f.window.emit('pageshow',{persisted:true});await settled();assert.equal(f.nodes.content.hidden,true);assert.deepEqual(f.destinations,['login-page.html']);assert.equal(f.readyCalls,1);
+  f.window.emit('pageshow',{persisted:true});await settled();assert.equal(f.nodes.content.hidden,true);assert.deepEqual(f.destinations,['/login']);assert.equal(f.readyCalls,1);
  }finally{f.guard.stop();}
 });
 test('restored valid page remounts once; mere tab visibility revalidation does not reload data/history',async()=>{
@@ -51,14 +51,14 @@ test('restored valid page remounts once; mere tab visibility revalidation does n
 test('account switching clears former state before mounting the new account; roles come from server',async()=>{
  const seen=[],f=fixture({responses:[reply(),reply({...alice,playfab_id:'BOB'})],ready:user=>seen.push(user.playfab_id)});
  try{await f.guard.check();await f.guard.check();assert.deepEqual(seen,['ALICE','BOB']);assert.equal(f.guard.owner,'BOB');}finally{f.guard.stop();}
- for(const [role,user,target]of [['admin',alice,'dashboard.html'],['player',{...alice,is_admin:true},'admin.html']]){
+ for(const [role,user,target]of [['admin',alice,'/profile'],['player',{...alice,is_admin:true},'/admin']]){
   const f=fixture({role,responses:[reply(user)]});try{await f.guard.check();assert.equal(f.readyCalls,0);assert.equal(f.nodes.content.hidden,true);assert.deepEqual(f.destinations,[target]);}finally{f.guard.stop();}
  }
 });
 test('successful logout verifies response, clears hints, notifies other tabs and uses replace navigation',async()=>{
  const f=fixture({responses:[reply(),reply({success:true})]});try{
   await f.guard.check();f.storage.set('sf_reported','private');assert.equal(await f.guard.logout(),true);
-  assert.equal(f.nodes.content.hidden,true);assert.equal(f.guard.owner,null);assert.equal(f.storage.size,0);assert.deepEqual(f.destinations,['login-page.html']);
+  assert.equal(f.nodes.content.hidden,true);assert.equal(f.guard.owner,null);assert.equal(f.storage.size,0);assert.deepEqual(f.destinations,['/login']);
   assert.equal(JSON.parse(f.persistent.get(EVENT_KEY)).kind,'signed-out');assert.equal(f.calls[1].options.method,'POST');assert.equal(f.calls[1].options.credentials,'include');
  }finally{f.guard.stop();}
 });
@@ -67,7 +67,7 @@ test('failed/malformed logout keeps private content masked, offers retry and nev
   const f=fixture({responses:[reply(),response,reply({success:true})]});try{
    await f.guard.check();assert.equal(await f.guard.logout(),false);assert.equal(f.destinations.length,0);assert.equal(f.nodes.content.hidden,true);
    assert.match(f.nodes.loading.children[0].textContent,/could not be confirmed/);assert.equal(f.persistent.size,0);
-   assert.equal(await f.guard.logout(),true);assert.deepEqual(f.destinations,['login-page.html']);
+   assert.equal(await f.guard.logout(),true);assert.deepEqual(f.destinations,['/login']);
   }finally{f.guard.stop();}
  }
 });
@@ -85,13 +85,13 @@ test('optional 403 triggers session check rather than blind logout; a real 401 i
  const f=fixture({responses:[reply(),reply({error:'Store paused'},403),reply(),reply({},401)]});try{
   await f.guard.check();const response=await f.guard.request('https://api.example/api/store/checkout');assert.equal(response.status,403);await settled();
   assert.equal(f.guard.owner,'ALICE');assert.equal(f.destinations.length,0);assert.equal(f.readyCalls,1);
-  await assert.rejects(f.guard.request('https://api.example/api/private'));assert.deepEqual(f.destinations,['login-page.html']);
+  await assert.rejects(f.guard.request('https://api.example/api/private'));assert.deepEqual(f.destinations,['/login']);
  }finally{f.guard.stop();}
 });
 test('cross-tab sign-out masks immediately; sign-in revalidates the cookie, never trusts broadcast identity',async()=>{
  const f=fixture({responses:[reply(),reply({...alice,playfab_id:'BOB'})]});try{
   await f.guard.check();f.window.emit('storage',{key:EVENT_KEY,newValue:JSON.stringify({kind:'signed-in',playfab_id:'FORGED'})});await settled();assert.equal(f.guard.owner,'BOB');
-  f.window.emit('storage',{key:EVENT_KEY,newValue:JSON.stringify({kind:'signed-out'})});assert.equal(f.nodes.content.hidden,true);assert.equal(f.guard.owner,null);assert.deepEqual(f.destinations,['login-page.html']);
+  f.window.emit('storage',{key:EVENT_KEY,newValue:JSON.stringify({kind:'signed-out'})});assert.equal(f.nodes.content.hidden,true);assert.equal(f.guard.owner,null);assert.deepEqual(f.destinations,['/login']);
  }finally{f.guard.stop();}
 });
 test('timeout aborts authentication and stop removes navigation handlers',async()=>{
@@ -102,14 +102,14 @@ test('timeout aborts authentication and stop removes navigation handlers',async(
 test('both protected pages mask their root in HTML and load the shared guard before page handlers',()=>{
  assert.match(fs.readFileSync('base.css','utf8'),/\[hidden\]\s*\{\s*display:none !important/);
  for(const [file,id,script]of [['dashboard.html','dashboard','dashboard.js'],['admin.html','admin-content','admin.js']]){
-  const html=fs.readFileSync(file,'utf8');assert.match(html,new RegExp('id="'+id+'"[^>]*hidden'));assert.ok(html.indexOf('src="session-guard.js?')<html.indexOf('src="'+script+'"'));
+  const html=fs.readFileSync(file,'utf8');assert.match(html,new RegExp('id="'+id+'"[^>]*hidden'));assert.ok(html.indexOf('src="session-guard.js?')<html.indexOf('src="'+script+'?'));
   assert.match(fs.readFileSync(script,'utf8'),/sessionAccess\.logout\(\)/);assert.doesNotMatch(fs.readFileSync(script,'utf8'),/logout[^\n]*\.catch\(\(\) => \{\}\)/);
  }
 });
 test('initial login preserves valid game Store context while explicit logout clears navigation',async()=>{
- const id='11111111-2222-4333-8444-555555555555',f=fixture({responses:[reply({},401)]});f.window.location.href='https://site.example/dashboard.html?shop=true#forge-handoff='+id;
- try{await f.guard.check();assert.deepEqual(f.destinations,['login-page.html?redirect='+encodeURIComponent('dashboard.html?shop=true#forge-handoff='+id)]);}finally{f.guard.stop();}
+ const id='11111111-2222-4333-8444-555555555555',f=fixture({responses:[reply({},401)]});f.window.location.href='https://site.example/profile?shop=true#forge-handoff='+id;
+ try{await f.guard.check();assert.deepEqual(f.destinations,['/login?redirect='+encodeURIComponent('/profile?shop=true#forge-handoff='+id)]);}finally{f.guard.stop();}
  const g=fixture({responses:[reply(),reply({success:true})]});g.window.location.href='https://site.example/dashboard.html#forge-handoff='+id;
- try{await g.guard.check();await g.guard.logout();assert.deepEqual(g.destinations,['login-page.html']);}finally{g.guard.stop();}
- const h=fixture({responses:[reply({},401)]});h.window.location.href='https://site.example/dashboard.html#forge-handoff=bad';try{await h.guard.check();assert.deepEqual(h.destinations,['login-page.html']);}finally{h.guard.stop();}
+ try{await g.guard.check();await g.guard.logout();assert.deepEqual(g.destinations,['/login']);}finally{g.guard.stop();}
+ const h=fixture({responses:[reply({},401)]});h.window.location.href='https://site.example/dashboard.html#forge-handoff=bad';try{await h.guard.check();assert.deepEqual(h.destinations,['/login']);}finally{h.guard.stop();}
 });

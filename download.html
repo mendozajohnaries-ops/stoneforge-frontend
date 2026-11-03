@@ -23,7 +23,7 @@
   <header>
     <nav class="nav" id="main-nav">
       <div class="nav__inner">
-        <a href="index.html" class="nav__logo">
+        <a href="/" class="nav__logo">
           <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
           <span class="nav__logo-text">StoneForge</span>
         </a>
@@ -35,12 +35,12 @@
             <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
             <span class="nav__sidebar-brand-text">StoneForge</span>
           </li>
-          <li><a href="index.html" class="nav__link">Home</a></li>
-          <li><a href="index.html#about" class="nav__link">About</a></li>
-          <li><a href="index.html#features" class="nav__link">Features</a></li>
-          <li><a href="download.html" class="nav__link nav__link--active">Download</a></li>
+          <li><a href="/" class="nav__link">Home</a></li>
+          <li><a href="/#about" class="nav__link">About</a></li>
+          <li><a href="/#features" class="nav__link">Features</a></li>
+          <li><a href="/download" class="nav__link nav__link--active">Download</a></li>
           <li id="nav-auth-item">
-            <a href="login-page.html"><button class="nav__cta">Sign In</button></a>
+            <a href="/login"><button class="nav__cta">Sign In</button></a>
           </li>
         </ul>
       </div>
@@ -106,7 +106,7 @@
         <h2 class="dl-section-title" id="account-heading">Your Account and Forge Medals</h2>
         <p class="dl-summary">StoneForge no longer requires a one-time game purchase. Use the same account on the website and in the game for your Forge Medal balance, character unlocks, and perk upgrades.</p>
         <p class="dl-summary">Forge Medal purchases are optional and currently use sandbox checkout. No real money is charged. Existing account and transaction records are preserved.</p>
-        <a class="btn btn--ghost" href="login-page.html?redirect=dashboard.html">Sign In to Your Account</a>
+        <a class="btn btn--ghost" href="/login?redirect=%2Fprofile">Sign In to Your Account</a>
       </section>
 
       <section class="dl-section animate-up delay-4" aria-labelledby="release-heading">
@@ -168,7 +168,7 @@
     </div>
   </footer>
 
-  <script src="StoneForge.js"></script>
+  <script src="StoneForge.js?v=20261103-clean-urls"></script>
   <script src="download-maintenance.js?v=20261024-b3"></script>
   <script src="download.js?v=20261024-b3"></script>
 </body>

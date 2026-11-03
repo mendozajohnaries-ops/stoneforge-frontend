@@ -23,7 +23,7 @@
   <header>
     <nav class="nav" id="main-nav">
       <div class="nav__inner">
-        <a href="index.html" class="nav__logo">
+        <a href="/" class="nav__logo">
           <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
           <span class="nav__logo-text">StoneForge</span>
         </a>
@@ -35,12 +35,12 @@
             <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
             <span class="nav__sidebar-brand-text">StoneForge</span>
           </li>
-          <li><a href="index.html" class="nav__link">Home</a></li>
-          <li><a href="index.html#about" class="nav__link">About</a></li>
-          <li><a href="index.html#features" class="nav__link">Features</a></li>
-          <li><a href="download.html" class="nav__link">Download</a></li>
+          <li><a href="/" class="nav__link">Home</a></li>
+          <li><a href="/#about" class="nav__link">About</a></li>
+          <li><a href="/#features" class="nav__link">Features</a></li>
+          <li><a href="/download" class="nav__link">Download</a></li>
           <li id="nav-auth-item">
-            <a href="login-page.html"><button class="nav__cta">Sign In</button></a>
+            <a href="/login"><button class="nav__cta">Sign In</button></a>
           </li>
         </ul>
       </div>
@@ -82,7 +82,7 @@
             placeholder="Enter your password" required autocomplete="current-password">
         </div>
 
-        <a href="forgot-password.html" class="form-forgot">Forgot password?</a>
+        <a href="/forgot-password" class="form-forgot">Forgot password?</a>
 
         <button type="submit" id="submit-btn" class="btn-submit">Sign In</button>
 
@@ -95,13 +95,13 @@
       </form>
 
       <div class="auth-footer">
-        Don't have an account? <a href="signup-page.html">Create one</a>
+        Don't have an account? <a href="/signup">Create one</a>
       </div>
     </div>
   </main>
 
-  <script src="session-guard.js?v=20261025-a"></script>
-  <script src="StoneForge.js"></script>
-  <script src="auth.js"></script>
+  <script src="session-guard.js?v=20261103-clean-urls"></script>
+  <script src="StoneForge.js?v=20261103-clean-urls"></script>
+  <script src="auth.js?v=20261103-clean-urls"></script>
 </body>
 </html>

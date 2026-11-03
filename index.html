@@ -23,7 +23,7 @@
   <header>
     <nav class="nav" id="main-nav">
       <div class="nav__inner">
-        <a href="index.html" class="nav__logo">
+        <a href="/" class="nav__logo">
           <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__logo-img">
           <span class="nav__logo-text">StoneForge</span>
         </a>
@@ -37,13 +37,13 @@
             <img src="Assets/logo-transparent.png" alt="StoneForge" class="nav__sidebar-brand-img">
             <span class="nav__sidebar-brand-text">StoneForge</span>
           </li>
-          <li><a href="index.html" class="nav__link nav__link--active">Home</a></li>
+          <li><a href="/" class="nav__link nav__link--active">Home</a></li>
           <li><a href="#about" class="nav__link">About</a></li>
           <li><a href="#features" class="nav__link">Features</a></li>
           <li><a href="#reviews" class="nav__link">Reviews</a></li>
-          <li><a href="download.html" class="nav__link">Download</a></li>
+          <li><a href="/download" class="nav__link">Download</a></li>
           <li id="nav-auth-item">
-            <a href="login-page.html"><button class="nav__cta">Sign In</button></a>
+            <a href="/login"><button class="nav__cta">Sign In</button></a>
           </li>
         </ul>
       </div>
@@ -71,7 +71,7 @@
         </p>
 
         <div class="hero__actions animate-up delay-4">
-          <a href="download.html">
+          <a href="/download">
             <button class="btn btn--primary btn--lg">⬇ Download</button>
           </a>
           <a href="#trailer">
@@ -287,7 +287,7 @@
               <p class="review-form__message" id="review-form-message" role="status"></p>
             </form>
 
-            <a href="login-page.html?redirect=index.html%23reviews" class="btn btn--ghost reviews__signin" id="review-signin">Sign In to Review</a>
+            <a href="/login?redirect=%2F%23reviews" class="btn btn--ghost reviews__signin" id="review-signin">Sign In to Review</a>
           </div>
         </div>
 
@@ -313,7 +313,7 @@
             </div>
           </div>
           <div class="download-cta__actions">
-            <a href="download.html">
+            <a href="/download">
               <button class="btn btn--primary btn--lg" style="min-width: 220px;">
                 ⬇ Download Page
               </button>
@@ -361,8 +361,8 @@
           <li><a href="#about" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">About</a></li>
           <li><a href="#features" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Features</a></li>
           <li><a href="#reviews" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Reviews</a></li>
-          <li><a href="download.html" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Download</a></li>
-          <li><a href="login-page.html" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Sign In</a></li>
+          <li><a href="/download" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Download</a></li>
+          <li><a href="/login" style="color: var(--clr-text-muted); transition: color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">Sign In</a></li>
         </ul>
       </div>
     </div>
@@ -372,6 +372,6 @@
     </div>
   </footer>
 
-  <script src="StoneForge.js"></script>
+  <script src="StoneForge.js?v=20261103-clean-urls"></script>
 </body>
 </html>

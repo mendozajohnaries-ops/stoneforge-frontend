@@ -27,11 +27,11 @@
   }
   function signedOut(){
    attempt++;verification?.abort();checking=null;suspend();clearHints();mask('You have signed out.');
-   let destination='login-page.html';
+   let destination='/login';
    if(!loggingOut&&role==='player')try{
     const url=new URL(window.location.href),id=new URLSearchParams(url.hash.slice(1));
-    if(url.pathname.endsWith('/dashboard.html')&&[...id.keys()].length===1&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id.get('forge-handoff')||''))
-     destination+='?redirect='+encodeURIComponent('dashboard.html?shop=true#forge-handoff='+id.get('forge-handoff'));
+    if(['/profile','/dashboard.html'].includes(url.pathname)&&[...id.keys()].length===1&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id.get('forge-handoff')||''))
+     destination+='?redirect='+encodeURIComponent('/profile?shop=true#forge-handoff='+id.get('forge-handoff'));
    }catch{}
    window.location.replace(destination);
   }
@@ -48,7 +48,7 @@
      if(response.status===401||response.status===403){signedOut();return false;}
      if(!response.ok||user?.success!==true||typeof user.playfab_id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(user.playfab_id))throw new Error('Session unavailable');
      if((role==='admin')!==(user.is_admin===true)){
-      suspend();window.location.replace(user.is_admin===true?'admin.html':'dashboard.html');return false;
+      suspend();window.location.replace(user.is_admin===true?'/admin':'/profile');return false;
      }
      if(owner!==user.playfab_id||!initialized){
       suspend();owner=user.playfab_id;try{window.sessionStorage.setItem('sf_user',JSON.stringify(user));}catch{}
