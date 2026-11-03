@@ -10,7 +10,9 @@
   let storeRequested=false,selectedPack=null,selectedButton=null,backdropPressed=false,checkoutVersion=0;
   let shopSnapshot=null,shopTask=null,shopFresh=false,ownershipState='Checking…';
   let skinSnapshot=null,skinTask=null,skinFresh=false;
-  let classesOpen=false,classReview=null,classBusy=false;
+  let category='medals',classReview=null,classBusy=false;
+  const toolNames={stone_axe:'Stone Axe',iron_axe:'Iron Axe',iron_pickaxe:'Iron Pickaxe',wooden_shovel:'Wooden Shovel',
+   stone_spear:'Stone Spear',chisel:'Chisel',hoe:'Hoe',torch:'Torch',wooden_fire_starter:'Wooden Fire Starter',small_resin_bucket:'Small Resin Bucket'};
   const classInfo={
    scientist:['Scientist','Access detailed guides for recipes, materials, and crafting procedures.'],
    captain:['Captain','Rescue downed teammates faster.'],
@@ -90,29 +92,61 @@
    el('forge-confirm-continue').textContent=checkoutBusy?'Preparing…':handoff?.status==='completed'?'Payment confirmed':handoff?.status==='pending'?'Resume checkout':handoff?.status==='processing'?'Checking payment':'Continue to checkout';
    el('forge-store-retry').disabled=walletLoading||availabilityLoading||reconciling||checkoutBusy;
   }
-  function showCategory(showClasses){
-   if(showClasses&&(!storeDialog.open||handoffId||handoffError||selectedPack||checkoutBusy))return;
-   classesOpen=showClasses;classReview=null;
-   el('forge-store-browse').hidden=showClasses;
-   el('forge-store-availability').hidden=showClasses;
-   el('store-state').hidden=showClasses;
-   el('forge-classes').hidden=!showClasses;
-   el('forge-classes-tab').setAttribute('aria-pressed',String(showClasses));
-   el('forge-medals-tab').setAttribute('aria-pressed',String(!showClasses));
-   if(showClasses){notice('forge-class-state','');renderClasses();void readShop();}
-   else{el('forge-class-grid').replaceChildren();el('forge-class-review-details').textContent='';el('forge-class-review-heading').textContent='';notice('forge-class-state','');}
+  function showCategory(next){
+   if(next!=='medals'&&(!storeDialog.open||handoffId||handoffError||selectedPack||checkoutBusy))return;
+   category=next;classReview=null;
+   el('forge-store-browse').hidden=next!=='medals';
+   el('forge-store-availability').hidden=next!=='medals';
+   el('store-state').hidden=next!=='medals';
+   el('forge-classes').hidden=next!=='classes';
+   el('forge-skins').hidden=next!=='skins';
+   for(const name of ['medals','classes','skins'])el('forge-'+name+'-tab').setAttribute('aria-pressed',String(name===next));
+   el('forge-class-grid').replaceChildren();el('forge-skin-grid').replaceChildren();
+   el('forge-class-review-art').replaceChildren();
+   el('forge-class-review-details').textContent='';el('forge-class-review-heading').textContent='';
+   notice('forge-class-state','');notice('forge-skin-state','');
+   el('forge-store-body').scrollTop=0;
+   if(next==='classes'){renderClasses();void readShop();}
+   if(next==='skins'){renderSkins();void readSkins();}
+  }
+  function productImage(src){
+   const image=document.createElement('img');image.src=src;image.alt='';image.decoding='async';image.loading='lazy';
+   image.width=160;image.height=160;return image;
+  }
+  function productCard(id,name,description){
+   const card=document.createElement('article');card.className='forge-product';
+   const art=document.createElement('div');art.className='forge-product-art';art.append(productImage('Assets/store/catalog/'+id+'.png'));
+   const content=document.createElement('div');content.className='forge-product-copy';
+   const title=document.createElement('h4');title.textContent=name;
+   const details=document.createElement('p');details.className='forge-muted';details.textContent=description;
+   content.append(title,details);card.append(art,content);return{card,content};
+  }
+  function renderSkins(){
+   if(category!=='skins')return;
+   const grid=el('forge-skin-grid');grid.replaceChildren();
+   notice('forge-skin-state',skinFresh?'':skinTask?'Checking skin ownership…':'Ownership unavailable. Refresh to retry.');
+   for(const [id,name] of Object.entries(toolNames)){
+    const skin=skinFresh?skinSnapshot.skins.find(entry=>entry.tool_id===id):null;
+    const {card,content}=productCard(id,name,'Tool appearance');
+    const status=document.createElement('span');status.className='forge-product-badge';
+    status.textContent=skinSnapshot&&skin&&skinSnapshot.equipped.some(slot=>slot.skinId===skin.id)?'Equipped':
+     skin&&skinSnapshot.owned.includes(skin.id)?'Owned':skin?.available?'Available in game':'Preview Only';
+    content.append(status);grid.append(card);
+   }
   }
   const fm=value=>value.toLocaleString()+' FM';
   function canUnlock(role){
    return sameOwner()&&complete()&&shopFresh&&shopSnapshot?.classPurchasesAvailable&&role&&!role.owned;
   }
   function renderClasses(){
-   if(!classesOpen)return;
+   if(category!=='classes')return;
    const grid=el('forge-class-grid'),review=el('forge-class-review');
    grid.hidden=!!classReview;review.hidden=!classReview;
    if(classReview){
     const {id,price,balance,generation}=classReview;
     const role=shopSnapshot?.roles.find(item=>item.id===id);
+    const art=el('forge-class-review-art');
+    if(!art.children.length)art.append(productImage('Assets/store/catalog/'+id+'.png'));
     el('forge-class-review-heading').textContent='Unlock '+classInfo[id][0]+'?';
     el('forge-class-review-details').textContent='Price: '+fm(price)+' · Your balance: '+fm(balance)+' · After purchase: '+fm(balance-price);
     el('forge-class-confirm').disabled=classBusy||!canUnlock(role)||role.price!==price||
@@ -120,30 +154,31 @@
     el('forge-class-confirm').textContent=classBusy?'Unlocking…':'Confirm unlock';
     return;
    }
-   grid.replaceChildren();
+   el('forge-class-review-art').replaceChildren();grid.replaceChildren();
    for(const [id,[name,description]] of Object.entries(classInfo)){
     const role=shopFresh?shopSnapshot.roles.find(item=>item.id===id):null;
-    const card=document.createElement('article');card.className='forge-pack';
-    const title=document.createElement('h3');title.className='forge-pack__name';title.textContent=name;
-    const details=document.createElement('p');details.className='forge-muted';details.textContent=description;
-    const action=document.createElement('button');action.type='button';action.className='forge-primary';
-    action.disabled=classBusy||!canUnlock(role)||shopSnapshot.wallet.balance<role.price;
+    const {card,content}=productCard(id,name,description);
+    const isStatus=!canUnlock(role)||shopSnapshot.wallet.balance<role.price;
+    const action=document.createElement(isStatus?'span':'button');
+    if(isStatus)action.className='forge-product-badge';
+    else{action.type='button';action.className='forge-primary';}
+    if(!isStatus)action.disabled=classBusy;
     action.textContent=id==='scientist'?'Included':!role?ownershipState:role.owned?'Owned':
      !canUnlock(role)?'Unavailable':shopSnapshot.wallet.balance<role.price?'Needs '+fm(role.price):'Unlock · '+fm(role.price);
-    action.addEventListener('click',()=>{
+    if(!isStatus)action.addEventListener('click',()=>{
      if(classBusy||!canUnlock(role)||shopSnapshot.wallet.balance<role.price)return;
      classReview={id,price:role.price,balance:shopSnapshot.wallet.balance,generation:shopSnapshot.wallet.generation};
      notice('forge-class-state','');renderClasses();el('forge-class-review-heading').focus({preventScroll:true});
     });
-    card.append(title,details,action);grid.append(card);
+    content.append(action);grid.append(card);
    }
   }
   function applyShop(data){
-   shopSnapshot=data;shopFresh=true;ownershipState='';renderPerks();renderClasses();
+   shopSnapshot=data;shopFresh=true;ownershipState='';renderClasses();
    if(wallet){wallet={...wallet,balance:data.wallet.balance};el('wallet-balance').textContent=data.wallet.balance.toLocaleString();syncStoreWallet();}
   }
   async function unlockClass(){
-   if(!storeDialog.open||!classesOpen||classBusy||!classReview||el('forge-class-confirm').disabled)return;
+   if(!storeDialog.open||category!=='classes'||classBusy||!classReview||el('forge-class-confirm').disabled)return;
    const selection=classReview;
    const {id,price,generation}=selection;
    classBusy=true;renderClasses();notice('forge-class-state','Unlocking class…');
@@ -158,9 +193,9 @@
      result.receipt.cost!==price||data.wallet.generation!==generation||!data.roles.some(role=>role.id===id&&role.owned))
      throw new Error('Purchase could not be verified. Refresh to check ownership.');
     applyShop(data);
-    if(classesOpen){classReview=null;notice('forge-class-state',classInfo[id][0]+' unlocked. Refresh the game shop to see it.');}
+    if(category==='classes'){classReview=null;notice('forge-class-state',classInfo[id][0]+' unlocked. Refresh the game shop to see it.');}
    }catch(error){
-    if(sameOwner()&&classesOpen){classReview=null;notice('forge-class-state',error.message,true);}
+    if(sameOwner()&&category==='classes'){classReview=null;notice('forge-class-state',error.message,true);}
    }finally{
     classBusy=false;
     if(sameOwner()){renderClasses();void readShop();}
@@ -169,7 +204,7 @@
   function resetSelection(restoreFocus=false){
    const previous=selectedButton;selectedPack=null;selectedButton=null;
    el('forge-store-browse').hidden=false;el('forge-confirmation').hidden=true;
-   el('forge-confirm-pack').textContent='';el('forge-confirm-price').textContent='';renderButtons();
+   el('forge-pack-review-art').replaceChildren();el('forge-confirm-pack').textContent='';el('forge-confirm-price').textContent='';renderButtons();
    if(restoreFocus&&storeDialog.open)previous?.focus({preventScroll:true});
   }
   function showRequestedStore(){
@@ -186,7 +221,7 @@
   }
   function storeClosed(){
    storeRequested=false;backdropPressed=false;checkoutVersion++;
-   showCategory(false);
+   showCategory('medals');
    document.documentElement.classList.remove('forge-store-open');storeButton.setAttribute('aria-expanded','false');resetSelection();
    if(sameOwner()&&!dialog.open)storeButton.focus({preventScroll:true});
   }
@@ -195,11 +230,15 @@
    const box=storeDialog.getBoundingClientRect();
    return event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom;
   }
+  function packImage(pack){
+   return pack.image.replace('Assets/store/','Assets/store/web/').replace('.png','.webp');
+  }
   function selectPack(packId,button){
    if(!handoffAllowed()||handoff&&packId!==handoff.package_id)return;
    if(!storeDialog.open||!sameOwner()||checkoutBusy||walletLoading||availabilityLoading||reconciling||!complete()||!wallet?.test_checkout_available||wallet.requires_profile_completion===true)return;
    const pack=catalog?.packs.find(item=>item.id===packId);if(!pack)return;
    selectedPack=pack;selectedButton=button;
+   el('forge-pack-review-art').replaceChildren(productImage(packImage(pack)));
    el('forge-confirm-pack').textContent=pack.name+' · '+pack.medals.toLocaleString()+' FM';
    el('forge-confirm-price').textContent=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(pack.price_centavos/100);
    el('forge-store-browse').hidden=true;el('forge-confirmation').hidden=false;
@@ -216,7 +255,7 @@
    if(pack.medals!==handoff.medals||pack.price_centavos!==handoff.price_centavos){handoffError='Package details changed. Review the package again in the game.';notice('store-state',handoffError,true);renderButtons();return;}
    if(!walletLoading&&!availabilityLoading&&!reconciling&&wallet?.test_checkout_available&&complete()&&!handoffSelected){
     if(['review','pending'].includes(handoff.status))selectPack(pack.id,Array.from(document.querySelectorAll('[data-forge-pack]')).find(b=>b.dataset.forgePack===pack.id)||null);
-    else{selectedPack=pack;el('forge-confirm-pack').textContent=pack.name+' · '+pack.medals.toLocaleString()+' FM';el('forge-confirm-price').textContent=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(pack.price_centavos/100);el('forge-store-browse').hidden=true;el('forge-confirmation').hidden=false;}
+    else{selectedPack=pack;el('forge-pack-review-art').replaceChildren(productImage(packImage(pack)));el('forge-confirm-pack').textContent=pack.name+' · '+pack.medals.toLocaleString()+' FM';el('forge-confirm-price').textContent=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(pack.price_centavos/100);el('forge-store-browse').hidden=true;el('forge-confirmation').hidden=false;}
     handoffSelected=true;
    }
    notice('store-state',handoff.status==='completed'?'Payment confirmed by the server. Return to StoneForge and press Refresh to update your balance.':
@@ -253,67 +292,29 @@
     const title=document.createElement('h3');title.className='forge-pack__name';title.textContent=pack.name;
     const amount=document.createElement('div');amount.className='forge-pack__amount';amount.textContent=pack.medals.toLocaleString()+' FM';
     const art=document.createElement('div');art.className='forge-art'+(pack.id==='fm_handful'?'':' forge-art--padded');
-    const image=document.createElement('img');image.src=pack.image.replace('Assets/store/','Assets/store/web/').replace('.png','.webp');image.alt=pack.name;image.loading='lazy';image.decoding='async';image.width=170;image.height=170;art.append(image);
+    const image=document.createElement('img');image.src=packImage(pack);image.alt=pack.name;image.loading='lazy';image.decoding='async';image.width=170;image.height=170;art.append(image);
     const price=document.createElement('div');price.className='forge-pack__price';price.textContent=new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(pack.price_centavos/100);
     const button=document.createElement('button');button.type='button';button.className='forge-primary';button.dataset.forgePack=pack.id;
     button.addEventListener('click',()=>selectPack(pack.id,button));card.append(title,amount,art,price,button);grid.append(card);
    }
    renderButtons();
   }
-  function renderPerks(){
-   const section=el('forge-perk-preview'),explorer=el('forge-character-preview'),perks=catalog?.perk_upgrades;
-   const fixed=catalog?.fixed_roles;
-   if(section&&explorer&&fixed){
-    const names={scientist:'Scientist',captain:'Captain',engineer:'Engineer',attendant:'Attendant',explorer:'Explorer'};
-    const definitions=fixed.roles,seen=new Set();
-    if(fixed.id!=='multiplayer-fixed-roles'||fixed.version!==1||fixed.upgrade_levels!==false||!Array.isArray(definitions)||definitions.length!==5)return;
-    for(const role of definitions){
-     if(!role||!Object.hasOwn(names,role.id)||seen.has(role.id)||!Number.isSafeInteger(role.price)||role.price<0||role.price>1000000||role.id==='scientist'&&role.price!==0||role.id!=='scientist'&&role.price===0)return;
-     seen.add(role.id);
-    }
-    section.replaceChildren();const heading=document.createElement('h3');heading.textContent='Team roles';section.append(heading);
-    const intro=document.createElement('p');intro.className='forge-muted';intro.textContent='Scientist is free. Unlock additional roles in the game. Roles have fixed specialties, with no upgrade levels.';section.append(intro);
-    for(const role of definitions){const row=document.createElement('p');row.className='forge-muted';
-     const owned=shopFresh?shopSnapshot?.roles.find(item=>item.id===role.id):null;
-     const status=role.id==='scientist'?'Free — Included':owned?(owned.owned?'Owned':owned.price.toLocaleString()+' FM'):ownershipState;
-     row.textContent=names[role.id]+': '+status;section.append(row);}
-    explorer.replaceChildren();const title=document.createElement('h3');title.textContent='Item skins';explorer.append(title);
-    const note=document.createElement('p');note.className='forge-muted';note.textContent=skinFresh?(skinSnapshot.skins.some(entry=>entry.available)?'Unlock and equip available skins in the game. Item stats and functionality stay unchanged.':'10 tool-skin previews. Final artwork is pending; unfinished skins cannot be purchased.'):'Skin ownership unavailable · Refresh to check. Final artwork is pending.';explorer.append(note);
-    if(skinFresh)for(const entry of skinSnapshot.skins){const row=document.createElement('p');row.className='forge-muted';const equipped=skinSnapshot.equipped.some(slot=>slot.skinId===entry.id);row.textContent=entry.tool_id.split('_').map(word=>word[0].toUpperCase()+word.slice(1)).join(' ')+' Skin: '+(equipped?'Equipped':skinSnapshot.owned.includes(entry.id)?'Owned':entry.available?entry.price.toLocaleString()+' FM · Unlock in game':'Preview');explorer.append(row);}return;
-   }
-   if(!section||!explorer||!perks)return;
-   if(perks.id!=='multiplayer-perks'||![1,2].includes(perks.version)||!Array.isArray(perks.characters))return;
-   const names={captain:'Captain',engineer:'Engineer',attendant:'Attendant',explorer:'Explorer'};
-   section.replaceChildren();
-   const heading=document.createElement('h3');heading.textContent='Character perks';section.append(heading);
-   const note=document.createElement('p');note.className='forge-muted';note.textContent='Upgrade in the game. Level 1 is included. Levels 2 / 3 / 4 / 5:';section.append(note);
-   for(const def of perks.characters){
-    if(!names[def.id]||!Array.isArray(def.costs)||def.costs.length!==4||def.costs.some(n=>!Number.isSafeInteger(n)||n<1))continue;
-    const row=document.createElement('p');row.className='forge-muted';row.textContent=names[def.id]+': '+def.costs.join(' / ')+' FM';section.append(row);
-   }
-   const scientist=document.createElement('p');scientist.className='forge-muted';scientist.textContent='Scientist has no paid upgrades.';section.append(scientist);
-   explorer.replaceChildren();const title=document.createElement('h3');title.textContent='Explorer';explorer.append(title);
-   const text=document.createElement('p');text.className='forge-muted';
-   text.textContent=perks.version===2&&perks.explorer_available===true&&perks.explorer_unlock_cost===750?
-    'Unlock in the game for 750 FM, including Level 1. Your four original characters stay free.':'Explorer is unavailable on this backend version.';
-   explorer.append(text);
-  }
   function readShop(){
    if(!sameOwner()||typeof StoneForgeWallet.shopState!=='function')return Promise.resolve(null);
    if(shopTask)return shopTask;
-   shopFresh=false;ownershipState='Checking…';renderPerks();renderClasses();
+   shopFresh=false;ownershipState='Checking…';renderClasses();
    const pending=(async()=>{
     try{const data=StoneForgeWallet.shopState(await api('shop/account',{headers:{'x-playfab-id':owner}}),owner,shopSnapshot);
      if(!sameOwner())return null;applyShop(data);
      return data;
-    }catch{if(sameOwner()){ownershipState='Ownership unavailable · Refresh';renderPerks();renderClasses();}return null;}
+    }catch{if(sameOwner()){ownershipState='Ownership unavailable · Refresh';renderClasses();}return null;}
    })();shopTask=pending;pending.finally(()=>{if(shopTask===pending)shopTask=null;});return pending;
   }
   function readSkins(){
    if(!sameOwner()||typeof root.StoneForgeSkins?.state!=='function')return Promise.resolve(null);if(skinTask)return skinTask;
-   skinFresh=false;renderPerks();
-   const pending=(async()=>{try{const data=root.StoneForgeSkins.state(await api('skins',{headers:{'x-playfab-id':owner}}),owner,skinSnapshot);if(!sameOwner())return null;skinSnapshot=data;skinFresh=true;renderPerks();return data;}
-    catch{if(sameOwner()){skinFresh=false;renderPerks();}return null;}})();skinTask=pending;pending.finally(()=>{if(skinTask===pending)skinTask=null;});return pending;
+   skinFresh=false;
+   const pending=(async()=>{try{const data=root.StoneForgeSkins.state(await api('skins',{headers:{'x-playfab-id':owner}}),owner,skinSnapshot);if(!sameOwner())return null;skinSnapshot=data;skinFresh=true;renderSkins();return data;}
+    catch{if(sameOwner()){skinFresh=false;}return null;}})();skinTask=pending;renderSkins();pending.finally(()=>{if(skinTask===pending){skinTask=null;if(sameOwner())renderSkins();}});return pending;
   }
   const readBalance=async()=>StoneForgeWallet.canonical(await api('wallet/current',{headers:{'x-playfab-id':owner}}),owner);
   function loadWallet(){
@@ -387,8 +388,7 @@
    }catch(error){if(sameOwner()&&attempt===checkoutVersion&&storeDialog.open)notice('store-state',error.message,true);}
    finally{checkoutBusy=false;renderButtons();}
   }
-  listen(el('forge-medals-tab'),'click',()=>{if(classesOpen)showCategory(false);});
-  listen(el('forge-classes-tab'),'click',()=>{if(!classesOpen)showCategory(true);});
+  for(const name of ['medals','classes','skins'])listen(el('forge-'+name+'-tab'),'click',()=>{if(category!==name)showCategory(name);});
   listen(el('forge-class-cancel'),'click',()=>{classReview=null;renderClasses();el('forge-classes-tab').focus();});
   listen(el('forge-class-confirm'),'click',unlockClass);
   listen(el('wallet-refresh'),'click',loadWallet);
@@ -426,7 +426,7 @@
       data.packs.some(pack=>!/^fm_(handful|pouch|crate|chest)$/.test(pack.id)||!Number.isSafeInteger(pack.medals)||pack.medals<1||
        !Number.isSafeInteger(pack.price_centavos)||pack.price_centavos<1||!/^Assets\/store\/fm-[a-z]+\.png$/.test(pack.image)))
      throw new Error('Store catalog unavailable.');
-    catalog=data;renderPacks();renderPerks();notice('store-state','Choose a package to review before checkout.');tryHandoffSelection();
+    catalog=data;renderPacks();notice('store-state','Choose a package to review before checkout.');tryHandoffSelection();
    }catch{if(sameOwner())notice('store-state','Store unavailable. Please refresh the page to retry.',true);}
   }
   function initialize(){
@@ -442,7 +442,7 @@
   return{open:openStore,refresh:loadWallet,stop(){stopped=true;generation++;clearInterval(timer);schoolPicker.stop();document.removeEventListener('visibilitychange',onVisible);root.removeEventListener?.('focus',onVisible);
    storeListeners.forEach(remove=>remove());closeStore();
    if(dialog.open)dialog.close();el('wallet-balance').textContent='—';el('wallet-test-row').hidden=true;
-   el('wallet-test-balance').textContent='';wallet=null;profile=null;skinSnapshot=null;skinFresh=false;handoff=null;handoffError='';shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';renderPerks();walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
+   el('wallet-test-balance').textContent='';wallet=null;profile=null;skinSnapshot=null;skinFresh=false;handoff=null;handoffError='';shopSnapshot=null;shopFresh=false;ownershipState='Sign in to view ownership';walletLoading=false;availabilityLoading=false;reconciling=false;walletFailure='';
    type.value='';school.value='';el('profile-save').disabled=false;for(const id of ['user-type-value','profile-user-type-badge','school-value','profile-state-status','profile-save-status'])el(id).textContent='';
    syncStoreWallet();renderButtons();}};
  }
