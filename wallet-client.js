@@ -35,7 +35,8 @@
    !data.skins.equipped||Object.keys(data.skins.equipped).length)fail();
   if(previous?.owner===owner&&(wallet.generation<previous.wallet.generation||wallet.generation===previous.wallet.generation&&
    (wallet.revision<previous.wallet.revision||wallet.credits<previous.wallet.credits)))fail();
-  return Object.freeze({owner,wallet:Object.freeze({...wallet}),roles:Object.freeze(roles)});
+  if(Object.hasOwn(data,'class_purchases_available')&&typeof data.class_purchases_available!=='boolean')fail();
+  return Object.freeze({owner,wallet:Object.freeze({...wallet}),roles:Object.freeze(roles),classPurchasesAvailable:data.class_purchases_available===true});
  }
  const api={canonical,availability,shopState};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.StoneForgeWallet=api;
