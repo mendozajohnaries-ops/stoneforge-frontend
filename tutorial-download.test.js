@@ -111,7 +111,7 @@ test('legacy Tutorial client remains detached from the unified download page',()
 });
 
 test('Demo maintenance has no click handler, requests, downloads or automatic unlock',async()=>{
- for(const policy of [require('./download-maintenance'),null,{}]){
+ for(const policy of [{enabled:true},null,{}]){
   const f=fixture([{status:200,body:signed()}],policy);
   try{
    assert.equal(f.button.disabled,true);assert.equal(f.button.textContent,'Under Maintenance');
@@ -123,10 +123,10 @@ test('Demo maintenance has no click handler, requests, downloads or automatic un
  }
 });
 
-test('HTML is disabled before JavaScript and loads the versioned maintenance policy first',()=>{
+test('unified installer waits for JavaScript and loads the versioned release policy first',()=>{
  const html=fs.readFileSync('download.html','utf8');
- assert.match(html,/<div id="game-action"><button[^>]*disabled>Under Maintenance<\/button>/);
- assert.match(html,/Under Maintenance · Preparing the Unified Installer/);
+ assert.match(html,/<div id="game-action"><button[^>]*disabled>Preparing Download\.\.\.<\/button>/);
+ assert.match(html,/id="download-maintenance-notice"[^>]*hidden>/);
  assert.ok(html.indexOf('src="download-maintenance.js?')<html.indexOf('src="download.js?'));
  assert.match(fs.readFileSync('download.css','utf8'),/\.game-download-button:disabled\s*\{\s*cursor:not-allowed/);
 });
