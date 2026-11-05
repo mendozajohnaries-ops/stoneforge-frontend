@@ -1,10 +1,10 @@
-/* Keep downloads paused until the fixed builds have been tested and released. */
+/* Manual download pause. The backend independently enforces release readiness. */
 (function (root) {
   'use strict';
   const policy = Object.freeze({
-    enabled: true,
+    enabled: false,
     label: 'Under Maintenance',
-    message: 'StoneForge downloads are temporarily paused while we prepare and test the unified build.'
+    message: 'StoneForge downloads are temporarily unavailable. Please try again later.'
   });
   if (typeof module !== 'undefined' && module.exports) module.exports = policy;
   else root.StoneForgeDownloadMaintenance = policy;

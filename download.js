@@ -1,13 +1,13 @@
 'use strict';
 
-// Public installer preparation only. The backend owns release readiness and
+// Public installer download. The backend owns release readiness and
 // issues short-lived links; no account, ownership or payment return unlocks it.
 (function () {
   const API_BASE = 'https://stoneforge-backend.onrender.com/api';
   const FILE_NAME = 'StoneForgeSetup.exe';
   const policy = window.StoneForgeDownloadMaintenance;
   const paused = !policy || policy.enabled !== false;
-  const message = 'StoneForge downloads are temporarily paused while we prepare and test the unified build.';
+  const message = 'StoneForge downloads are temporarily unavailable. Please try again later.';
   let busy = false;
   const container = document.getElementById('game-action');
   const note = document.getElementById('game-note');

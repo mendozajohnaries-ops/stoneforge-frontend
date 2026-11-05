@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="base.css">
   <link rel="stylesheet" href="nav.css">
-  <link rel="stylesheet" href="download.css?v=20261024-b3">
+  <link rel="stylesheet" href="download.css?v=20261105-v158">
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
@@ -53,16 +53,16 @@
       <h1 class="dl-hero__title">Download StoneForge</h1>
       <p class="dl-intro">One game, from your first discovery to the next invention.</p>
       <div class="dl-hero__meta">
-        <span class="badge badge--orange">Unified Build in Preparation</span>
+        <span class="badge badge--orange">Version 1.5.8</span>
         <span class="badge badge--green">Windows 10/11 · x64</span>
         <span class="badge badge--green">Unity Engine</span>
       </div>
     </div>
     <div class="dl-page__inner">
       <p id="legacy-payment-note" class="dl-maintenance-notice" role="status" hidden></p>
-      <div class="dl-maintenance-notice" id="download-maintenance-notice" role="status">
-        <strong>Under Maintenance · Preparing the Unified Installer</strong>
-        <p>StoneForge downloads are temporarily paused while we prepare and test the unified build.</p>
+      <div class="dl-maintenance-notice" id="download-maintenance-notice" role="status" hidden>
+        <strong>Under Maintenance</strong>
+        <p>StoneForge downloads are temporarily unavailable. Please try again later.</p>
       </div>
 
       <section class="dl-card animate-up delay-1" aria-labelledby="game-download-heading">
@@ -72,15 +72,17 @@
             <h2 class="dl-card__name" id="game-download-heading">StoneForge for Windows</h2>
             <div class="dl-card__details">
               <span class="dl-detail">Installer: <strong>StoneForgeSetup.exe</strong></span>
+              <span class="dl-detail">Version: <strong id="release-version">1.5.8</strong></span>
+              <span class="dl-detail">Download: <strong id="release-download-size">187.39 MB</strong></span>
               <span class="dl-detail">Price: <strong>Free to play</strong></span>
             </div>
-            <p class="dl-summary">The planned unified installer brings Tutorial, Story Mode, and Multiplayer into the same app. Downloads open after the combined build passes testing.</p>
+            <p class="dl-summary">This unified build brings Tutorial, Story Mode, and Multiplayer into the same app. Start with the Tutorial, continue your own story, or play together with your team.</p>
           </div>
         </div>
         <div class="dl-card__btn-wrap">
-          <div id="game-action"><button type="button" class="game-download-button" aria-describedby="game-note" disabled>Under Maintenance</button></div>
-          <span class="dl-btn-note" id="game-note" role="status" aria-live="polite">Preparing and testing the unified build.</span>
-          <noscript>JavaScript is required to request a fresh installer link. Downloads are currently paused.</noscript>
+          <div id="game-action"><button type="button" class="game-download-button" aria-describedby="game-note" disabled>Preparing Download...</button></div>
+          <span class="dl-btn-note" id="game-note" role="status" aria-live="polite">Loading the download service...</span>
+          <noscript>Enable JavaScript to request your installer download link.</noscript>
         </div>
       </section>
 
@@ -88,45 +90,45 @@
         <h2 class="dl-section-title" id="install-heading">How to Install</h2>
         <div class="steps">
           <div class="step-item"><div class="step-num">1</div><div class="step-content">
-            <strong>Download when the build is released</strong>
+            <strong>Download StoneForge</strong>
             <span>Select Download StoneForge to request the free Windows installer. No game purchase, activation key, or account is needed to download.</span>
           </div></div>
           <div class="step-item"><div class="step-num">2</div><div class="step-content">
             <strong>Run StoneForgeSetup.exe</strong>
-            <span>Follow the installer instructions. The version and final download size will be published with the tested release.</span>
+            <span>Follow the installer instructions to install StoneForge 1.5.8. You can also create a desktop shortcut during setup.</span>
           </div></div>
           <div class="step-item"><div class="step-num">3</div><div class="step-content">
             <strong>Start your adventure</strong>
-            <span>Tutorial, Story Mode, and Multiplayer will share the same app. Online features require internet and a valid StoneForge account verified through your browser.</span>
+            <span>Tutorial, Story Mode, and Multiplayer are available in the same app. Online features require internet and a valid StoneForge account verified through your browser.</span>
           </div></div>
         </div>
       </section>
 
       <section class="dl-section animate-up delay-3" aria-labelledby="account-heading">
         <h2 class="dl-section-title" id="account-heading">Your Account and Forge Medals</h2>
-        <p class="dl-summary">StoneForge no longer requires a one-time game purchase. Use the same account on the website and in the game for your Forge Medal balance, character unlocks, and perk upgrades.</p>
+        <p class="dl-summary">StoneForge no longer requires a one-time game purchase. Use the same account on the website and in the game for your Forge Medal balance and owned Multiplayer classes.</p>
         <p class="dl-summary">Forge Medal purchases are optional and currently use sandbox checkout. No real money is charged. Existing account and transaction records are preserved.</p>
         <a class="btn btn--ghost" href="/login?redirect=%2Fprofile">Sign In to Your Account</a>
       </section>
 
       <section class="dl-section animate-up delay-4" aria-labelledby="release-heading">
-        <h2 class="dl-section-title" id="release-heading">Release Preparation</h2>
+        <h2 class="dl-section-title" id="release-heading">Release Notes</h2>
         <div class="patch-notes">
           <button type="button" class="patch-head" id="patch-toggle" aria-expanded="false" aria-controls="patch-body">
-            <span class="patch-head-left"><span class="patch-ver">Unified Build</span><span class="patch-date">In preparation</span></span>
+            <span class="patch-head-left"><span class="patch-ver">Version 1.5.8</span><span class="patch-date">5 November 2026</span></span>
             <span class="patch-toggle" aria-hidden="true">▼</span>
           </button>
           <div class="patch-body" id="patch-body">
-            <p class="patch-sub">Before downloads open</p>
+            <p class="patch-sub">Included in this release</p>
             <ul class="patch-list">
-              <li>Combine and test Tutorial and FullGame in one Windows application.</li>
-              <li>Validate free-account verification and shared FM balance in the matching game client.</li>
-              <li>Test installation, Story progress, and Multiplayer on separate devices.</li>
+              <li>Tutorial, Story Mode, and Multiplayer in one Windows application.</li>
+              <li>Free account verification and a shared Forge Medal balance across the game and website.</li>
+              <li>Multiplayer room Voice, microphone/deafen controls, and Voice Chat Volume settings.</li>
             </ul>
-            <p class="patch-sub">Current availability</p>
+            <p class="patch-sub">Before you play</p>
             <ul class="patch-list issues">
-              <li>Downloads remain paused until the combined installer is approved for release.</li>
-              <li>FM checkout is sandbox only; live purchases are not enabled.</li>
+              <li>Use matching v1.5.8 clients on each device when playing Multiplayer.</li>
+              <li>Forge Medal checkout uses test payments. No real money is charged.</li>
             </ul>
           </div>
         </div>
@@ -169,7 +171,7 @@
   </footer>
 
   <script src="StoneForge.js?v=20261103-clean-urls"></script>
-  <script src="download-maintenance.js?v=20261024-b3"></script>
-  <script src="download.js?v=20261024-b3"></script>
+  <script src="download-maintenance.js?v=20261105-v158"></script>
+  <script src="download.js?v=20261105-v158"></script>
 </body>
 </html>
