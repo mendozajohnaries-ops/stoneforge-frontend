@@ -48,7 +48,7 @@
             if (className) node.className = className;
             return node;
         };
-        for (const category of ['All', ...categories]) {
+        for (const category of ['All', ...categories.filter(category => category !== 'Perks')]) {
             const option = element('option', category); option.value = category; filter.append(option);
         }
         function render() {
@@ -92,7 +92,10 @@
                 const [catalog, snapshot] = await Promise.all(responses.map(response => response.json()));
                 if (stopped || requestGeneration !== generation || currentOwner() !== owner) return;
                 if (snapshot.owner !== owner) throw new Error('Account session changed.');
-                definitions = validateCatalog(catalog); records = validateRecords(snapshot, definitions);
+                const catalogDefinitions = validateCatalog(catalog);
+                records = validateRecords(snapshot, catalogDefinitions);
+                // Validate historical records before filtering the display catalog.
+                definitions = catalogDefinitions.filter(def => !def.id.startsWith('perk.'));
                 render();
                 const totals = summary(definitions, records);
                 status.textContent = totals.unlocked + '/' + totals.available + ' available completed · ' + totals.reserved +
