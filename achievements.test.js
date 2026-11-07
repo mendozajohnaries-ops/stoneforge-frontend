@@ -48,15 +48,33 @@ function fixture(snapshot={version:1,records:[]}, definitionsOverride=catalog, p
         fetch:async(url,options)=>{ calls.push({url,options}); return {ok:!fail,json:async()=>url.endsWith('/catalog')?definitionsOverride:{owner:'alice',...snapshot}}; }});
     return { nodes,calls,browser,setOwner(value){owner=value;},fail(){fail=true;} };
 }
-test('browser renders all 71, filters categories, shows real progress and uses credentialed GET only', async () => {
+test('browser renders 63 displayable achievements, filters categories and uses credentialed GET only', async () => {
     const f=fixture({version:1,records:[{id:'gameplay.resourceful_survivor',progress:2}]});
     try {
-        await f.browser.refresh(); assert.equal(f.nodes['achievements-grid'].children.length,71);
-        assert.match(f.nodes['achievement-sync-status'].textContent,/0\/64.*7 reserved/);
+        await f.browser.refresh(); assert.equal(f.nodes['achievements-grid'].children.length,63);
+        assert.match(f.nodes['achievement-sync-status'].textContent,/0\/58.*5 reserved/);
         f.nodes['achievement-category'].value='Collection'; f.nodes['achievement-category'].listeners.change();
         assert.equal(f.nodes['achievements-grid'].children.length,2);
         assert.ok(f.calls.every(call=>call.options.credentials==='include'&&!call.options.method&&!call.options.body));
     } finally {f.browser.stop();}
+});
+test('trusted historical perk unlocks sync but stay out of the filter, cards and counts', async () => {
+    const earned = definitions.find(def => def.available && !def.id.startsWith('perk.'));
+    const f = fixture({version:2, records:[
+        {id:'perk.first_improvement',progress:1,source:'server_perks'},
+        {id:earned.id,progress:earned.target}
+    ]}, catalog, true);
+    try {
+        await f.browser.refresh();
+        const grid = f.nodes['achievements-grid'];
+        assert.ok(f.nodes['achievement-category'].children.every(option => option.value !== 'Perks'));
+        assert.equal(grid.children.length, 1);
+        assert.equal(grid.children[0].children[1].children[0].textContent, earned.title);
+        assert.match(f.nodes['achievement-sync-status'].textContent, /1\/58.*5 reserved/);
+        f.nodes['achievement-view-all'].listeners.click();
+        assert.equal(grid.children.length, 63);
+        assert.ok(grid.children.every(card => card.children[1].children[0].textContent !== 'First Improvement'));
+    } finally { f.browser.stop(); }
 });
 test('completed-only preview expands and collapses; locked details stay concealed in the full catalog', async () => {
     const f=fixture({version:1,records:[{id:definitions[0].id,progress:definitions[0].target}]},catalog,true);
@@ -65,7 +83,7 @@ test('completed-only preview expands and collapses; locked details stay conceale
         const grid=f.nodes['achievements-grid'];
         assert.equal(grid.children.length,1);
         assert.equal(grid.children[0].children[1].children[0].textContent,definitions[0].title);
-        f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,71);
+        f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,63);
         assert.equal(f.nodes['achievement-view-all'].textContent,'Show completed achievements');
         for(const card of grid.children.slice(1)) {
             assert.equal(card.children[0].textContent,'?');
@@ -84,20 +102,20 @@ test('completed achievements beyond the first six catalog entries are shown with
  const f=fixture({version:1,records:[{id:late.id,progress:late.target}]},catalog,true);
  try{await f.browser.refresh();const cards=f.nodes['achievements-grid'].children;
   assert.equal(cards.length,1);assert.equal(cards[0].children[1].children[0].textContent,late.title);
-  assert.match(f.nodes['achievement-sync-status'].textContent,/1\/64/);
+  assert.match(f.nodes['achievement-sync-status'].textContent,/1\/58/);
   assert.ok(f.calls.every(call=>!call.options.method&&!call.options.body));
  }finally{f.browser.stop();}
 });
-test('empty completed preview is explicit; at most six earned cards appear and View all retains all entries',async()=>{
+test('empty completed preview is explicit; at most six earned cards appear and View all shows the display catalog',async()=>{
  const empty=fixture({version:1,records:[]},catalog,true);
  try{await empty.browser.refresh();assert.equal(empty.nodes['achievements-grid'].children[0].textContent,'No completed achievements yet.');
-  empty.nodes['achievement-view-all'].listeners.click();assert.equal(empty.nodes['achievements-grid'].children.length,71);
+  empty.nodes['achievement-view-all'].listeners.click();assert.equal(empty.nodes['achievements-grid'].children.length,63);
  }finally{empty.browser.stop();}
  const earned=definitions.filter(def=>def.available&&def.authority!=='server_perks').slice(0,8);
  const f=fixture({version:1,records:earned.map(def=>({id:def.id,progress:def.target}))},catalog,true);
  try{await f.browser.refresh();const grid=f.nodes['achievements-grid'];assert.equal(grid.children.length,6);
-  assert.ok(grid.children.every(card=>card.children[0].textContent==='✓'));assert.match(f.nodes['achievement-sync-status'].textContent,/8\/64/);
-  f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,71);
+  assert.ok(grid.children.every(card=>card.children[0].textContent==='✓'));assert.match(f.nodes['achievement-sync-status'].textContent,/8\/58/);
+  f.nodes['achievement-view-all'].listeners.click();assert.equal(grid.children.length,63);
  }finally{f.browser.stop();}
 });
 
