@@ -707,6 +707,12 @@
   gap: 0.2rem;
 }
 
+.about__image-frame img{
+  width: 100%;
+  height: auto;
+  padding: 4rem;
+}
+
 .star-picker__star {
   border: 0;
   background: transparent;
