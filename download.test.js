@@ -81,17 +81,17 @@ test('double click has a single request and timeout restores the retryable actio
  const click=slow.button.click();for(const timer of slow.timers.values())timer();await click;
  assert.equal(slow.downloads.length,0);assert.equal(slow.timers.size,0);assert.equal(slow.button.disabled,false);assert.equal(slow.button.attributes['aria-busy'],'false');
 });
-test('download page presents the verified v1.5.8 installer and preserves account/FM guidance',()=>{
+test('download page presents the verified v1.5.9 installer and preserves account/FM guidance',()=>{
  const html=fs.readFileSync('download.html','utf8');assert.equal((html.match(/id="game-action"/g)||[]).length,1);
  assert.match(html,/<button[^>]*class="game-download-button"[^>]*disabled>Preparing Download/);
- assert.match(html,/id="release-version">1\.5\.8</);assert.match(html,/id="release-download-size">187\.39 MB</);
+ assert.match(html,/id="release-version">1\.5\.9</);assert.match(html,/id="release-download-size">226\.67 MB</);
  assert.match(html,/id="download-maintenance-notice"[^>]*hidden>/);
  assert.match(html,/StoneForgeSetup\.exe/);assert.match(html,/Tutorial, Story Mode, and Multiplayer/);assert.match(html,/No real money is charged/);
  assert.doesNotMatch(html,/tutorial-download\.js|id="full-action"|id="tutorial-download"|₱350|Purchase to Unlock|147 MB|103\.4 MB|next week/);
  assert.ok(html.indexOf('src="download-maintenance.js?')<html.indexOf('src="download.js?'));
  assert.match(html,/id="patch-toggle"[^>]*aria-expanded="false"/);
  assert.doesNotMatch(html,/in preparation|Preparing the Unified Installer|Downloads open after|perk upgrades/);
- const home=fs.readFileSync('index.html','utf8');assert.match(home,/Version 1\.5\.8 · 187\.39 MB/);assert.doesNotMatch(home,/Unified installer in preparation/);
+ const home=fs.readFileSync('index.html','utf8');assert.match(home,/Version 1\.5\.9 · 226\.67 MB/);assert.doesNotMatch(home,/Unified installer in preparation/);
  assert.doesNotMatch(fs.readFileSync('download.js','utf8'),/check-ownership|create-checkout|download\/full-game|sessionStorage|localStorage/);
 });
 
