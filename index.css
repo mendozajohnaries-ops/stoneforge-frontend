@@ -18,7 +18,7 @@
 .hero__bg {
   position: absolute;
   inset: 0;
-  background: url('Assets/stoneForgeHeroBackground.png') center/cover no-repeat;
+  background: url('Assets/homepage-background-image.png') center/cover no-repeat;
   z-index: 0;
 }
 
