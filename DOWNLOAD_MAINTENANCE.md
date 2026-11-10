@@ -1,18 +1,18 @@
 # Unified installer release and download maintenance
 
-The Windows release is StoneForge 1.5.8. Tutorial, Story Mode and Multiplayer
+The Windows release is StoneForge 1.5.9. Tutorial, Story Mode and Multiplayer
 use the same installer. The download is free and does not require account
 ownership, a one-time payment or an activation key.
 
 ## Verified release artifact
 
 - File: StoneForgeSetup.exe
-- Version: 1.5.8
-- Size: 187,392,095 bytes (187.39 MB; 178.71 MiB)
-- SHA-256: c7cd712b99e5f9ecda60b5d1840eb4ff18d9f37a970482b03bc68340cee490cb
+- Version: 1.5.9
+- Size: 226,666,685 bytes (226.67 MB, 216.17 MiB)
+- SHA-256: 463aded4311d78a0f0e5772e1f2cdf4634ca666a510a82ac3b0d91da639005c1
 - Platform: Windows 10/11 x64
 
-On 5 November 2026 the public download API returned a link to the private R2
+On 11 November 2026 the public download API returned a link to the private R2
 object. A downloaded copy matched the local packaged installer exactly by
 byte count and SHA-256. This verifies delivery of the intended artifact;
 it does not certify installed gameplay on every device.
