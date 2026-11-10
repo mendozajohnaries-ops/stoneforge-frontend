@@ -130,7 +130,7 @@
     const {card,content}=productCard(id,name,'Tool appearance');
     const status=document.createElement('span');status.className='forge-product-badge';
     status.textContent=skinSnapshot&&skin&&skinSnapshot.equipped.some(slot=>slot.skinId===skin.id)?'Equipped':
-     skin&&skinSnapshot.owned.includes(skin.id)?'Owned':skin?.available?'Available in game':'Preview Only';
+     skin&&skinSnapshot.owned.includes(skin.id)?'Owned':skin?.available?fm(skin.price)+' · Available in game':'Preview Only';
     content.append(status);grid.append(card);
    }
   }

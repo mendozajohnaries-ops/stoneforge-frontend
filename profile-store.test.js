@@ -507,6 +507,19 @@ test('website repeat top-up renews only completed/expired key and resumes pendin
 const skinSnapshot=(owner='alice',owned=false)=>({version:1,catalog_id:'stoneforge-tool-skins',catalog_version:1,owner,currency:'FM',environment:'test',live_purchases_enabled:false,balance:1800,revision:0,wallet_generation:0,equip_revision:owned?1:0,can_purchase:false,requires_profile_completion:false,
  skins:['stone_axe','iron_axe','iron_pickaxe','wooden_shovel','stone_spear','chisel','hoe','torch','wooden_fire_starter','small_resin_bucket'].map(tool=>({id:tool+'.basic',tool_id:tool,price:300,asset_revision:1,available:false})),owned:owned?['stone_axe.basic']:[],equipped:owned?[{toolId:'stone_axe',skinId:'stone_axe.basic'}]:[]});
 const skinRolesCatalog={...catalog,perk_upgrades:null,fixed_roles:{id:'multiplayer-fixed-roles',version:1,upgrade_levels:false,roles:['scientist','captain','engineer','attendant','explorer'].map(id=>({id,price:id==='scientist'?0:750}))}};
+test('available unowned skins display the verified server price and owned skins keep their status',async()=>{
+ const snapshot=skinSnapshot('alice',true);
+ snapshot.skins.find(row=>row.tool_id==='iron_axe').available=true;
+ snapshot.skins.find(row=>row.tool_id==='iron_axe').price=1500;
+ const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>snapshot})});
+ try{
+  await openCategory(f,'skins');
+  const labels=productLabels(f,'skin');
+  assert(labels.includes('Iron Axe: 1,500 FM · Available in game'));
+  assert(labels.includes('Stone Axe: Equipped'));
+  assert(labels.includes('Torch: Preview Only'));
+ }finally{f.controller.stop();}
+});
 test('website displays ten draft skin previews without checkout or fake ownership',async()=>{
  const f=fixture({catalogReply:()=>({ok:true,json:async()=>skinRolesCatalog}),skinReply:()=>({ok:true,json:async()=>skinSnapshot()})});try{await openCategory(f,'skins');const text=productLabels(f,'skin').join('|');assert.equal((text.match(/: Preview Only/g)||[]).length,10);assert.doesNotMatch(text,/: Owned|: Equipped/g);assert.equal(f.calls.some(c=>c.url.endsWith('/store/checkout')),false);}finally{f.controller.stop();}
 });
