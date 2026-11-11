@@ -11,14 +11,13 @@
   let shopSnapshot=null,shopTask=null,shopFresh=false,ownershipState='Checking…';
   let skinSnapshot=null,skinTask=null,skinFresh=false;
   let category='medals',classReview=null,classBusy=false;
-  const toolNames={stone_axe:'Stone Axe',iron_axe:'Iron Axe',iron_pickaxe:'Iron Pickaxe',wooden_shovel:'Wooden Shovel',
-   stone_spear:'Stone Spear',chisel:'Chisel',hoe:'Hoe',torch:'Torch',wooden_fire_starter:'Wooden Fire Starter',small_resin_bucket:'Small Resin Bucket'};
+  const toolNames={stone_axe:'Stone Axe',iron_axe:'Iron Axe',iron_pickaxe:'Iron Pickaxe',
+   stone_spear:'Stone Spear',chisel:'Chisel',hoe:'Hoe',wooden_fire_starter:'Wooden Fire Starter',small_resin_bucket:'Small Resin Bucket'};
   const classInfo={
    scientist:['Scientist','Access detailed guides for recipes, materials, and crafting procedures.'],
    captain:['Captain','Rescue downed teammates faster.'],
    engineer:['Engineer','Use 15% less tool durability when chopping and mining.'],
-   attendant:['Attendant','Carry more supplies with eight extra storage slots.'],
-   explorer:['Explorer','Mark nearby resources needed for your selected recipe.']
+   attendant:['Attendant','Carry more supplies with eight extra storage slots.']
   };
   let handoffId=null,handoff=null,handoffError='',handoffTask=null,handoffSelected=false;
   try{handoffId=root.StoneForgeStoreHandoff?.fromHash(root.location?.hash);}catch(error){handoffError=error.message;}
@@ -113,9 +112,10 @@
    const image=document.createElement('img');image.src=src;image.alt='';image.decoding='async';image.loading='lazy';
    image.width=160;image.height=160;return image;
   }
+  const productArtwork=id=>'Assets/store/catalog/'+id+'.png'+(Object.hasOwn(classInfo,id)?'?v=20261112':'');
   function productCard(id,name,description){
    const card=document.createElement('article');card.className='forge-product';
-   const art=document.createElement('div');art.className='forge-product-art';art.append(productImage('Assets/store/catalog/'+id+'.png'));
+   const art=document.createElement('div');art.className='forge-product-art';art.append(productImage(productArtwork(id)));
    const content=document.createElement('div');content.className='forge-product-copy';
    const title=document.createElement('h4');title.textContent=name;
    const details=document.createElement('p');details.className='forge-muted';details.textContent=description;
@@ -136,7 +136,7 @@
   }
   const fm=value=>value.toLocaleString()+' FM';
   function canUnlock(role){
-   return sameOwner()&&complete()&&shopFresh&&shopSnapshot?.classPurchasesAvailable&&role&&!role.owned;
+   return sameOwner()&&complete()&&shopFresh&&shopSnapshot?.classPurchasesAvailable&&role&&Object.hasOwn(classInfo,role.id)&&!role.owned;
   }
   function renderClasses(){
    if(category!=='classes')return;
@@ -146,7 +146,7 @@
     const {id,price,balance,generation}=classReview;
     const role=shopSnapshot?.roles.find(item=>item.id===id);
     const art=el('forge-class-review-art');
-    if(!art.children.length)art.append(productImage('Assets/store/catalog/'+id+'.png'));
+    if(!art.children.length)art.append(productImage(productArtwork(id)));
     el('forge-class-review-heading').textContent='Unlock '+classInfo[id][0]+'?';
     el('forge-class-review-details').textContent='Price: '+fm(price)+' · Your balance: '+fm(balance)+' · After purchase: '+fm(balance-price);
     el('forge-class-confirm').disabled=classBusy||!canUnlock(role)||role.price!==price||
