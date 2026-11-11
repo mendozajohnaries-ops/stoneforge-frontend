@@ -385,26 +385,38 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 function renderPurchases(purchases) {
     const tbody   = document.getElementById('purchases-body');
     const totalEl = document.getElementById('purchases-total');
+    const peso    = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 });
+    const when    = d => d ? new Date(d).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown';
 
     if (!purchases || purchases.length === 0) {
-        tbody.innerHTML   = '<tr><td colspan="3" class="no-data">No purchases yet.</td></tr>';
-        totalEl.textContent = '₱0';
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No completed FM purchases yet.</td></tr>';
+        totalEl.textContent = peso.format(0);
         return;
     }
 
-    tbody.innerHTML = purchases.map(p => {
-        const name = p.display_name || 'Unknown';
-        const pid  = 'UF-' + (p.playfab_id || '').slice(0, 4);
-        return `
-            <tr>
-                <td style="color:var(--clr-white);font-weight:600;">${name}</td>
-                <td style="font-family:var(--font-body);font-size:0.82rem;color:var(--clr-text-dim);">${pid}</td>
-                <td style="color:var(--clr-orange-light);font-weight:600;">₱350</td>
-            </tr>
-        `;
-    }).join('');
+    // Built with DOM nodes so player names can never be interpreted as HTML.
+    const cell = (text, css, title) => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (css) td.style.cssText = css;
+        if (title) td.title = title;
+        return td;
+    };
+    const rows = purchases.map(p => {
+        const tr = document.createElement('tr');
+        tr.append(
+            cell(p.player_name || 'Unknown', 'color:var(--clr-white);font-weight:600;'),
+            cell('UF-' + String(p.playfab_id || '').slice(0, 4), 'font-family:var(--font-body);font-size:0.82rem;color:var(--clr-text-dim);', p.playfab_id || ''),
+            cell(Number(p.fm_purchased).toLocaleString() + ' FM', 'color:var(--clr-white);font-weight:600;'),
+            cell(peso.format(Number(p.amount_paid) || 0), 'color:var(--clr-orange-light);font-weight:600;'),
+            cell(when(p.purchased_at), 'color:var(--clr-text-dim);')
+        );
+        return tr;
+    });
+    tbody.replaceChildren(...rows);
 
-    totalEl.textContent = '₱' + (purchases.length * 350).toLocaleString();
+    const total = purchases.reduce((sum, p) => sum + (Number(p.amount_paid) || 0), 0);
+    totalEl.textContent = peso.format(total);
 }
 
 // ============================================
@@ -456,7 +468,7 @@ async function initAdmin(cachedUser) {
     }).catch(() => {});
 
     // Load purchases
-    sessionAccess.request(`${API_BASE}/admin/purchases`, {
+    sessionAccess.request(`${API_BASE}/admin/fm-purchases`, {
             credentials: 'include',
             headers: { 'x-playfab-id': cachedUser.playfab_id },
         }).then(response => response.json()).then(data => {
